@@ -7,30 +7,23 @@ import { InputBar } from './components/InputBar';
 import { VariantPickerModal } from './components/VariantPickerModal';
 import { CartDrawer } from './components/CartDrawer';
 
-// ── Demo PIN gate ──────────────────────────────────────────────────────────
-// Change this to whatever PIN you want to share with the client.
 const DEMO_PIN = 'rb2025';
 
 const SUGGESTIONS = [
-  'Help me find a dress for a wedding 💍',
+  'Help me find a dress for a wedding',
   'What do you have in tops under $80?',
-  'I need a complete date night outfit ✨',
+  'I need a complete date night outfit',
   "What's new this season?",
 ];
 
 const WELCOME: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
-  text: "Hey! I'm Ava, your personal style assistant here at Revolution Boutique 👋\n\nTell me what you're looking for — a specific occasion, a vibe, a type of piece — and I'll pull together some options from what we have in store right now. What can I help you find?",
+  text: "Hi, I'm Ava — your personal style assistant at Revolution Boutique.\n\nTell me what you're looking for. An occasion, a vibe, a specific piece. I'll pull together options from what we have in store right now.",
   timestamp: Date.now(),
 };
 
-// ── Logo component ──────────────────────────────────────────────────────────
-const RBLogo: React.FC<{ className?: string }> = ({ className }) => (
-  <img src="/logo.png" alt="Revolution Boutique" className={className} />
-);
-
-// ── PIN Screen ─────────────────────────────────────────────────────────────
+// ── PIN Screen ──────────────────────────────────────────────────────────────
 const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
@@ -48,36 +41,84 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-base-100 px-6">
-      <div className="card bg-base-200 border border-base-300 w-full max-w-xs shadow-xl">
-        <div className="card-body items-center text-center gap-5 p-8">
-          <RBLogo className="w-48 h-auto" />
-          <p className="text-xs text-base-content/40 -mt-2">Personal Shopper · Demo</p>
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-            <input
-              type="password"
-              className={`input input-bordered w-full text-center tracking-widest text-lg ${error ? 'input-error' : ''}`}
-              placeholder="Enter PIN"
-              value={pin}
-              onChange={e => setPin(e.target.value)}
-              autoFocus
-              maxLength={12}
-            />
-            {error && (
-              <p className="text-error text-xs text-center">Incorrect PIN — try again</p>
-            )}
-            <button type="submit" className="btn btn-primary w-full gap-2">
-              <Lock size={14} />
-              Enter Demo
-            </button>
-          </form>
+    <div style={{
+      background: '#080808',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px 24px',
+    }}>
+      {/* Logo */}
+      <img
+        src="/logo.png"
+        alt="Revolution Boutique"
+        style={{ width: '180px', marginBottom: '10px', filter: 'brightness(0) invert(1)', opacity: 0.92 }}
+      />
+
+      {/* Tagline */}
+      <p style={{
+        color: 'rgba(240,236,228,0.2)',
+        fontSize: '10px',
+        letterSpacing: '4px',
+        textTransform: 'uppercase',
+        fontFamily: "'Inter', sans-serif",
+        marginBottom: '48px',
+      }}>
+        Personal Shopper · Demo
+      </p>
+
+      {/* PIN form */}
+      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '280px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <p style={{
+            color: 'rgba(240,236,228,0.25)',
+            fontSize: '10px',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            fontFamily: "'Inter', sans-serif",
+            marginBottom: '12px',
+            textAlign: 'center',
+          }}>
+            Enter PIN
+          </p>
+          <input
+            type="password"
+            className={`pin-input${error ? ' error' : ''}`}
+            placeholder="· · · · · ·"
+            value={pin}
+            onChange={e => setPin(e.target.value)}
+            autoFocus
+            maxLength={12}
+          />
+          {error && (
+            <p style={{ color: '#c97a7a', fontSize: '11px', textAlign: 'center', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
+              Incorrect — try again
+            </p>
+          )}
         </div>
-      </div>
+        <button type="submit" className="btn-pin-enter">
+          Enter
+        </button>
+      </form>
+
+      {/* Bottom mark */}
+      <p style={{
+        position: 'absolute',
+        bottom: '24px',
+        color: 'rgba(240,236,228,0.1)',
+        fontSize: '10px',
+        letterSpacing: '1px',
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        © Revolution Boutique
+      </p>
     </div>
   );
 };
 
-// ── Main App ───────────────────────────────────────────────────────────────
+// ── Main App ─────────────────────────────────────────────────────────────────
 const App: React.FC = () => {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('rb_unlocked') === '1');
   const [products, setProducts] = useState<Product[]>([]);
@@ -86,12 +127,10 @@ const App: React.FC = () => {
   const [handedOff, setHandedOff] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
   const [pickerProduct, setPickerProduct] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
 
-  // Load product catalog from API on mount, deduplicating by title
   useEffect(() => {
     if (!unlocked) return;
     fetch('/api/products')
@@ -136,7 +175,6 @@ const App: React.FC = () => {
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       const parsed = await response.json() as { message: string; product_ids: string[] };
 
-      // Resolve products by ID, with a name-based fallback for hallucinated IDs
       const resolvedIds = new Set<string>();
       const recommendedProducts: Product[] = [];
       for (const id of parsed.product_ids) {
@@ -146,7 +184,6 @@ const App: React.FC = () => {
           recommendedProducts.push(byId);
         }
       }
-      // Fallback: scan AI text for product titles (fires even when product_ids is empty)
       if (recommendedProducts.length === 0 || recommendedProducts.length < parsed.product_ids.length) {
         const lowerText = parsed.message.toLowerCase();
         for (const p of products) {
@@ -168,13 +205,12 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
       console.error('AI chat error:', err);
-      const errorMsg: ChatMessage = {
+      setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        text: "Sorry, I had a little hiccup! Try again in a moment — or hit \"Talk to a person\" and our team will help you out. 😊",
+        text: "Sorry, I had a little hiccup! Try again in a moment — or hit \"Talk to a person\" and our team will help.",
         timestamp: Date.now(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -183,16 +219,14 @@ const App: React.FC = () => {
   const handleHandoff = useCallback(() => {
     if (handedOff) return;
     setHandedOff(true);
-    const handoffMsg: ChatMessage = {
+    setMessages(prev => [...prev, {
       id: `handoff-${Date.now()}`,
       role: 'handoff',
       text: '',
       timestamp: Date.now(),
-    };
-    setMessages(prev => [...prev, handoffMsg]);
+    }]);
   }, [handedOff]);
 
-  // Cart handlers
   const handleAddToCart = useCallback((product: Product) => {
     setPickerProduct(product);
   }, []);
@@ -200,21 +234,14 @@ const App: React.FC = () => {
   const handleCartAdd = useCallback((item: CartItem) => {
     setCart(prev => {
       const existing = prev.find(c => c.variantId === item.variantId);
-      if (existing) {
-        return prev.map(c =>
-          c.variantId === item.variantId ? { ...c, qty: c.qty + item.qty } : c
-        );
-      }
+      if (existing) return prev.map(c => c.variantId === item.variantId ? { ...c, qty: c.qty + item.qty } : c);
       return [...prev, item];
     });
   }, []);
 
   const handleUpdateQty = useCallback((cartId: string, qty: number) => {
-    if (qty <= 0) {
-      setCart(prev => prev.filter(c => c.cartId !== cartId));
-    } else {
-      setCart(prev => prev.map(c => c.cartId === cartId ? { ...c, qty } : c));
-    }
+    if (qty <= 0) setCart(prev => prev.filter(c => c.cartId !== cartId));
+    else setCart(prev => prev.map(c => c.cartId === cartId ? { ...c, qty } : c));
   }, []);
 
   const handleRemove = useCallback((cartId: string) => {
@@ -224,32 +251,50 @@ const App: React.FC = () => {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const hasUserMessages = messages.some(m => m.role === 'user');
 
-  if (!unlocked) {
-    return <PinScreen onUnlock={() => setUnlocked(true)} />;
-  }
+  if (!unlocked) return <PinScreen onUnlock={() => setUnlocked(true)} />;
 
   return (
-    <div className="flex flex-col h-screen bg-base-100">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-base-300 bg-base-200 flex-shrink-0">
-        <RBLogo className="h-7 w-auto" />
-        <div className="ml-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-success inline-block" />
-            <p className="text-xs text-base-content/50">Ava · Personal Shopper</p>
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808' }}>
+
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '14px 20px',
+        borderBottom: '1px solid rgba(240,236,228,0.06)',
+        background: '#080808',
+        flexShrink: 0,
+        gap: '12px',
+      }}>
+        <img
+          src="/logo.png"
+          alt="Revolution Boutique"
+          style={{ height: '22px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }}
+        />
+
+        <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#9caa8e', display: 'inline-block' }} />
+          <span style={{ fontSize: '11px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px' }}>
+            Ava · Online
+          </span>
         </div>
 
-        {/* Cart button */}
-        <div className="ml-auto">
-          <button
-            className="btn btn-ghost btn-sm btn-circle relative"
-            onClick={() => setCartOpen(true)}
-            title="View cart"
-          >
-            <ShoppingBag size={18} className="text-base-content/70" />
+        <div style={{ marginLeft: 'auto' }}>
+          <button className="btn-cart-luxury" onClick={() => setCartOpen(true)} title="View cart">
+            <ShoppingBag size={18} />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-content text-xs rounded-full flex items-center justify-center font-bold leading-none">
+              <span style={{
+                position: 'absolute',
+                top: '-2px', right: '-2px',
+                width: '16px', height: '16px',
+                background: '#c4a26e',
+                color: '#080808',
+                fontSize: '10px',
+                fontWeight: 600,
+                borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: "'Inter', sans-serif",
+              }}>
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
             )}
@@ -257,22 +302,31 @@ const App: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Error banner ─────────────────────────────────────────────── */}
       {loadError && (
-        <div className="alert alert-error mx-4 mt-3 text-sm py-2">
+        <div style={{
+          margin: '12px 20px 0',
+          padding: '10px 14px',
+          background: 'rgba(201,122,122,0.1)',
+          border: '1px solid rgba(201,122,122,0.3)',
+          color: '#c97a7a',
+          fontSize: '12px',
+          fontFamily: "'Inter', sans-serif",
+        }}>
           {loadError}
         </div>
       )}
 
-      {/* Messages */}
+      {/* ── Messages ─────────────────────────────────────────────────── */}
       <ChatWindow messages={messages} isLoading={isLoading} onAddToCart={handleAddToCart} />
 
-      {/* Suggestion chips */}
+      {/* ── Suggestion chips ─────────────────────────────────────────── */}
       {!hasUserMessages && !handedOff && (
-        <div className="px-4 pb-2 flex flex-wrap gap-2">
+        <div style={{ padding: '0 20px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {SUGGESTIONS.map(s => (
             <button
               key={s}
-              className="btn btn-sm btn-outline text-xs font-normal"
+              className="suggestion-chip"
               onClick={() => sendMessage(s)}
               disabled={isLoading}
             >
@@ -282,7 +336,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Input */}
+      {/* ── Input ────────────────────────────────────────────────────── */}
       <InputBar
         onSend={sendMessage}
         onHandoff={handleHandoff}
@@ -290,7 +344,7 @@ const App: React.FC = () => {
         handedOff={handedOff}
       />
 
-      {/* Variant picker modal */}
+      {/* ── Variant picker ───────────────────────────────────────────── */}
       <VariantPickerModal
         product={pickerProduct}
         onClose={() => setPickerProduct(null)}
@@ -301,7 +355,7 @@ const App: React.FC = () => {
         }}
       />
 
-      {/* Cart drawer */}
+      {/* ── Cart drawer ──────────────────────────────────────────────── */}
       <CartDrawer
         items={cart}
         open={cartOpen}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Sparkles, Phone } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { ChatMessage, Product } from '../types';
 import { ProductCard } from './ProductCard';
 
@@ -14,22 +14,41 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAddToCa
 
   if (isHandoff) {
     return (
-      <div className="flex justify-center my-2">
-        <div className="card bg-base-200 border border-secondary/40 max-w-xs w-full">
-          <div className="card-body p-4 items-center text-center gap-2">
-            <div className="bg-secondary/20 rounded-full p-2">
-              <Phone size={18} className="text-secondary" />
-            </div>
-            <p className="font-semibold text-base-content text-sm">Connecting you with our team</p>
-            <p className="text-xs text-base-content/60 leading-relaxed">
-              We'll follow up shortly! In the meantime, feel free to browse the store.
+      <div style={{ display: 'flex', justifyContent: 'center' }} className="fade-slide-up">
+        <div style={{
+          background: '#0f0f0f',
+          border: '1px solid rgba(196,162,110,0.2)',
+          maxWidth: '280px',
+          width: '100%',
+          padding: '20px',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: '36px', height: '36px',
+            border: '1px solid rgba(196,162,110,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <Phone size={16} style={{ color: '#c4a26e' }} />
+          </div>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '17px',
+            color: '#f0ece4',
+            marginBottom: '8px',
+            fontWeight: 400,
+          }}>
+            Connecting you with our team
+          </p>
+          <p style={{ fontSize: '12px', color: 'rgba(240,236,228,0.4)', lineHeight: 1.6, marginBottom: '16px' }}>
+            We'll follow up shortly. Feel free to keep browsing in the meantime.
+          </p>
+          <div style={{ borderTop: '1px solid rgba(240,236,228,0.06)', paddingTop: '14px' }}>
+            <p style={{ fontSize: '11px', color: 'rgba(240,236,228,0.3)', lineHeight: 1.8, fontFamily: "'Inter', sans-serif" }}>
+              Four locations across Alberta<br />
+              Mon–Fri 10am–6pm · Sat 10am–5pm<br />
+              hello@revolutionboutique.ca
             </p>
-            <div className="divider my-0 opacity-30" />
-            <div className="text-xs text-base-content/50 space-y-1">
-              <p>📍 Four locations across Alberta</p>
-              <p>🕙 Mon–Fri 10am–6pm · Sat 10am–5pm</p>
-              <p>📧 hello@revolutionboutique.ca</p>
-            </div>
           </div>
         </div>
       </div>
@@ -37,35 +56,56 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAddToCa
   }
 
   return (
-    <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+    <div
+      style={{ display: 'flex', gap: '10px', flexDirection: isUser ? 'row-reverse' : 'row', alignItems: 'flex-start' }}
+      className="fade-slide-up"
+    >
       {/* Avatar */}
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-          <Sparkles size={14} className="text-primary" />
+        <div style={{
+          width: '28px', height: '28px',
+          border: '1px solid rgba(196,162,110,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, marginTop: '2px',
+        }}>
+          <span style={{ fontSize: '13px', color: '#c4a26e', fontFamily: "'Cormorant Garamond', serif" }}>A</span>
         </div>
       )}
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-base-300 flex items-center justify-center flex-shrink-0 mt-1">
-          <User size={14} className="text-base-content/60" />
+        <div style={{
+          width: '28px', height: '28px',
+          border: '1px solid rgba(240,236,228,0.1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, marginTop: '2px',
+        }}>
+          <span style={{ fontSize: '11px', color: 'rgba(240,236,228,0.4)', fontFamily: "'Inter', sans-serif" }}>You</span>
         </div>
       )}
 
-      <div className={`flex flex-col gap-2 max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '78%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
         {/* Bubble */}
-        <div
-          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-            isUser
-              ? 'bg-primary text-primary-content rounded-tr-sm'
-              : 'bg-base-200 text-base-content rounded-tl-sm'
-          }`}
-          style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-        >
+        <div style={{
+          padding: '11px 15px',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          fontFamily: "'Inter', sans-serif",
+          ...(isUser ? {
+            background: '#f0ece4',
+            color: '#0a0a0a',
+          } : {
+            background: '#111111',
+            border: '1px solid rgba(240,236,228,0.06)',
+            color: '#f0ece4',
+          }),
+        }}>
           {message.text}
         </div>
 
         {/* Product cards */}
         {message.products && message.products.length > 0 && (
-          <div className="flex flex-row gap-2 overflow-x-auto pb-1 max-w-full">
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', overflowX: 'auto', paddingBottom: '4px', maxWidth: '100%' }}>
             {message.products.map(p => (
               <ProductCard key={p.id} product={p} onAddToCart={onAddToCart} />
             ))}

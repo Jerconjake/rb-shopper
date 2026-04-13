@@ -19,75 +19,158 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ items, open, onClose, on
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-base-100">
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', flexDirection: 'column',
+      background: '#080808',
+    }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-200 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <ShoppingBag size={18} className="text-primary" />
-          <span className="font-bold text-base-content">Your Cart</span>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 20px',
+        borderBottom: '1px solid rgba(240,236,228,0.06)',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '20px',
+            color: '#f0ece4',
+            fontWeight: 400,
+            letterSpacing: '0.5px',
+          }}>
+            Your Selections
+          </p>
           {itemCount > 0 && (
-            <span className="badge badge-primary badge-sm">{itemCount}</span>
+            <span style={{
+              background: '#c4a26e',
+              color: '#080808',
+              fontSize: '10px',
+              fontWeight: 600,
+              padding: '2px 7px',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              {itemCount}
+            </span>
           )}
         </div>
-        <button className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
-          <X size={16} />
+        <button
+          className="btn-icon-luxury"
+          onClick={onClose}
+          style={{ padding: '6px' }}
+        >
+          <X size={18} />
         </button>
       </div>
 
       {/* Items */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-            <ShoppingBag size={48} className="opacity-20" />
-            <p className="text-base-content/50 text-sm">Your cart is empty</p>
-            <button className="btn btn-primary btn-sm" onClick={onClose}>Keep browsing</button>
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', height: '100%', gap: '16px', textAlign: 'center',
+          }}>
+            <ShoppingBag size={36} style={{ color: 'rgba(240,236,228,0.1)' }} />
+            <p style={{ fontSize: '14px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif" }}>
+              Nothing here yet
+            </p>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(240,236,228,0.15)',
+                color: 'rgba(240,236,228,0.6)',
+                padding: '10px 20px',
+                fontSize: '11px',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              Keep Browsing
+            </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {items.map(item => (
-              <div key={item.cartId} className="flex gap-3 items-start bg-base-200 rounded-xl p-3 border border-base-300">
+              <div key={item.cartId} style={{
+                display: 'flex', gap: '14px', alignItems: 'flex-start',
+                padding: '14px',
+                border: '1px solid rgba(240,236,228,0.06)',
+                background: '#0f0f0f',
+              }}>
                 {/* Image */}
-                <div className="w-16 h-16 rounded-lg bg-base-300 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <div style={{
+                  width: '60px', height: '60px',
+                  background: '#1a1a1a',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   {item.image ? (
-                    <img src={item.image} alt={item.productTitle} className="w-full h-full object-cover" />
+                    <img src={item.image} alt={item.productTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <ShoppingBag size={20} className="opacity-30" />
+                    <ShoppingBag size={16} style={{ color: 'rgba(240,236,228,0.15)' }} />
                   )}
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-base-content leading-tight">{item.productTitle}</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: '13px', color: '#f0ece4', fontFamily: "'Inter', sans-serif", lineHeight: 1.4 }}>
+                    {item.productTitle}
+                  </p>
                   {item.variantTitle && (
-                    <p className="text-xs text-base-content/50 mt-0.5">{item.variantTitle}</p>
+                    <p style={{ fontSize: '11px', color: 'rgba(240,236,228,0.35)', fontFamily: "'Inter', sans-serif", marginTop: '3px' }}>
+                      {item.variantTitle}
+                    </p>
                   )}
-                  <p className="text-primary font-bold text-sm mt-1">
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#c4a26e',
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontWeight: 500,
+                    marginTop: '6px',
+                  }}>
                     ${(parseFloat(item.price) * item.qty).toFixed(2)} CAD
                   </p>
                 </div>
 
                 {/* Controls */}
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <button
-                    className="btn btn-ghost btn-xs opacity-40 hover:opacity-100 hover:text-error p-0"
-                    onClick={() => onRemove(item.cartId)}
-                  >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                  <button className="btn-icon-luxury" onClick={() => onRemove(item.cartId)} style={{ padding: '3px' }}>
                     <Trash2 size={13} />
                   </button>
-                  <div className="flex items-center gap-1">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button
-                      className="btn btn-xs btn-circle btn-ghost border border-base-300"
                       onClick={() => onUpdateQty(item.cartId, item.qty - 1)}
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center text-sm font-bold text-base-content">{item.qty}</span>
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(240,236,228,0.12)',
+                        color: 'rgba(240,236,228,0.6)',
+                        width: '24px', height: '24px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >−</button>
+                    <span style={{ fontSize: '13px', color: '#f0ece4', fontFamily: "'Inter', sans-serif", minWidth: '12px', textAlign: 'center' }}>
+                      {item.qty}
+                    </span>
                     <button
-                      className="btn btn-xs btn-circle btn-ghost border border-base-300"
                       onClick={() => onUpdateQty(item.cartId, item.qty + 1)}
-                    >
-                      +
-                    </button>
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(240,236,228,0.12)',
+                        color: 'rgba(240,236,228,0.6)',
+                        width: '24px', height: '24px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >+</button>
                   </div>
                 </div>
               </div>
@@ -98,23 +181,62 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ items, open, onClose, on
 
       {/* Footer */}
       {items.length > 0 && (
-        <div className="px-4 py-4 border-t border-base-300 bg-base-200 space-y-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-base-content/60 text-sm">
+        <div style={{
+          padding: '20px',
+          borderTop: '1px solid rgba(240,236,228,0.06)',
+          background: '#080808',
+          flexShrink: 0,
+          display: 'flex', flexDirection: 'column', gap: '14px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: '12px', color: 'rgba(240,236,228,0.35)', fontFamily: "'Inter', sans-serif" }}>
               Subtotal ({itemCount} item{itemCount !== 1 ? 's' : ''})
             </span>
-            <span className="font-bold text-base-content text-lg">${total.toFixed(2)} CAD</span>
+            <span style={{
+              fontSize: '20px',
+              color: '#f0ece4',
+              fontFamily: "'Cormorant Garamond', serif",
+              fontWeight: 500,
+            }}>
+              ${total.toFixed(2)} CAD
+            </span>
           </div>
-          <p className="text-xs text-base-content/40">Shipping & taxes calculated at checkout</p>
+          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.2)', fontFamily: "'Inter', sans-serif" }}>
+            Shipping & taxes calculated at checkout
+          </p>
           <a
             href={STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary w-full gap-2"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              background: '#f0ece4',
+              color: '#080808',
+              padding: '14px',
+              textDecoration: 'none',
+              fontSize: '11px',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 500,
+              transition: 'background 0.2s',
+            }}
           >
-            Proceed to Checkout <ExternalLink size={14} />
+            Proceed to Checkout <ExternalLink size={13} />
           </a>
-          <button className="btn btn-ghost btn-sm w-full text-base-content/60" onClick={onClose}>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'rgba(240,236,228,0.25)',
+              fontSize: '11px',
+              letterSpacing: '1px',
+              cursor: 'pointer',
+              fontFamily: "'Inter', sans-serif",
+              padding: '6px',
+            }}
+          >
             Continue Shopping
           </button>
         </div>

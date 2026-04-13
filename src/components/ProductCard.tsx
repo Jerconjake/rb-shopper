@@ -1,19 +1,6 @@
 import React from 'react';
-import { ExternalLink, ShoppingCart } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Product } from '../types';
-
-const TYPE_EMOJI: Record<string, string> = {
-  Tops: '👚',
-  Dresses: '👗',
-  Pants: '👖',
-  Skirts: '🩱',
-  Outerwear: '🧥',
-  Accessories: '👜',
-  Shoes: '👠',
-  Jewelry: '💍',
-  Bags: '👛',
-  Activewear: '🏃',
-};
 
 interface ProductCardProps {
   product: Product;
@@ -21,8 +8,6 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
-  const emoji = TYPE_EMOJI[product.productType] || '✨';
-  // Shopify prices come back as minor units (e.g. "8900" = $89.00)
   const minP = parseFloat(product.minPrice) / 100;
   const maxP = parseFloat(product.maxPrice) / 100;
   const fmt = (n: number) => n % 1 === 0 ? `$${n.toFixed(0)}` : `$${n.toFixed(2)}`;
@@ -40,60 +25,103 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
   const inStock = product.variants.filter(v => v.available && (v.qty || 0) > 0).length;
 
   return (
-    <div className="card bg-base-200 border border-base-300 w-44 flex-shrink-0 hover:border-primary transition-colors">
-      {/* Image / Placeholder */}
-      <div className="h-36 bg-base-300 rounded-t-xl flex items-center justify-center overflow-hidden">
+    <div className="rb-product-card">
+      {/* Image */}
+      <div style={{
+        height: '140px',
+        background: '#1a1a1a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
         {product.image ? (
-          <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+          <img
+            src={product.image}
+            alt={product.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         ) : (
-          <div className="flex flex-col items-center gap-1 opacity-60">
-            <span className="text-4xl">{emoji}</span>
-            <span className="text-xs text-base-content/40">{product.productType}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: 0.3 }}>
+            <span style={{ fontSize: '28px' }}>✦</span>
           </div>
+        )}
+        {inStock > 0 && (
+          <span style={{
+            position: 'absolute',
+            top: '8px', right: '8px',
+            background: 'rgba(8,8,8,0.8)',
+            color: '#9caa8e',
+            fontSize: '9px',
+            letterSpacing: '1px',
+            padding: '3px 7px',
+            fontFamily: "'Inter', sans-serif",
+          }}>
+            IN STOCK
+          </span>
         )}
       </div>
 
-      <div className="card-body p-3 gap-1">
-        <p className="text-sm font-semibold text-base-content leading-tight line-clamp-2">
+      {/* Info */}
+      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <p style={{
+          fontSize: '12px',
+          fontFamily: "'Inter', sans-serif",
+          color: '#f0ece4',
+          lineHeight: 1.4,
+          fontWeight: 400,
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+        }}>
           {product.title}
         </p>
+
         {product.vendor && (
-          <p className="text-xs text-base-content/50">{product.vendor}</p>
+          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            {product.vendor}
+          </p>
         )}
-        <p className="text-sm font-bold text-primary mt-1">{priceStr} CAD</p>
+
+        <p style={{
+          fontSize: '13px',
+          color: '#c4a26e',
+          fontFamily: "'Cormorant Garamond', serif",
+          fontWeight: 500,
+          marginTop: '4px',
+        }}>
+          {priceStr} CAD
+        </p>
 
         {colours.size > 0 && (
-          <p className="text-xs text-base-content/50 leading-tight">
-            {Array.from(colours).slice(0, 3).join(' · ')}
-            {colours.size > 3 && ` +${colours.size - 3}`}
+          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif" }}>
+            {Array.from(colours).slice(0, 3).join(' · ')}{colours.size > 3 ? ` +${colours.size - 3}` : ''}
           </p>
         )}
         {sizes.size > 0 && (
-          <p className="text-xs text-base-content/50 leading-tight">
-            {Array.from(sizes).slice(0, 4).join(', ')}
-            {sizes.size > 4 && '…'}
+          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.25)', fontFamily: "'Inter', sans-serif" }}>
+            {Array.from(sizes).slice(0, 4).join(' · ')}{sizes.size > 4 ? '…' : ''}
           </p>
         )}
 
-        <span className="text-xs text-success mt-0.5">{inStock} in stock</span>
-
         {/* Actions */}
-        <div className="flex items-center gap-1 mt-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
           <button
-            className="btn btn-xs btn-primary flex-1 gap-1 text-xs"
+            className="btn-add-luxury"
             onClick={() => onAddToCart?.(product)}
           >
-            <ShoppingCart size={10} />
             Add
           </button>
           <a
             href={product.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-xs btn-ghost btn-circle opacity-50 hover:opacity-100"
+            className="btn-icon-luxury"
             title="View on store"
           >
-            <ExternalLink size={12} />
+            <ExternalLink size={11} />
           </a>
         </div>
       </div>

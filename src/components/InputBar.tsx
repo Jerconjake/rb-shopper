@@ -13,9 +13,7 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, onHandoff, disabled,
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!disabled && textareaRef.current) {
-      textareaRef.current.focus();
-    }
+    if (!disabled && textareaRef.current) textareaRef.current.focus();
   }, [disabled]);
 
   const handleSend = () => {
@@ -34,46 +32,59 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, onHandoff, disabled,
 
   if (handedOff) {
     return (
-      <div className="border-t border-base-300 px-4 py-3">
-        <p className="text-center text-sm text-base-content/40">
-          Chat ended · Our team will be in touch soon 💌
+      <div style={{
+        borderTop: '1px solid rgba(240,236,228,0.06)',
+        padding: '16px 20px',
+        textAlign: 'center',
+      }}>
+        <p style={{ fontSize: '12px', color: 'rgba(240,236,228,0.25)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.3px' }}>
+          Chat ended · Our team will be in touch soon
         </p>
       </div>
     );
   }
 
   return (
-    <div className="border-t border-base-300 px-3 py-3 flex flex-col gap-2">
-      <div className="flex gap-2 items-end">
-        <label className="textarea textarea-bordered flex-1 flex items-end min-h-10 max-h-28 p-0 overflow-hidden">
-          <textarea
-            ref={textareaRef}
-            className="resize-none w-full bg-transparent px-3 py-2.5 text-sm focus:outline-none min-h-10 max-h-28"
-            placeholder="Ask Ava anything…"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={disabled}
-            rows={1}
-          />
-        </label>
+    <div style={{
+      borderTop: '1px solid rgba(240,236,228,0.06)',
+      padding: '14px 20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+      background: '#080808',
+    }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+        <textarea
+          ref={textareaRef}
+          className="chat-textarea"
+          placeholder="Ask Ava anything…"
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={disabled}
+          rows={1}
+          style={{ maxHeight: '100px' }}
+        />
         <button
-          className="btn btn-primary btn-square flex-shrink-0"
+          className="btn-send-luxury"
           onClick={handleSend}
           disabled={disabled || !text.trim()}
           title="Send"
         >
-          <Send size={16} />
+          <Send size={15} />
         </button>
       </div>
-      <div className="flex justify-between items-center px-1">
-        <p className="text-xs text-base-content/30">Press Enter to send · Shift+Enter for new line</p>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.15)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.2px' }}>
+          Enter to send · Shift+Enter for new line
+        </p>
         <button
-          className="btn btn-xs btn-ghost text-base-content/40 gap-1 hover:text-secondary"
+          className="btn-handoff-luxury"
           onClick={onHandoff}
           disabled={disabled}
         >
-          <UserCircle size={13} />
+          <UserCircle size={12} />
           Talk to a person
         </button>
       </div>
