@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Sparkles, ShoppingBag, Lock } from 'lucide-react';
+import { ShoppingBag, Lock } from 'lucide-react';
 import { ChatMessage, Product, CartItem } from './types';
 import { ChatWindow } from './components/ChatWindow';
 import { InputBar } from './components/InputBar';
@@ -25,6 +25,11 @@ const WELCOME: ChatMessage = {
   timestamp: Date.now(),
 };
 
+// ── Logo component ──────────────────────────────────────────────────────────
+const RBLogo: React.FC<{ className?: string }> = ({ className }) => (
+  <img src="/logo.png" alt="Revolution Boutique" className={className} />
+);
+
 // ── PIN Screen ─────────────────────────────────────────────────────────────
 const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   const [pin, setPin] = useState('');
@@ -45,14 +50,9 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-base-100 px-6">
       <div className="card bg-base-200 border border-base-300 w-full max-w-xs shadow-xl">
-        <div className="card-body items-center text-center gap-4 p-8">
-          <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
-            <Sparkles size={24} className="text-primary" />
-          </div>
-          <div>
-            <h1 className="font-bold text-base-content text-lg">Revolution Boutique</h1>
-            <p className="text-xs text-base-content/50 mt-1">Personal Shopper · Demo</p>
-          </div>
+        <div className="card-body items-center text-center gap-5 p-8">
+          <RBLogo className="w-48 h-auto" />
+          <p className="text-xs text-base-content/40 -mt-2">Personal Shopper · Demo</p>
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
             <input
               type="password"
@@ -71,9 +71,6 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
               Enter Demo
             </button>
           </form>
-          <p className="text-xs text-base-content/30">
-            Powered by Revolution Boutique AI
-          </p>
         </div>
       </div>
     </div>
@@ -235,11 +232,8 @@ const App: React.FC = () => {
     <div className="flex flex-col h-screen bg-base-100">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-base-300 bg-base-200 flex-shrink-0">
-        <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
-          <Sparkles size={16} className="text-primary" />
-        </div>
-        <div>
-          <p className="font-bold text-base-content text-sm leading-tight">Revolution Boutique</p>
+        <RBLogo className="h-7 w-auto" />
+        <div className="ml-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-success inline-block" />
             <p className="text-xs text-base-content/50">Ava · Personal Shopper</p>
@@ -278,7 +272,7 @@ const App: React.FC = () => {
           {SUGGESTIONS.map(s => (
             <button
               key={s}
-              className="btn btn-sm btn-outline btn-primary text-xs font-normal"
+              className="btn btn-sm btn-outline text-xs font-normal"
               onClick={() => sendMessage(s)}
               disabled={isLoading}
             >
