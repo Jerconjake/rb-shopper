@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#251f18"/>
+      <stop offset="100%" stop-color="#1c1814"/>
+    </linearGradient>
+    <!-- Subtle diagonal texture -->
+    <pattern id="tex" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="20" x2="20" y2="0" stroke="#f0e6d8" stroke-width="0.3" opacity="0.06"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="520" fill="url(#bg)"/>
+  <rect width="400" height="520" fill="url(#tex)"/>
+  
+  <!-- Corner accent lines -->
+  <line x1="20" y1="20" x2="60" y2="20" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="20" y1="20" x2="20" y2="60" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="340" y2="500" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="380" y2="460" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  
+  <!-- Icon area -->
+  <g transform="translate(0, 40)">
+    
+        <!-- Scarf/belt abstract -->
+        <rect x="140" y="160" width="120" height="6" rx="3" fill="#8a7a6a" opacity="0.5"/>
+        <path d="M 200 166 Q 230 200 220 250 Q 210 290 230 320" 
+              fill="none" stroke="#8a7a6a" stroke-width="5" opacity="0.5" stroke-linecap="round"/>
+        <!-- Belt buckle -->
+        <rect x="175" y="155" width="50" height="16" rx="2" fill="none" stroke="#c9835a" stroke-width="1.5" opacity="0.8"/>
+        <line x1="200" y1="155" x2="200" y2="171" stroke="#c9835a" stroke-width="1" opacity="0.8"/>
+        <!-- Texture dots -->
+        <circle cx="150" cy="200" r="1.5" fill="#8a7a6a" opacity="0.3"/>
+        <circle cx="165" cy="215" r="1.5" fill="#8a7a6a" opacity="0.3"/>
+        <circle cx="155" cy="230" r="1.5" fill="#8a7a6a" opacity="0.3"/>
+        
+  </g>
+  
+  <!-- Label -->
+  <text x="200" y="490" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9" 
+        fill="#8a7a6a" text-anchor="middle" letter-spacing="3" opacity="0.7">ACCESSORIES</text>
+</svg>

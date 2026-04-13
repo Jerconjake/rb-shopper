@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#251f18"/>
+      <stop offset="100%" stop-color="#1c1814"/>
+    </linearGradient>
+    <!-- Subtle diagonal texture -->
+    <pattern id="tex" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="20" x2="20" y2="0" stroke="#f0e6d8" stroke-width="0.3" opacity="0.06"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="520" fill="url(#bg)"/>
+  <rect width="400" height="520" fill="url(#tex)"/>
+  
+  <!-- Corner accent lines -->
+  <line x1="20" y1="20" x2="60" y2="20" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="20" y1="20" x2="20" y2="60" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="340" y2="500" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="380" y2="460" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  
+  <!-- Icon area -->
+  <g transform="translate(0, 40)">
+    
+        <!-- RB monogram abstract -->
+        <text x="200" y="220" font-family="Georgia, serif" font-size="96" font-weight="300"
+              fill="#8a7a6a" text-anchor="middle" opacity="0.3" letter-spacing="4">RB</text>
+        <!-- Decorative lines -->
+        <line x1="120" y1="250" x2="280" y2="250" stroke="#c9835a" stroke-width="0.8" opacity="0.4"/>
+        <line x1="140" y1="260" x2="260" y2="260" stroke="#c9835a" stroke-width="0.5" opacity="0.3"/>
+        
+  </g>
+  
+  <!-- Label -->
+  <text x="200" y="490" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9" 
+        fill="#8a7a6a" text-anchor="middle" letter-spacing="3" opacity="0.7"></text>
+</svg>

@@ -7,11 +7,11 @@ interface Props {
 }
 
 export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
-  const price = product.priceRange
-    ? `$${(product.priceRange.minVariantPrice.amount / 100).toFixed(0)}`
+  const price = product.minPrice
+    ? `$${(parseFloat(product.minPrice) / 100).toFixed(0)}`
     : '—';
 
-  const hasImage = product.featuredImage?.url;
+  const hasImage = product.image;
 
   return (
     <div className="rb-product-card" onClick={() => onAddToCart(product)}>
@@ -25,7 +25,7 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
       }}>
         {hasImage ? (
           <img
-            src={product.featuredImage!.url}
+            src={product.image!}
             alt={product.title}
             style={{
               width: '100%',

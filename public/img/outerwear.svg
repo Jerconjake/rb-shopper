@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#251f18"/>
+      <stop offset="100%" stop-color="#1c1814"/>
+    </linearGradient>
+    <!-- Subtle diagonal texture -->
+    <pattern id="tex" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="20" x2="20" y2="0" stroke="#f0e6d8" stroke-width="0.3" opacity="0.06"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="520" fill="url(#bg)"/>
+  <rect width="400" height="520" fill="url(#tex)"/>
+  
+  <!-- Corner accent lines -->
+  <line x1="20" y1="20" x2="60" y2="20" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="20" y1="20" x2="20" y2="60" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="340" y2="500" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  <line x1="380" y1="500" x2="380" y2="460" stroke="#c9835a" stroke-width="0.8" opacity="0.5"/>
+  
+  <!-- Icon area -->
+  <g transform="translate(0, 40)">
+    
+        <!-- Jacket/coat silhouette -->
+        <path d="M 155 75 L 110 120 L 80 155 L 80 340 L 320 340 L 320 155 L 290 120 L 245 75" 
+              fill="none" stroke="#8a7a6a" stroke-width="1.5" opacity="0.5"/>
+        <!-- Lapels -->
+        <path d="M 155 75 L 185 130 L 200 145 L 215 130 L 245 75" 
+              fill="none" stroke="#c9835a" stroke-width="1.5" opacity="0.7"/>
+        <!-- Button line -->
+        <line x1="200" y1="145" x2="200" y2="340" stroke="#8a7a6a" stroke-width="0.8" opacity="0.4"/>
+        <circle cx="200" cy="200" r="3" fill="#8a7a6a" opacity="0.5"/>
+        <circle cx="200" cy="230" r="3" fill="#8a7a6a" opacity="0.5"/>
+        <circle cx="200" cy="260" r="3" fill="#8a7a6a" opacity="0.5"/>
+        <!-- Collar -->
+        <path d="M 110 120 L 155 75" fill="none" stroke="#8a7a6a" stroke-width="1.5" opacity="0.5"/>
+        <path d="M 290 120 L 245 75" fill="none" stroke="#8a7a6a" stroke-width="1.5" opacity="0.5"/>
+        
+  </g>
+  
+  <!-- Label -->
+  <text x="200" y="490" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9" 
+        fill="#8a7a6a" text-anchor="middle" letter-spacing="3" opacity="0.7">OUTERWEAR</text>
+</svg>

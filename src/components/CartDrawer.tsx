@@ -13,7 +13,7 @@ interface Props {
 export const CartDrawer: React.FC<Props> = ({ items, open, onClose, onUpdateQty, onRemove }) => {
   if (!open) return null;
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const subtotal = items.reduce((sum, i) => sum + parseFloat(i.price as string) * i.qty, 0);
 
   return (
     <>
@@ -159,7 +159,7 @@ export const CartDrawer: React.FC<Props> = ({ items, open, onClose, onUpdateQty,
                         fontSize: '16px',
                         color: 'var(--rb-cream)',
                       }}>
-                        ${(item.price * item.qty / 100).toFixed(2)}
+                        ${(parseFloat(item.price as string) * item.qty).toFixed(2)}
                       </span>
                       <button
                         className="btn-icon"
@@ -194,7 +194,7 @@ export const CartDrawer: React.FC<Props> = ({ items, open, onClose, onUpdateQty,
                 fontSize: '20px',
                 color: 'var(--rb-cream)',
               }}>
-                ${(subtotal / 100).toFixed(2)}
+                ${subtotal.toFixed(2)}
               </span>
             </div>
             <button
