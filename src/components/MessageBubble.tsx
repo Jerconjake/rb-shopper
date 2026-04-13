@@ -1,117 +1,177 @@
 import React from 'react';
-import { Phone } from 'lucide-react';
 import { ChatMessage, Product } from '../types';
 import { ProductCard } from './ProductCard';
 
-interface MessageBubbleProps {
-  message: ChatMessage;
-  onAddToCart?: (product: Product) => void;
+interface Props {
+  msg: ChatMessage;
+  onAddToCart: (p: Product) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAddToCart }) => {
-  const isUser = message.role === 'user';
-  const isHandoff = message.role === 'handoff';
+const HandoffCard: React.FC = () => (
+  <div style={{
+    background: 'var(--rb-surface)',
+    border: '1px solid var(--rb-border-md)',
+    padding: '20px',
+    maxWidth: '340px',
+  }}>
+    <p style={{
+      fontFamily: "'Cormorant Garamond', serif",
+      fontSize: '17px',
+      fontWeight: 400,
+      color: 'var(--rb-cream)',
+      marginBottom: '6px',
+      lineHeight: 1.4,
+    }}>
+      Our team is ready to help
+    </p>
+    <p style={{
+      fontSize: '12.5px',
+      color: 'var(--rb-cream-60)',
+      fontFamily: "'Inter', sans-serif",
+      lineHeight: 1.6,
+      marginBottom: '18px',
+    }}>
+      Reach us any way that works for you:
+    </p>
+
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <a
+        href="tel:+17804677700"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: 'var(--rb-cream)',
+          textDecoration: 'none',
+          fontSize: '13px',
+          fontFamily: "'Inter', sans-serif",
+          padding: '10px 14px',
+          border: '1px solid var(--rb-border)',
+          background: 'var(--rb-raised)',
+          transition: 'border-color 0.2s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--rb-accent-30)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--rb-border)')}
+      >
+        <span style={{ fontSize: '16px' }}>📞</span>
+        <span>+1 (780) 467-7700</span>
+      </a>
+
+      <a
+        href="mailto:hello@revolutionboutique.ca"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: 'var(--rb-cream)',
+          textDecoration: 'none',
+          fontSize: '13px',
+          fontFamily: "'Inter', sans-serif",
+          padding: '10px 14px',
+          border: '1px solid var(--rb-border)',
+          background: 'var(--rb-raised)',
+          transition: 'border-color 0.2s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--rb-accent-30)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--rb-border)')}
+      >
+        <span style={{ fontSize: '16px' }}>✉️</span>
+        <span>hello@revolutionboutique.ca</span>
+      </a>
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        padding: '10px 14px',
+        border: '1px solid var(--rb-border)',
+        background: 'var(--rb-raised)',
+        fontSize: '13px',
+        color: 'var(--rb-cream-60)',
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <span style={{ fontSize: '16px' }}>🕐</span>
+        <span style={{ lineHeight: 1.6 }}>
+          Mon–Fri 10am–6pm<br />
+          Sat 10am–5pm · Sun Closed
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+export const MessageBubble: React.FC<Props> = ({ msg, onAddToCart }) => {
+  const isUser = msg.role === 'user';
+  const isHandoff = msg.role === 'handoff';
 
   if (isHandoff) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center' }} className="fade-slide-up">
-        <div style={{
-          background: '#0f0f0f',
-          border: '1px solid rgba(196,162,110,0.2)',
-          maxWidth: '280px',
-          width: '100%',
-          padding: '20px',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: '36px', height: '36px',
-            border: '1px solid rgba(196,162,110,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 12px',
-          }}>
-            <Phone size={16} style={{ color: '#c4a26e' }} />
-          </div>
-          <p style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: '17px',
-            color: '#f0ece4',
-            marginBottom: '8px',
-            fontWeight: 400,
-          }}>
-            Connecting you with our team
-          </p>
-          <p style={{ fontSize: '12px', color: 'rgba(240,236,228,0.4)', lineHeight: 1.6, marginBottom: '16px' }}>
-            We'll follow up shortly. Feel free to keep browsing in the meantime.
-          </p>
-          <div style={{ borderTop: '1px solid rgba(240,236,228,0.06)', paddingTop: '14px' }}>
-            <p style={{ fontSize: '11px', color: 'rgba(240,236,228,0.3)', lineHeight: 1.8, fontFamily: "'Inter', sans-serif" }}>
-              Four locations across Alberta<br />
-              Mon–Fri 10am–6pm · Sat 10am–5pm<br />
-              hello@revolutionboutique.ca
-            </p>
-          </div>
-        </div>
+      <div className="fade-up" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <HandoffCard />
       </div>
     );
   }
 
   return (
     <div
-      style={{ display: 'flex', gap: '10px', flexDirection: isUser ? 'row-reverse' : 'row', alignItems: 'flex-start' }}
-      className="fade-slide-up"
+      className="fade-up"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: isUser ? 'flex-end' : 'flex-start',
+        gap: '10px',
+      }}
     >
-      {/* Avatar */}
-      {!isUser && (
-        <div style={{
-          width: '28px', height: '28px',
-          border: '1px solid rgba(196,162,110,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, marginTop: '2px',
-        }}>
-          <span style={{ fontSize: '13px', color: '#c4a26e', fontFamily: "'Cormorant Garamond', serif" }}>A</span>
-        </div>
-      )}
-      {isUser && (
-        <div style={{
-          width: '28px', height: '28px',
-          border: '1px solid rgba(240,236,228,0.1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, marginTop: '2px',
-        }}>
-          <span style={{ fontSize: '11px', color: 'rgba(240,236,228,0.4)', fontFamily: "'Inter', sans-serif" }}>You</span>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '78%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
-        {/* Bubble */}
-        <div style={{
+      {/* Text bubble */}
+      <div
+        className={isUser ? 'msg-user' : 'msg-assistant'}
+        style={{
+          maxWidth: '82%',
           padding: '11px 15px',
           fontSize: '14px',
-          lineHeight: 1.6,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
+          lineHeight: 1.65,
           fontFamily: "'Inter', sans-serif",
-          ...(isUser ? {
-            background: '#f0ece4',
-            color: '#0a0a0a',
-          } : {
-            background: '#111111',
-            border: '1px solid rgba(240,236,228,0.06)',
-            color: '#f0ece4',
-          }),
-        }}>
-          {message.text}
-        </div>
-
-        {/* Product cards */}
-        {message.products && message.products.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', overflowX: 'auto', paddingBottom: '4px', maxWidth: '100%' }}>
-            {message.products.map(p => (
-              <ProductCard key={p.id} product={p} onAddToCart={onAddToCart} />
-            ))}
-          </div>
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {!isUser && (
+          <span style={{
+            display: 'inline-block',
+            width: '20px',
+            height: '20px',
+            background: 'var(--rb-accent)',
+            color: '#fff',
+            fontSize: '10px',
+            fontFamily: "'Cormorant Garamond', serif",
+            fontWeight: 500,
+            textAlign: 'center',
+            lineHeight: '20px',
+            marginRight: '8px',
+            marginBottom: '-3px',
+            letterSpacing: '0',
+            flexShrink: 0,
+          }}>
+            A
+          </span>
         )}
+        {msg.text}
       </div>
+
+      {/* Product cards */}
+      {msg.products && msg.products.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          overflowX: 'auto',
+          paddingBottom: '4px',
+          maxWidth: '100%',
+          alignSelf: 'flex-start',
+        }}>
+          {msg.products.map(p => (
+            <ProductCard key={p.id} product={p} onAddToCart={onAddToCart} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

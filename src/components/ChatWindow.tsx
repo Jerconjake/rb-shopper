@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import { ChatMessage, Product } from '../types';
 import { MessageBubble } from './MessageBubble';
 
-interface ChatWindowProps {
+interface Props {
   messages: ChatMessage[];
   isLoading: boolean;
-  onAddToCart?: (product: Product) => void;
+  onAddToCart: (p: Product) => void;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading, onAddToCart }) => {
+export const ChatWindow: React.FC<Props> = ({ messages, isLoading, onAddToCart }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,34 +19,39 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading, onA
     <div style={{
       flex: 1,
       overflowY: 'auto',
-      padding: '24px 20px 16px',
+      padding: '20px 18px 12px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '20px',
+      gap: '16px',
     }}>
       {messages.map(msg => (
-        <MessageBubble key={msg.id} message={msg} onAddToCart={onAddToCart} />
+        <MessageBubble key={msg.id} msg={msg} onAddToCart={onAddToCart} />
       ))}
 
       {/* Typing indicator */}
       {isLoading && (
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }} className="fade-slide-up">
-          {/* Avatar */}
+        <div className="fade-up" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
-            width: '28px', height: '28px',
-            border: '1px solid rgba(196,162,110,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, marginTop: '2px',
-          }}>
-            <span style={{ fontSize: '12px', color: '#c4a26e', fontFamily: "'Cormorant Garamond', serif" }}>A</span>
-          </div>
-          {/* Dots */}
-          <div style={{
-            background: '#111',
-            border: '1px solid rgba(240,236,228,0.06)',
+            background: 'var(--rb-surface)',
+            border: '1px solid var(--rb-border)',
             padding: '12px 16px',
-            display: 'flex', gap: '5px', alignItems: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            borderRadius: '2px 2px 2px 0',
           }}>
+            <span style={{
+              display: 'inline-block',
+              width: '18px',
+              height: '18px',
+              background: 'var(--rb-accent)',
+              color: '#fff',
+              fontSize: '9px',
+              fontFamily: "'Cormorant Garamond', serif",
+              textAlign: 'center',
+              lineHeight: '18px',
+              marginRight: '6px',
+            }}>A</span>
             <span className="typing-dot" />
             <span className="typing-dot" />
             <span className="typing-dot" />

@@ -1,15 +1,16 @@
 <!doctype html>
-<html data-theme="rb-dark">
+<html data-theme="rb">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Revolution Boutique · Personal Shopper</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5" type="text/css" />
     <style>
-[data-theme='rb-dark'] {
+/* ── Theme tokens ──────────────────────────────────────────────────────────── */
+[data-theme='rb'] {
   color-scheme: dark;
   --radius-selector: 0rem;
   --radius-field: 0rem;
@@ -19,205 +20,255 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  --color-base-100: #080808;
-  --color-base-200: #111111;
-  --color-base-300: #1c1c1c;
-  --color-base-content: #f0ece4;
-  --color-primary: #c4a26e;
-  --color-primary-content: #080808;
-  --color-secondary: rgba(240,236,228,0.5);
-  --color-secondary-content: #080808;
-  --color-accent: #c4a26e;
-  --color-accent-content: #080808;
-  --color-neutral: #1c1c1c;
-  --color-neutral-content: #f0ece4;
-  --color-info: rgba(240,236,228,0.5);
-  --color-info-content: #080808;
-  --color-success: #9caa8e;
-  --color-success-content: #080808;
-  --color-warning: #c4a26e;
-  --color-warning-content: #080808;
-  --color-error: #c97a7a;
-  --color-error-content: #080808;
+
+  /* Palette */
+  --rb-bg:        #141210;
+  --rb-surface:   #1e1b18;
+  --rb-raised:    #262320;
+  --rb-border:    rgba(245,238,228,0.07);
+  --rb-border-md: rgba(245,238,228,0.13);
+  --rb-cream:     #f5eee4;
+  --rb-cream-60:  rgba(245,238,228,0.6);
+  --rb-cream-35:  rgba(245,238,228,0.35);
+  --rb-cream-18:  rgba(245,238,228,0.18);
+  --rb-cream-08:  rgba(245,238,228,0.08);
+  --rb-accent:    #c9835a;
+  --rb-accent-15: rgba(201,131,90,0.15);
+  --rb-accent-30: rgba(201,131,90,0.3);
+  --rb-green:     #8daa86;
+  --rb-error:     #c47a7a;
+
+  /* DaisyUI compat */
+  --color-base-100: #141210;
+  --color-base-200: #1e1b18;
+  --color-base-300: #262320;
+  --color-base-content: #f5eee4;
+  --color-primary: #c9835a;
+  --color-primary-content: #141210;
+  --color-error: #c47a7a;
+  --color-success: #8daa86;
 }
 
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  background: #080808;
-}
-
+html, body, #root { height: 100%; margin: 0; background: var(--rb-bg); }
 body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--rb-cream);
 }
 
-/* Scrollbar */
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(240,236,228,0.1); }
-::-webkit-scrollbar-thumb:hover { background: rgba(240,236,228,0.2); }
+::-webkit-scrollbar-thumb { background: var(--rb-cream-08); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rb-cream-18); }
 
-/* Typography */
-.font-editorial { font-family: 'Cormorant Garamond', serif; }
+/* ── Typography ────────────────────────────────────────────────────────────── */
+.font-serif { font-family: 'Cormorant Garamond', serif; }
 
-/* Animations */
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(10px); }
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes goldPulse {
-  0%, 100% { opacity: 0.25; transform: scale(0.85); }
-  50%       { opacity: 1;    transform: scale(1); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.2; transform: scale(0.75); }
+  50%       { opacity: 1;   transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pinReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-slide-up { animation: fadeSlideUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+.fade-up  { animation: fadeUp  0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.fade-in  { animation: fadeIn  0.5s ease both; }
+.slide-in { animation: slideInRight 0.3s cubic-bezier(0.16,1,0.3,1) both; }
 
-/* Typing dots */
+/* ── Typing indicator ──────────────────────────────────────────────────────── */
 .typing-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: #c4a26e;
+  background: var(--rb-accent);
   display: inline-block;
-  animation: goldPulse 1.4s ease-in-out infinite;
+  animation: pulseDot 1.4s ease-in-out infinite;
 }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) { animation-delay: 0.22s; }
+.typing-dot:nth-child(3) { animation-delay: 0.44s; }
 
-/* Suggestion chips */
+/* ── Suggestion chips ──────────────────────────────────────────────────────── */
 .suggestion-chip {
-  border: 1px solid rgba(240,236,228,0.1);
-  color: rgba(240,236,228,0.45);
-  background: transparent;
-  padding: 7px 14px;
-  font-size: 12px;
+  border: 1px solid var(--rb-border-md);
+  color: var(--rb-cream-60);
+  background: var(--rb-surface);
+  padding: 8px 16px;
+  font-size: 12.5px;
   font-family: 'Inter', sans-serif;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
   white-space: nowrap;
+  border-radius: 2px;
 }
-.suggestion-chip:hover { border-color: #c4a26e; color: #c4a26e; }
+.suggestion-chip:hover {
+  border-color: var(--rb-accent-30);
+  color: var(--rb-cream);
+  background: var(--rb-raised);
+}
 .suggestion-chip:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Product card */
+/* ── Product card ──────────────────────────────────────────────────────────── */
 .rb-product-card {
-  background: #0f0f0f;
-  border: 1px solid rgba(240,236,228,0.06);
-  width: 152px;
+  background: var(--rb-surface);
+  border: 1px solid var(--rb-border);
+  width: 156px;
   flex-shrink: 0;
-  transition: border-color 0.25s, box-shadow 0.25s;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
   overflow: hidden;
   cursor: pointer;
 }
 .rb-product-card:hover {
-  border-color: rgba(196,162,110,0.5);
-  box-shadow: 0 0 20px rgba(196,162,110,0.08);
+  border-color: var(--rb-accent-30);
+  box-shadow: 0 4px 24px rgba(201,131,90,0.1);
+  transform: translateY(-2px);
 }
 
-/* Add to cart button */
-.btn-add-luxury {
+/* ── Add to cart button ────────────────────────────────────────────────────── */
+.btn-add {
   flex: 1;
   background: transparent;
-  border: 1px solid rgba(240,236,228,0.15);
-  color: rgba(240,236,228,0.6);
-  padding: 5px 10px;
+  border: 1px solid var(--rb-border-md);
+  color: var(--rb-cream-60);
+  padding: 6px 10px;
   font-size: 10px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Inter', sans-serif;
+  border-radius: 1px;
 }
-.btn-add-luxury:hover {
-  background: #c4a26e;
-  border-color: #c4a26e;
-  color: #080808;
+.btn-add:hover {
+  background: var(--rb-accent);
+  border-color: var(--rb-accent);
+  color: var(--rb-bg);
 }
 
-/* Icon button */
-.btn-icon-luxury {
+/* ── Icon button ───────────────────────────────────────────────────────────── */
+.btn-icon {
   background: transparent;
   border: none;
-  color: rgba(240,236,228,0.2);
+  color: var(--rb-cream-18);
   cursor: pointer;
   padding: 5px;
   transition: color 0.2s;
   display: flex; align-items: center; justify-content: center;
 }
-.btn-icon-luxury:hover { color: rgba(240,236,228,0.6); }
+.btn-icon:hover { color: var(--rb-cream-60); }
 
-/* Send button */
-.btn-send-luxury {
-  background: #f0ece4;
+/* ── Send button ───────────────────────────────────────────────────────────── */
+.btn-send {
+  background: var(--rb-accent);
   border: none;
-  color: #080808;
+  color: #fff;
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
+  border-radius: 2px;
 }
-.btn-send-luxury:hover:not(:disabled) { background: #c4a26e; }
-.btn-send-luxury:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-send:hover:not(:disabled) {
+  background: #d9936a;
+  transform: scale(1.05);
+}
+.btn-send:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Chat input */
+/* ── Chat input ────────────────────────────────────────────────────────────── */
 .chat-textarea {
   background: transparent;
   border: none;
   outline: none;
-  color: #f0ece4;
+  color: var(--rb-cream);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   resize: none;
   width: 100%;
   padding: 10px 0;
-  line-height: 1.5;
+  line-height: 1.55;
 }
-.chat-textarea::placeholder { color: rgba(240,236,228,0.2); }
+.chat-textarea::placeholder { color: var(--rb-cream-35); }
 
-/* Handoff button */
-.btn-handoff-luxury {
+/* ── Handoff button ────────────────────────────────────────────────────────── */
+.btn-handoff {
   background: transparent;
   border: none;
-  color: rgba(240,236,228,0.25);
-  font-size: 11px;
-  letter-spacing: 0.3px;
+  color: var(--rb-cream-35);
+  font-size: 11.5px;
+  letter-spacing: 0.2px;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
   transition: color 0.2s;
   padding: 4px 0;
   display: flex; align-items: center; gap: 5px;
 }
-.btn-handoff-luxury:hover { color: #c4a26e; }
-.btn-handoff-luxury:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-handoff:hover { color: var(--rb-accent); }
+.btn-handoff:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Cart button */
-.btn-cart-luxury {
+/* ── Cart button ───────────────────────────────────────────────────────────── */
+.btn-cart {
   background: transparent;
   border: none;
-  color: rgba(240,236,228,0.5);
+  color: var(--rb-cream-60);
   cursor: pointer;
   padding: 6px;
   position: relative;
   transition: color 0.2s;
   display: flex; align-items: center; justify-content: center;
 }
-.btn-cart-luxury:hover { color: #f0ece4; }
+.btn-cart:hover { color: var(--rb-cream); }
 
-/* PIN enter button */
-.btn-pin-enter {
-  background: #f0ece4;
+/* ── PIN screen ────────────────────────────────────────────────────────────── */
+.pin-input {
+  background: transparent;
   border: none;
-  color: #080808;
-  padding: 14px;
+  border-bottom: 1px solid var(--rb-border-md);
+  color: var(--rb-cream);
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 12px;
+  padding: 14px 0;
+  outline: none;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.25s;
+}
+.pin-input:focus { border-bottom-color: var(--rb-accent); }
+.pin-input.error { border-bottom-color: var(--rb-error); animation: shake 0.35s ease; }
+.pin-input::placeholder { letter-spacing: 8px; color: var(--rb-cream-18); font-size: 18px; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+
+.btn-pin {
+  background: var(--rb-cream);
+  border: none;
+  color: var(--rb-bg);
+  padding: 15px;
   font-size: 11px;
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -227,31 +278,69 @@ body {
   width: 100%;
   transition: background 0.2s;
   margin-top: 8px;
+  border-radius: 1px;
 }
-.btn-pin-enter:hover { background: #c4a26e; }
+.btn-pin:hover { background: var(--rb-accent); color: #fff; }
 
-/* PIN input */
-.pin-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(240,236,228,0.15);
-  color: #f0ece4;
-  font-size: 20px;
-  text-align: center;
-  letter-spacing: 10px;
-  padding: 12px 0;
-  outline: none;
-  width: 100%;
-  font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s;
+/* ── Decorative pin accent line ────────────────────────────────────────────── */
+.pin-accent-line {
+  width: 40px;
+  height: 1px;
+  background: var(--rb-accent);
+  margin: 0 auto 40px;
+  animation: pinReveal 0.8s 0.4s both;
 }
-.pin-input:focus { border-bottom-color: rgba(240,236,228,0.4); }
-.pin-input.error { border-bottom-color: #c97a7a; }
-.pin-input::placeholder { letter-spacing: 6px; color: rgba(240,236,228,0.15); }
+
+/* ── Message user bubble ───────────────────────────────────────────────────── */
+.msg-user {
+  background: var(--rb-raised);
+  border: 1px solid var(--rb-border-md);
+  color: var(--rb-cream);
+  border-radius: 2px 2px 0 2px;
+}
+
+/* ── Message assistant bubble ──────────────────────────────────────────────── */
+.msg-assistant {
+  background: var(--rb-surface);
+  border: 1px solid var(--rb-border);
+  color: var(--rb-cream);
+  border-radius: 2px 2px 2px 0;
+}
+
+/* ── Input bar wrapper ─────────────────────────────────────────────────────── */
+.input-bar-wrapper {
+  border-top: 1px solid var(--rb-border);
+  background: var(--rb-bg);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Cart drawer overlay ───────────────────────────────────────────────────── */
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14,12,10,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+  animation: fadeIn 0.2s ease;
+}
+.cart-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(340px, 92vw);
+  background: var(--rb-surface);
+  border-left: 1px solid var(--rb-border-md);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s cubic-bezier(0.16,1,0.3,1);
+}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   </head>
-  <body style="background:#080808;">
+  <body style="background: var(--rb-bg);">
     <div id="root"></div>
     <script type="module" src="/src/app.tsx"></script>
   </body>

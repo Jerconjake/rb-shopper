@@ -1,76 +1,72 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
 import { Product } from '../types';
 
-interface ProductCardProps {
+interface Props {
   product: Product;
-  onAddToCart?: (product: Product) => void;
+  onAddToCart: (p: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
-  const minP = parseFloat(product.minPrice) / 100;
-  const maxP = parseFloat(product.maxPrice) / 100;
-  const fmt = (n: number) => n % 1 === 0 ? `$${n.toFixed(0)}` : `$${n.toFixed(2)}`;
-  const priceStr = minP === maxP ? fmt(minP) : `${fmt(minP)}–${fmt(maxP)}`;
+export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
+  const price = product.priceRange
+    ? `$${(product.priceRange.minVariantPrice.amount / 100).toFixed(0)}`
+    : '—';
 
-  const sizes = new Set<string>();
-  const colours = new Set<string>();
-  product.variants.forEach(v => {
-    v.options.forEach(o => {
-      if (o.name.toLowerCase().includes('size')) sizes.add(o.value);
-      if (o.name.toLowerCase().includes('col')) colours.add(o.value);
-    });
-  });
-
-  const inStock = product.variants.filter(v => v.available && (v.qty || 0) > 0).length;
+  const hasImage = product.featuredImage?.url;
 
   return (
-    <div className="rb-product-card">
+    <div className="rb-product-card" onClick={() => onAddToCart(product)}>
       {/* Image */}
       <div style={{
-        height: '140px',
-        background: '#1a1a1a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: '100%',
+        aspectRatio: '3/4',
+        background: hasImage ? 'var(--rb-raised)' : 'var(--rb-raised)',
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {product.image ? (
+        {hasImage ? (
           <img
-            src={product.image}
+            src={product.featuredImage!.url}
             alt={product.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              transition: 'transform 0.4s ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.04)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: 0.3 }}>
-            <span style={{ fontSize: '28px' }}>✦</span>
-          </div>
-        )}
-        {inStock > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '8px', right: '8px',
-            background: 'rgba(8,8,8,0.8)',
-            color: '#9caa8e',
-            fontSize: '9px',
-            letterSpacing: '1px',
-            padding: '3px 7px',
-            fontFamily: "'Inter', sans-serif",
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: '6px',
           }}>
-            IN STOCK
-          </span>
+            <span style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: '24px',
+              color: 'var(--rb-cream-18)',
+              letterSpacing: '1px',
+            }}>
+              RB
+            </span>
+          </div>
         )}
       </div>
 
       {/* Info */}
-      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ padding: '10px 10px 8px' }}>
         <p style={{
-          fontSize: '12px',
+          fontSize: '11.5px',
           fontFamily: "'Inter', sans-serif",
-          color: '#f0ece4',
+          color: 'var(--rb-cream)',
           lineHeight: 1.4,
-          fontWeight: 400,
+          marginBottom: '4px',
           overflow: 'hidden',
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -79,50 +75,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
           {product.title}
         </p>
 
-        {product.vendor && (
-          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            {product.vendor}
-          </p>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+          <span style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '15px',
+            color: 'var(--rb-cream)',
+            fontWeight: 400,
+          }}>
+            {price}
+          </span>
 
-        <p style={{
-          fontSize: '13px',
-          color: '#c4a26e',
-          fontFamily: "'Cormorant Garamond', serif",
-          fontWeight: 500,
-          marginTop: '4px',
-        }}>
-          {priceStr} CAD
-        </p>
-
-        {colours.size > 0 && (
-          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif" }}>
-            {Array.from(colours).slice(0, 3).join(' · ')}{colours.size > 3 ? ` +${colours.size - 3}` : ''}
-          </p>
-        )}
-        {sizes.size > 0 && (
-          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.25)', fontFamily: "'Inter', sans-serif" }}>
-            {Array.from(sizes).slice(0, 4).join(' · ')}{sizes.size > 4 ? '…' : ''}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
           <button
-            className="btn-add-luxury"
-            onClick={() => onAddToCart?.(product)}
+            className="btn-add"
+            onClick={e => { e.stopPropagation(); onAddToCart(product); }}
+            style={{ flexGrow: 0, paddingLeft: '10px', paddingRight: '10px' }}
           >
             Add
           </button>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-icon-luxury"
-            title="View on store"
-          >
-            <ExternalLink size={11} />
-          </a>
         </div>
       </div>
     </div>

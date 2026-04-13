@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ShoppingBag, Lock } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { ChatMessage, Product, CartItem } from './types';
 import { ChatWindow } from './components/ChatWindow';
 import { InputBar } from './components/InputBar';
@@ -23,10 +23,17 @@ const WELCOME: ChatMessage = {
   timestamp: Date.now(),
 };
 
-// ── PIN Screen ──────────────────────────────────────────────────────────────
+// ── PIN Screen ───────────────────────────────────────────────────────────────
 const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Stagger the entrance animation
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,46 +49,82 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
 
   return (
     <div style={{
-      background: '#080808',
+      background: 'var(--rb-bg)',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '32px 24px',
+      padding: '40px 24px',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
-      {/* Logo */}
-      <img
-        src="/logo.png"
-        alt="Revolution Boutique"
-        style={{ width: '180px', marginBottom: '10px', filter: 'brightness(0) invert(1)', opacity: 0.92 }}
-      />
 
-      {/* Tagline */}
-      <p style={{
-        color: 'rgba(240,236,228,0.2)',
-        fontSize: '10px',
-        letterSpacing: '4px',
-        textTransform: 'uppercase',
-        fontFamily: "'Inter', sans-serif",
-        marginBottom: '48px',
+      {/* Subtle radial glow behind logo */}
+      <div style={{
+        position: 'absolute',
+        top: '30%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '400px',
+        height: '300px',
+        background: 'radial-gradient(ellipse at center, rgba(201,131,90,0.06) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Logo */}
+      <div style={{
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+        transition: 'opacity 0.6s ease, transform 0.6s ease',
+        marginBottom: '12px',
+        textAlign: 'center',
       }}>
-        Personal Shopper · Demo
-      </p>
+        <img
+          src="/logo.png"
+          alt="Revolution Boutique"
+          style={{
+            width: '200px',
+            filter: 'brightness(0) invert(1)',
+            opacity: 0.88,
+          }}
+        />
+      </div>
+
+      {/* Accent line */}
+      <div style={{
+        width: mounted ? '48px' : '0px',
+        height: '1px',
+        background: 'var(--rb-accent)',
+        transition: 'width 0.6s 0.3s ease',
+        marginBottom: '44px',
+      }} />
 
       {/* PIN form */}
-      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '280px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          width: '100%',
+          maxWidth: '260px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateY(0)' : 'translateY(12px)',
+          transition: 'opacity 0.6s 0.2s ease, transform 0.6s 0.2s ease',
+        }}
+      >
         <div>
           <p style={{
-            color: 'rgba(240,236,228,0.25)',
+            color: 'var(--rb-cream-35)',
             fontSize: '10px',
-            letterSpacing: '2px',
+            letterSpacing: '2.5px',
             textTransform: 'uppercase',
             fontFamily: "'Inter', sans-serif",
-            marginBottom: '12px',
+            marginBottom: '14px',
             textAlign: 'center',
           }}>
-            Enter PIN
+            Demo Access
           </p>
           <input
             type="password"
@@ -93,24 +136,32 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
             maxLength={12}
           />
           {error && (
-            <p style={{ color: '#c97a7a', fontSize: '11px', textAlign: 'center', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
+            <p style={{
+              color: 'var(--rb-error)',
+              fontSize: '11px',
+              textAlign: 'center',
+              marginTop: '10px',
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: '0.3px',
+            }}>
               Incorrect — try again
             </p>
           )}
         </div>
-        <button type="submit" className="btn-pin-enter">
+        <button type="submit" className="btn-pin">
           Enter
         </button>
       </form>
 
-      {/* Bottom mark */}
+      {/* Footer mark */}
       <p style={{
         position: 'absolute',
         bottom: '24px',
-        color: 'rgba(240,236,228,0.1)',
+        color: 'var(--rb-cream-18)',
         fontSize: '10px',
-        letterSpacing: '1px',
+        letterSpacing: '1.5px',
         fontFamily: "'Inter', sans-serif",
+        textTransform: 'uppercase',
       }}>
         © Revolution Boutique
       </p>
@@ -118,7 +169,7 @@ const PinScreen: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   );
 };
 
-// ── Main App ─────────────────────────────────────────────────────────────────
+// ── Main App ──────────────────────────────────────────────────────────────────
 const App: React.FC = () => {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('rb_unlocked') === '1');
   const [products, setProducts] = useState<Product[]>([]);
@@ -208,7 +259,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        text: "Sorry, I had a little hiccup! Try again in a moment — or hit \"Talk to a person\" and our team will help.",
+        text: 'Sorry, I had a little hiccup! Try again in a moment — or hit "Talk to a person" and our team will help.',
         timestamp: Date.now(),
       }]);
     } finally {
@@ -254,41 +305,51 @@ const App: React.FC = () => {
   if (!unlocked) return <PinScreen onUnlock={() => setUnlocked(true)} />;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--rb-bg)' }}>
 
-      {/* ── Header ─────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        padding: '14px 20px',
-        borderBottom: '1px solid rgba(240,236,228,0.06)',
-        background: '#080808',
+        padding: '12px 18px',
+        borderBottom: '1px solid var(--rb-border)',
+        background: 'var(--rb-bg)',
         flexShrink: 0,
-        gap: '12px',
+        gap: '14px',
       }}>
         <img
           src="/logo.png"
           alt="Revolution Boutique"
-          style={{ height: '22px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }}
+          style={{ height: '20px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.82 }}
         />
 
-        <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#9caa8e', display: 'inline-block' }} />
-          <span style={{ fontSize: '11px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <span style={{
+            width: '6px', height: '6px',
+            borderRadius: '50%',
+            background: 'var(--rb-green)',
+            display: 'inline-block',
+          }} />
+          <span style={{
+            fontSize: '11px',
+            color: 'var(--rb-cream-35)',
+            fontFamily: "'Inter', sans-serif",
+            letterSpacing: '0.3px',
+          }}>
             Ava · Online
           </span>
         </div>
 
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-cart-luxury" onClick={() => setCartOpen(true)} title="View cart">
+          <button className="btn-cart" onClick={() => setCartOpen(true)} title="View cart">
             <ShoppingBag size={18} />
             {cartCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-2px', right: '-2px',
                 width: '16px', height: '16px',
-                background: '#c4a26e',
-                color: '#080808',
+                background: 'var(--rb-accent)',
+                color: '#fff',
                 fontSize: '10px',
                 fontWeight: 600,
                 borderRadius: '50%',
@@ -302,14 +363,14 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Error banner ─────────────────────────────────────────────── */}
+      {/* ── Error banner ────────────────────────────────────────────────── */}
       {loadError && (
         <div style={{
-          margin: '12px 20px 0',
+          margin: '12px 18px 0',
           padding: '10px 14px',
-          background: 'rgba(201,122,122,0.1)',
-          border: '1px solid rgba(201,122,122,0.3)',
-          color: '#c97a7a',
+          background: 'rgba(196,122,122,0.08)',
+          border: '1px solid rgba(196,122,122,0.25)',
+          color: 'var(--rb-error)',
           fontSize: '12px',
           fontFamily: "'Inter', sans-serif",
         }}>
@@ -317,16 +378,17 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* ── Messages ─────────────────────────────────────────────────── */}
+      {/* ── Messages ────────────────────────────────────────────────────── */}
       <ChatWindow messages={messages} isLoading={isLoading} onAddToCart={handleAddToCart} />
 
-      {/* ── Suggestion chips ─────────────────────────────────────────── */}
+      {/* ── Suggestion chips ────────────────────────────────────────────── */}
       {!hasUserMessages && !handedOff && (
-        <div style={{ padding: '0 20px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {SUGGESTIONS.map(s => (
+        <div style={{ padding: '0 18px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {SUGGESTIONS.map((s, i) => (
             <button
               key={s}
-              className="suggestion-chip"
+              className="suggestion-chip fade-up"
+              style={{ animationDelay: `${i * 0.07}s` }}
               onClick={() => sendMessage(s)}
               disabled={isLoading}
             >
@@ -336,7 +398,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* ── Input ────────────────────────────────────────────────────── */}
+      {/* ── Input ───────────────────────────────────────────────────────── */}
       <InputBar
         onSend={sendMessage}
         onHandoff={handleHandoff}
@@ -344,7 +406,7 @@ const App: React.FC = () => {
         handedOff={handedOff}
       />
 
-      {/* ── Variant picker ───────────────────────────────────────────── */}
+      {/* ── Variant picker ──────────────────────────────────────────────── */}
       <VariantPickerModal
         product={pickerProduct}
         onClose={() => setPickerProduct(null)}
@@ -355,7 +417,7 @@ const App: React.FC = () => {
         }}
       />
 
-      {/* ── Cart drawer ──────────────────────────────────────────────── */}
+      {/* ── Cart drawer ─────────────────────────────────────────────────── */}
       <CartDrawer
         items={cart}
         open={cartOpen}

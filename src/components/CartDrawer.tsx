@@ -1,10 +1,8 @@
 import React from 'react';
-import { X, ShoppingBag, Trash2, ExternalLink } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { CartItem } from '../types';
 
-const STORE_URL = 'https://revolutionboutique.ca';
-
-interface CartDrawerProps {
+interface Props {
   items: CartItem[];
   open: boolean;
   onClose: () => void;
@@ -12,235 +10,227 @@ interface CartDrawerProps {
   onRemove: (cartId: string) => void;
 }
 
-export const CartDrawer: React.FC<CartDrawerProps> = ({ items, open, onClose, onUpdateQty, onRemove }) => {
+export const CartDrawer: React.FC<Props> = ({ items, open, onClose, onUpdateQty, onRemove }) => {
   if (!open) return null;
 
-  const total = items.reduce((sum, item) => sum + parseFloat(item.price) * item.qty, 0);
-  const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
-      display: 'flex', flexDirection: 'column',
-      background: '#080808',
-    }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 20px',
-        borderBottom: '1px solid rgba(240,236,228,0.06)',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <p style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: '20px',
-            color: '#f0ece4',
-            fontWeight: 400,
-            letterSpacing: '0.5px',
-          }}>
-            Your Selections
-          </p>
-          {itemCount > 0 && (
-            <span style={{
-              background: '#c4a26e',
-              color: '#080808',
-              fontSize: '10px',
-              fontWeight: 600,
-              padding: '2px 7px',
-              fontFamily: "'Inter', sans-serif",
-            }}>
-              {itemCount}
-            </span>
-          )}
-        </div>
-        <button
-          className="btn-icon-luxury"
-          onClick={onClose}
-          style={{ padding: '6px' }}
-        >
-          <X size={18} />
-        </button>
-      </div>
+    <>
+      {/* Overlay */}
+      <div className="cart-overlay" onClick={onClose} />
 
-      {/* Items */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-        {items.length === 0 ? (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', height: '100%', gap: '16px', textAlign: 'center',
-          }}>
-            <ShoppingBag size={36} style={{ color: 'rgba(240,236,228,0.1)' }} />
-            <p style={{ fontSize: '14px', color: 'rgba(240,236,228,0.3)', fontFamily: "'Inter', sans-serif" }}>
-              Nothing here yet
+      {/* Panel */}
+      <div className="cart-panel">
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '18px 20px',
+          borderBottom: '1px solid var(--rb-border)',
+        }}>
+          <div>
+            <h2 style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: '20px',
+              fontWeight: 400,
+              color: 'var(--rb-cream)',
+              margin: 0,
+              lineHeight: 1.2,
+            }}>
+              Your Selections
+            </h2>
+            <p style={{
+              fontSize: '11px',
+              color: 'var(--rb-cream-35)',
+              fontFamily: "'Inter', sans-serif",
+              margin: '3px 0 0',
+              letterSpacing: '0.3px',
+            }}>
+              {items.length === 0 ? 'Nothing here yet' : `${items.reduce((s, i) => s + i.qty, 0)} item${items.reduce((s, i) => s + i.qty, 0) !== 1 ? 's' : ''}`}
             </p>
-            <button
-              onClick={onClose}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(240,236,228,0.15)',
-                color: 'rgba(240,236,228,0.6)',
-                padding: '10px 20px',
-                fontSize: '11px',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              Keep Browsing
-            </button>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {items.map(item => (
-              <div key={item.cartId} style={{
-                display: 'flex', gap: '14px', alignItems: 'flex-start',
-                padding: '14px',
-                border: '1px solid rgba(240,236,228,0.06)',
-                background: '#0f0f0f',
-              }}>
-                {/* Image */}
+          <button className="btn-icon" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Items */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {items.length === 0 ? (
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '14px',
+              padding: '60px 0',
+              color: 'var(--rb-cream-35)',
+            }}>
+              <ShoppingBag size={32} strokeWidth={1} />
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', margin: 0 }}>
+                Ask Ava for recommendations
+              </p>
+            </div>
+          ) : (
+            items.map(item => (
+              <div
+                key={item.cartId}
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  padding: '12px',
+                  background: 'var(--rb-raised)',
+                  border: '1px solid var(--rb-border)',
+                }}
+              >
+                {/* Image or placeholder */}
                 <div style={{
-                  width: '60px', height: '60px',
-                  background: '#1a1a1a',
+                  width: '56px',
+                  height: '72px',
+                  background: 'var(--rb-surface)',
                   flexShrink: 0,
                   overflow: 'hidden',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {item.image ? (
-                    <img src={item.image} alt={item.productTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <ShoppingBag size={16} style={{ color: 'rgba(240,236,228,0.15)' }} />
+                    <div style={{
+                      width: '100%', height: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontSize: '14px',
+                      color: 'var(--rb-cream-18)',
+                    }}>RB</div>
                   )}
                 </div>
 
                 {/* Details */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '13px', color: '#f0ece4', fontFamily: "'Inter', sans-serif", lineHeight: 1.4 }}>
-                    {item.productTitle}
+                  <p style={{
+                    fontSize: '12.5px',
+                    fontFamily: "'Inter', sans-serif",
+                    color: 'var(--rb-cream)',
+                    margin: '0 0 3px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {item.title}
                   </p>
-                  {item.variantTitle && (
-                    <p style={{ fontSize: '11px', color: 'rgba(240,236,228,0.35)', fontFamily: "'Inter', sans-serif", marginTop: '3px' }}>
+                  {item.variantTitle && item.variantTitle !== 'Default Title' && (
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'var(--rb-cream-35)',
+                      fontFamily: "'Inter', sans-serif",
+                      margin: '0 0 8px',
+                    }}>
                       {item.variantTitle}
                     </p>
                   )}
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#c4a26e',
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontWeight: 500,
-                    marginTop: '6px',
-                  }}>
-                    ${(parseFloat(item.price) * item.qty).toFixed(2)} CAD
-                  </p>
-                </div>
 
-                {/* Controls */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
-                  <button className="btn-icon-luxury" onClick={() => onRemove(item.cartId)} style={{ padding: '3px' }}>
-                    <Trash2 size={13} />
-                  </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                      onClick={() => onUpdateQty(item.cartId, item.qty - 1)}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid rgba(240,236,228,0.12)',
-                        color: 'rgba(240,236,228,0.6)',
-                        width: '24px', height: '24px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                    >−</button>
-                    <span style={{ fontSize: '13px', color: '#f0ece4', fontFamily: "'Inter', sans-serif", minWidth: '12px', textAlign: 'center' }}>
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => onUpdateQty(item.cartId, item.qty + 1)}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid rgba(240,236,228,0.12)',
-                        color: 'rgba(240,236,228,0.6)',
-                        width: '24px', height: '24px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                    >+</button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {/* Qty controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        className="btn-icon"
+                        onClick={() => onUpdateQty(item.cartId, item.qty - 1)}
+                        style={{ padding: '3px', border: '1px solid var(--rb-border)', background: 'var(--rb-surface)' }}
+                      >
+                        <Minus size={11} />
+                      </button>
+                      <span style={{ fontSize: '13px', color: 'var(--rb-cream)', fontFamily: "'Inter', sans-serif", minWidth: '16px', textAlign: 'center' }}>
+                        {item.qty}
+                      </span>
+                      <button
+                        className="btn-icon"
+                        onClick={() => onUpdateQty(item.cartId, item.qty + 1)}
+                        style={{ padding: '3px', border: '1px solid var(--rb-border)', background: 'var(--rb-surface)' }}
+                      >
+                        <Plus size={11} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: '16px',
+                        color: 'var(--rb-cream)',
+                      }}>
+                        ${(item.price * item.qty / 100).toFixed(2)}
+                      </span>
+                      <button
+                        className="btn-icon"
+                        onClick={() => onRemove(item.cartId)}
+                        title="Remove"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        {items.length > 0 && (
+          <div style={{
+            padding: '16px 20px',
+            borderTop: '1px solid var(--rb-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '12px', color: 'var(--rb-cream-60)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px' }}>
+                SUBTOTAL
+              </span>
+              <span style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: '20px',
+                color: 'var(--rb-cream)',
+              }}>
+                ${(subtotal / 100).toFixed(2)}
+              </span>
+            </div>
+            <button
+              style={{
+                width: '100%',
+                background: 'var(--rb-cream)',
+                color: 'var(--rb-bg)',
+                border: 'none',
+                padding: '14px',
+                fontSize: '11px',
+                letterSpacing: '2.5px',
+                textTransform: 'uppercase',
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--rb-accent)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--rb-cream)')}
+              onMouseEnterCapture={e => ((e.target as HTMLElement).style.color = '#fff')}
+              onClick={() => alert('Checkout integration coming soon!')}
+            >
+              Proceed to Checkout
+            </button>
+            <p style={{
+              textAlign: 'center',
+              fontSize: '10.5px',
+              color: 'var(--rb-cream-35)',
+              fontFamily: "'Inter', sans-serif",
+              margin: 0,
+            }}>
+              Shipping &amp; taxes calculated at checkout
+            </p>
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      {items.length > 0 && (
-        <div style={{
-          padding: '20px',
-          borderTop: '1px solid rgba(240,236,228,0.06)',
-          background: '#080808',
-          flexShrink: 0,
-          display: 'flex', flexDirection: 'column', gap: '14px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: '12px', color: 'rgba(240,236,228,0.35)', fontFamily: "'Inter', sans-serif" }}>
-              Subtotal ({itemCount} item{itemCount !== 1 ? 's' : ''})
-            </span>
-            <span style={{
-              fontSize: '20px',
-              color: '#f0ece4',
-              fontFamily: "'Cormorant Garamond', serif",
-              fontWeight: 500,
-            }}>
-              ${total.toFixed(2)} CAD
-            </span>
-          </div>
-          <p style={{ fontSize: '10px', color: 'rgba(240,236,228,0.2)', fontFamily: "'Inter', sans-serif" }}>
-            Shipping & taxes calculated at checkout
-          </p>
-          <a
-            href={STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              background: '#f0ece4',
-              color: '#080808',
-              padding: '14px',
-              textDecoration: 'none',
-              fontSize: '11px',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 500,
-              transition: 'background 0.2s',
-            }}
-          >
-            Proceed to Checkout <ExternalLink size={13} />
-          </a>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(240,236,228,0.25)',
-              fontSize: '11px',
-              letterSpacing: '1px',
-              cursor: 'pointer',
-              fontFamily: "'Inter', sans-serif",
-              padding: '6px',
-            }}
-          >
-            Continue Shopping
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
