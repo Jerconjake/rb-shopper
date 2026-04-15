@@ -190,7 +190,7 @@
 /* ─── Screen backgrounds ───────────────────────────────────── */
 
 .reveal-bg {
-  background: #FAFAF8;
+  background: #FFFFFF;
   min-height: 100vh;
 }
 
@@ -199,11 +199,17 @@
 .prize-bg-10   { background: linear-gradient(160deg, #eef7ee 0%, #d9f0da 100%); }
 .prize-bg-gift { background: linear-gradient(160deg, #fef0f5 0%, #fcd9e9 100%); }
 
+/* ─── Global font ───────────────────────────────────────────── */
+
+*, *::before, *::after {
+  font-family: 'Outfit', sans-serif;
+}
+
 /* ─── Revolution Boutique branding — Clean White Edition ───── */
 
 .rb-header {
   background: #FFFFFF;
-  border-bottom: 1px solid #e8e3dc;
+  border-bottom: 1px solid #e5e5e5;
   padding: 1.1rem 1.5rem 0.9rem;
 }
 
@@ -265,7 +271,7 @@
 
 .rb-store-card {
   background: #FFFFFF;
-  border: 1px solid #e8e3dc;
+  border: 1px solid #e0e0e0;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   border-radius: 0;
@@ -293,9 +299,9 @@
 }
 
 .rb-screen-bg {
-  background: #FAFAF8;
+  background: #FFFFFF;
   min-height: 100vh;
-  color: #1a1a1a;
+  color: #111111;
 }
 
 /* ─── Home screen ──────────────────────────────────────────── */
