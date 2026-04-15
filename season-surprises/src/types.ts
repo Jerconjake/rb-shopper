@@ -46,4 +46,4 @@ export const PRIZE_DISTRIBUTION = [
   { type: 'free_gift' as PrizeType, count: 14 },
 ];
 
-export const INITIAL_STORES = ['Sherwood Park', 'South Edmonton', 'Calgary', 'Red Deer'];
+export const INITIAL_STORES = ['Sherwood Park', 'Riverbend', 'Stony Plain', 'St. Albert'];

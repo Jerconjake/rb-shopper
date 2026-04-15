@@ -19,7 +19,7 @@ interface DBState {
 
 // ─── Storage helpers ──────────────────────────────────────────
 
-const STORAGE_KEY = 'sos_db_v1';
+const STORAGE_KEY = 'sos_db_v2';
 
 function loadDB(): DBState {
   try {
