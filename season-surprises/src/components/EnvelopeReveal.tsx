@@ -30,7 +30,6 @@ export const EnvelopeReveal: React.FC<Props> = ({ prize, onComplete }) => {
     setTimeout(() => {
       setPhase('opening');
 
-      // Spawn confetti after flap starts opening
       setTimeout(() => {
         const pieces: ConfettiPiece[] = Array.from({ length: 14 }, (_, i) => ({
           id: i,
@@ -44,7 +43,6 @@ export const EnvelopeReveal: React.FC<Props> = ({ prize, onComplete }) => {
     }, 500);
   }, [phase]);
 
-  // Auto-advance after prize is revealed
   useEffect(() => {
     if (phase === 'revealed') {
       const timer = setTimeout(onComplete, 3000);
@@ -62,8 +60,16 @@ export const EnvelopeReveal: React.FC<Props> = ({ prize, onComplete }) => {
 
   return (
     <div
-      className="reveal-bg flex flex-col items-center justify-center min-h-screen select-none overflow-hidden"
-      style={{ position: 'relative' }}
+      className="reveal-bg select-none overflow-hidden"
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: 0,
+      }}
       onClick={handleTap}
     >
       {/* Confetti */}
@@ -82,45 +88,38 @@ export const EnvelopeReveal: React.FC<Props> = ({ prize, onComplete }) => {
       ))}
 
       {/* Logo + Header text */}
-      <div className="text-center mb-10 px-4">
+      <div style={{ textAlign: 'center', marginBottom: '2rem', padding: '0 1rem' }}>
         <img
-          src="/logo.png"
+          src="./logo.png"
           alt="Revolution Boutique"
-          style={{ height: 28, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.6, marginBottom: '1.5rem', display: 'block', margin: '0 auto 1.5rem' }}
+          style={{ height: 32, width: 'auto', opacity: 0.7, marginBottom: '1.25rem', display: 'block', margin: '0 auto 1.25rem' }}
         />
         {phase === 'idle' && (
           <>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f5eee4', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>Your Surprise Awaits</h2>
-            <p className="tap-hint" style={{ color: 'rgba(201,131,90,0.7)', fontSize: '0.85rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Tap the envelope to reveal</p>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a1a', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>Your Surprise Awaits</h2>
+            <p className="tap-hint" style={{ color: 'rgba(0,0,0,0.4)', fontSize: '0.78rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Tap the envelope to reveal</p>
           </>
         )}
         {(phase === 'shaking' || phase === 'opening') && (
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f5eee4', letterSpacing: '-0.02em' }}>Opening...</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em' }}>Opening…</h2>
         )}
         {phase === 'revealed' && (
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f5eee4', letterSpacing: '-0.02em' }}>Congratulations!</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em' }}>Congratulations!</h2>
         )}
       </div>
 
       {/* Envelope */}
       <div className={envelopeClass} style={{ position: 'relative' }}>
-        {/* Body */}
         <div className="env-body" />
-
-        {/* Inner fold shadows */}
         <div className="env-fold-left" />
         <div className="env-fold-right" />
         <div className="env-fold-bottom" />
-
-        {/* Flap */}
         <div className={flapClass} />
 
-        {/* Wax seal */}
         {phase === 'idle' && (
           <div className="env-seal">💌</div>
         )}
 
-        {/* Prize card rises from envelope */}
         <div className={prizeClass}>
           <div className={`prize-card-inner ${info.cssClass}`}>
             <div style={{ fontSize: '2.5rem', lineHeight: 1 }}>{info.emoji}</div>
@@ -134,13 +133,13 @@ export const EnvelopeReveal: React.FC<Props> = ({ prize, onComplete }) => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-16 text-center px-4">
+      {/* Footer — tight, no big margin */}
+      <div style={{ marginTop: '1.5rem', textAlign: 'center', padding: '0 1rem' }}>
         {phase === 'idle' && (
-          <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>Revolution Boutique · Season of Surprises</p>
+          <p style={{ color: 'rgba(0,0,0,0.2)', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Revolution Boutique · Season of Surprises</p>
         )}
         {phase === 'revealed' && (
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>Show this to your cashier ✦</p>
+          <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: '0.85rem' }}>Show this to your cashier ✦</p>
         )}
       </div>
     </div>

@@ -19,10 +19,21 @@ export const PrizeScreen: React.FC<Props> = ({ prize, onDone }) => {
   const bgClass = BG_CLASS[prize.type];
 
   return (
-    <div className={`${bgClass} min-h-screen flex flex-col items-center justify-center p-8 text-center`}>
-      <div className="result-animate flex flex-col items-center gap-6 w-full" style={{ maxWidth: 320 }}>
+    <div
+      className={bgClass}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        textAlign: 'center',
+      }}
+    >
+      <div className="result-animate" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', width: '100%', maxWidth: '320px' }}>
         {/* Big prize card */}
-        <div className={`prize-card-inner ${info.cssClass} w-full`} style={{ padding: '2rem 1.5rem' }}>
+        <div className={`prize-card-inner ${info.cssClass} w-full`} style={{ padding: '2rem 1.5rem', width: '100%' }}>
           <div style={{ fontSize: '3.5rem', lineHeight: 1 }}>{info.emoji}</div>
           <div style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '-0.03em', marginTop: '0.5rem', lineHeight: 1 }}>
             {info.label}
@@ -31,26 +42,21 @@ export const PrizeScreen: React.FC<Props> = ({ prize, onDone }) => {
             {info.sublabel}
           </div>
           <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', display: 'flex', justifyContent: 'center' }}>
-            <img src="/logo.png" alt="Revolution Boutique" style={{ height: 20, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.6 }} />
+            <img src="./logo.png" alt="Revolution Boutique" style={{ height: 20, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.7 }} />
           </div>
         </div>
 
         {/* Instructions */}
-        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem' }}>
+        <div style={{ fontSize: '0.875rem', color: 'rgba(0,0,0,0.6)' }}>
           <p>Show this screen to your cashier.</p>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginTop: '4px' }}>Max $150 savings. One per customer.</p>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(0,0,0,0.35)', marginTop: '4px' }}>Max $150 savings. One per customer.</p>
         </div>
 
-        {/* Done button (staff taps when finished) */}
+        {/* Done button */}
         <button
           onClick={onDone}
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            padding: '0.75rem 2rem', background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.3)', color: '#fff',
-            fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', marginTop: 8,
-            width: '100%',
-          }}
+          className="btn btn-wide"
+          style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 0, marginTop: '0.5rem' }}
         >
           <CheckCircle size={18} />
           Done — Next Customer

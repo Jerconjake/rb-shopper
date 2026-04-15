@@ -40,13 +40,13 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.15); }
-  50%       { box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0.08); }
+  50%       { box-shadow: 0 0 0 14px rgba(0,0,0,0); }
 }
 
 @keyframes tapHint {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.05); }
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.9; transform: scale(1.05); }
 }
 
 /* ─── State classes ────────────────────────────────────────── */
@@ -56,9 +56,7 @@
 .env-open    { animation: none; }
 
 .flap-opening { animation: flapOpen 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-
 .prize-rising { animation: prizeRise 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-
 .result-animate { animation: resultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
 .confetti-piece {
@@ -69,8 +67,7 @@
 }
 
 .tap-hint { animation: tapHint 1.8s ease-in-out infinite; }
-
-.envelope-glow { animation: pulseGlow 2s ease-in-out infinite; }
+.envelope-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
 
 /* ─── Envelope geometry ────────────────────────────────────── */
 
@@ -79,31 +76,32 @@
   width: 300px;
   height: 200px;
   cursor: pointer;
-  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 16px 40px rgba(0,0,0,0.12));
 }
 
 .env-body {
   position: absolute;
   inset: 0;
-  border-radius: 4px;
-  background: linear-gradient(145deg, #f8f8f8, #e8eaed, #f0f0f0);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.05);
+  border-radius: 2px;
+  background: linear-gradient(145deg, #ffffff, #f0ede8, #f8f6f3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.04);
+  border: 1px solid #e0dbd4;
 }
 
 .env-fold-left {
   position: absolute;
   inset: 0;
   clip-path: polygon(0 0, 0 100%, 52% 50%);
-  background: rgba(0,0,0,0.07);
-  border-radius: 4px 0 0 4px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 2px 0 0 2px;
 }
 
 .env-fold-right {
   position: absolute;
   inset: 0;
   clip-path: polygon(100% 0, 100% 100%, 48% 50%);
-  background: rgba(0,0,0,0.07);
-  border-radius: 0 4px 4px 0;
+  background: rgba(0,0,0,0.05);
+  border-radius: 0 2px 2px 0;
 }
 
 .env-fold-bottom {
@@ -111,7 +109,7 @@
   bottom: 0; left: 0; right: 0;
   height: 55%;
   clip-path: polygon(0 100%, 100% 100%, 50% 0%);
-  background: rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.04);
 }
 
 .env-flap {
@@ -119,10 +117,11 @@
   top: 0; left: 0; right: 0;
   height: 56%;
   clip-path: polygon(0 0, 100% 0, 50% 92%);
-  background: linear-gradient(160deg, #ffffff, #dde0e5);
+  background: linear-gradient(160deg, #fafaf8, #ede8e1);
   transform-origin: top center;
   z-index: 10;
-  border-radius: 4px 4px 0 0;
+  border-radius: 2px 2px 0 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .env-seal {
@@ -142,7 +141,7 @@
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.15);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
 .prize-float {
@@ -182,37 +181,36 @@
 }
 
 .prize-card-inner {
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 1.25rem 1.5rem;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
 
 /* ─── Screen backgrounds ───────────────────────────────────── */
 
 .reveal-bg {
-  background: radial-gradient(ellipse at center, #14161a 0%, #0a0b0d 100%);
+  background: #FAFAF8;
   min-height: 100vh;
 }
 
-.prize-bg-50   { background: radial-gradient(ellipse at center, #1c1800 0%, #0a0b0d 100%); }
-.prize-bg-20   { background: radial-gradient(ellipse at center, #080e28 0%, #0a0b0d 100%); }
-.prize-bg-10   { background: radial-gradient(ellipse at center, #071510 0%, #0a0b0d 100%); }
-.prize-bg-gift { background: radial-gradient(ellipse at center, #1e0810 0%, #0a0b0d 100%); }
+.prize-bg-50   { background: linear-gradient(160deg, #fffbea 0%, #fff8cc 100%); }
+.prize-bg-20   { background: linear-gradient(160deg, #eef0fb 0%, #dde1f7 100%); }
+.prize-bg-10   { background: linear-gradient(160deg, #eef7ee 0%, #d9f0da 100%); }
+.prize-bg-gift { background: linear-gradient(160deg, #fef0f5 0%, #fcd9e9 100%); }
 
-/* ─── Revolution Boutique branding — Diamond Edition ──────── */
+/* ─── Revolution Boutique branding — Clean White Edition ───── */
 
 .rb-header {
-  background: #0a0b0d;
-  border-bottom: 2px solid #ffffff;
-  padding: 1.25rem 1.5rem 1rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid #e8e3dc;
+  padding: 1.1rem 1.5rem 0.9rem;
 }
 
 .rb-logo {
-  height: 52px;
+  height: 48px;
   width: auto;
   object-fit: contain;
-  filter: invert(1);
 }
 
 .rb-badge-active {
@@ -223,9 +221,9 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ffffff;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.35);
+  color: #1a1a1a;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
   padding: 2px 8px;
   border-radius: 2px;
 }
@@ -235,7 +233,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #1a7a3a;
 }
 
 .rb-badge-inactive {
@@ -245,39 +243,38 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border: 1px solid rgba(185, 28, 28, 0.25);
   padding: 2px 8px;
   border-radius: 2px;
 }
 
 .rb-progress-bar {
   height: 2px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.08);
   width: 100%;
   margin-top: 0.75rem;
 }
 
 .rb-progress-fill {
   height: 2px;
-  background: #ffffff;
+  background: #1a1a1a;
   transition: width 0.5s ease;
-  box-shadow: 0 0 8px rgba(255,255,255,0.6);
 }
 
 .rb-store-card {
-  background: #111316;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #FFFFFF;
+  border: 1px solid #e8e3dc;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   border-radius: 0;
 }
 
 .rb-store-card:hover {
-  border-color: rgba(255,255,255,0.85);
+  border-color: #1a1a1a;
   transform: translateY(-2px);
-  box-shadow: 0 4px 24px rgba(255,255,255,0.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
 }
 
 .rb-store-card:active {
@@ -291,14 +288,14 @@
 
 .rb-divider {
   height: 1px;
-  background: rgba(255,255,255,0.06);
+  background: #e8e3dc;
   margin: 0 1.5rem;
 }
 
 .rb-screen-bg {
-  background: #0a0b0d;
+  background: #FAFAF8;
   min-height: 100vh;
-  color: #ffffff;
+  color: #1a1a1a;
 }
 
 /* ─── Home screen ──────────────────────────────────────────── */
@@ -309,7 +306,7 @@
 }
 .store-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 .store-card:active {
   transform: translateY(0);
