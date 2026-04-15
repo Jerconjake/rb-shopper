@@ -1,0 +1,342 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0e0d0c; color: #f5eee4; }
+button { font-family: inherit; cursor: pointer; }
+input { font-family: inherit; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; padding: 8px 16px; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.loading { display: inline-block; width: 24px; height: 24px; border: 2px solid rgba(201,131,90,0.3); border-top-color: #c9835a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Envelope animations ─────────────────────────────────── */
+
+@keyframes envelopeFloat {
+  0%, 100% { transform: translateY(0px) rotate(-0.5deg); }
+  50%       { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+@keyframes envelopeShake {
+  0%,100% { transform: rotate(0deg) scale(1); }
+  15%     { transform: rotate(-6deg) scale(1.04); }
+  30%     { transform: rotate(6deg)  scale(1.04); }
+  45%     { transform: rotate(-4deg) scale(1.02); }
+  60%     { transform: rotate(4deg)  scale(1.02); }
+  75%     { transform: rotate(-2deg); }
+  90%     { transform: rotate(2deg); }
+}
+
+@keyframes flapOpen {
+  0%   { transform: perspective(500px) rotateX(0deg); opacity: 1; }
+  60%  { opacity: 0.3; }
+  100% { transform: perspective(500px) rotateX(-160deg); opacity: 0; }
+}
+
+@keyframes prizeRise {
+  0%   { transform: translateX(-50%) translateY(40px)   scale(0.4); opacity: 0; }
+  55%  { transform: translateX(-50%) translateY(-110px) scale(1.1); opacity: 1; }
+  75%  { transform: translateX(-50%) translateY(-102px) scale(0.97); }
+  100% { transform: translateX(-50%) translateY(-105px) scale(1);   opacity: 1; }
+}
+
+@keyframes confettiFly {
+  0%   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(-180px) rotate(540deg); opacity: 0; }
+}
+
+@keyframes resultIn {
+  0%   { transform: scale(0.75) translateY(24px); opacity: 0; }
+  65%  { transform: scale(1.06) translateY(-4px);  opacity: 1; }
+  100% { transform: scale(1)    translateY(0);     opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.15); }
+  50%       { box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+}
+
+@keyframes tapHint {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.05); }
+}
+
+/* ─── State classes ────────────────────────────────────────── */
+
+.env-idle    { animation: envelopeFloat 3s ease-in-out infinite; }
+.env-shaking { animation: envelopeShake 0.5s ease-in-out forwards; }
+.env-open    { animation: none; }
+
+.flap-opening { animation: flapOpen 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+.prize-rising { animation: prizeRise 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+.result-animate { animation: resultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+.confetti-piece {
+  position: absolute;
+  pointer-events: none;
+  font-size: 1.6rem;
+  animation: confettiFly 1.2s ease-out forwards;
+}
+
+.tap-hint { animation: tapHint 1.8s ease-in-out infinite; }
+
+.envelope-glow { animation: pulseGlow 2s ease-in-out infinite; }
+
+/* ─── Envelope geometry ────────────────────────────────────── */
+
+.envelope-wrap {
+  position: relative;
+  width: 300px;
+  height: 200px;
+  cursor: pointer;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.4));
+}
+
+.env-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: #f0e8dc;
+}
+
+.env-fold-left {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 0 100%, 52% 50%);
+  background: rgba(0,0,0,0.10);
+  border-radius: 8px 0 0 8px;
+}
+
+.env-fold-right {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 0, 100% 100%, 48% 50%);
+  background: rgba(0,0,0,0.10);
+  border-radius: 0 8px 8px 0;
+}
+
+.env-fold-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 55%;
+  clip-path: polygon(0 100%, 100% 100%, 50% 0%);
+  background: rgba(0,0,0,0.08);
+}
+
+.env-flap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 56%;
+  clip-path: polygon(0 0, 100% 0, 50% 92%);
+  background: #e2d5c4;
+  transform-origin: top center;
+  z-index: 10;
+  border-radius: 8px 8px 0 0;
+}
+
+.env-seal {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #c4a882;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.prize-float {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%) translateY(30px);
+  opacity: 0;
+  z-index: 5;
+  width: 200px;
+}
+
+/* ─── Prize card styles ────────────────────────────────────── */
+
+.prize-50 {
+  background: linear-gradient(135deg, #b8860b, #ffd700, #b8860b);
+  color: #1a0a00;
+  border: 2px solid #ffd700;
+}
+
+.prize-20 {
+  background: linear-gradient(135deg, #1a237e, #3f51b5, #1a237e);
+  color: #fff;
+  border: 2px solid #7986cb;
+}
+
+.prize-10 {
+  background: linear-gradient(135deg, #1b5e20, #43a047, #1b5e20);
+  color: #fff;
+  border: 2px solid #81c784;
+}
+
+.prize-gift {
+  background: linear-gradient(135deg, #880e4f, #e91e63, #880e4f);
+  color: #fff;
+  border: 2px solid #f48fb1;
+}
+
+.prize-card-inner {
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ─── Screen backgrounds ───────────────────────────────────── */
+
+.reveal-bg {
+  background: radial-gradient(ellipse at center, #1a1614 0%, #0a0808 100%);
+  min-height: 100vh;
+}
+
+.prize-bg-50   { background: radial-gradient(ellipse at center, #2a1f00 0%, #0a0800 100%); }
+.prize-bg-20   { background: radial-gradient(ellipse at center, #0a0f2e 0%, #050810 100%); }
+.prize-bg-10   { background: radial-gradient(ellipse at center, #071a09 0%, #030a04 100%); }
+.prize-bg-gift { background: radial-gradient(ellipse at center, #250011 0%, #0a0006 100%); }
+
+/* ─── Revolution Boutique branding ────────────────────────── */
+
+.rb-header {
+  background: #141210;
+  border-bottom: 2px solid #c9835a;
+  padding: 1.25rem 1.5rem 1rem;
+}
+
+.rb-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.rb-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c9835a;
+  background: rgba(201, 131, 90, 0.12);
+  border: 1px solid rgba(201, 131, 90, 0.3);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.rb-badge-active::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c9835a;
+}
+
+.rb-badge-inactive {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.rb-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.rb-progress-fill {
+  height: 3px;
+  background: #c9835a;
+  transition: width 0.5s ease;
+}
+
+.rb-store-card {
+  background: #1c1917;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.rb-store-card:hover {
+  border-color: #c9835a;
+  transform: translateY(-2px);
+}
+
+.rb-store-card:active {
+  transform: translateY(0);
+}
+
+.rb-store-card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.rb-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 1.5rem;
+}
+
+.rb-screen-bg {
+  background: #0e0d0c;
+  min-height: 100vh;
+  color: #f5eee4;
+}
+
+/* ─── Home screen ──────────────────────────────────────────── */
+
+.store-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.store-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.store-card:active {
+  transform: translateY(0);
+}
+
+.progress-bar-fill {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ─── Flex utilities ───────────────────────────────────────── */
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.min-h-screen { min-height: 100vh; }
+.select-none { user-select: none; }
+.overflow-hidden { overflow: hidden; }
+.text-center { text-align: center; }
+.w-full { width: 100%; }
+.gap-6 { gap: 1.5rem; }
+.p-8 { padding: 2rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.mt-16 { margin-top: 4rem; }
