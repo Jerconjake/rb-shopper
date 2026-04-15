@@ -208,4 +208,115 @@
   padding: 1.25rem 1.5rem 1rem;
 }
 
-.r
+.rb-logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  filter: invert(1);
+}
+
+.rb-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.35);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.rb-badge-active::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.rb-badge-inactive {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.rb-progress-bar {
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.rb-progress-fill {
+  height: 2px;
+  background: #ffffff;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+
+.rb-store-card {
+  background: #111316;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.rb-store-card:hover {
+  border-color: rgba(255,255,255,0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(255,255,255,0.06);
+}
+
+.rb-store-card:active {
+  transform: translateY(0);
+}
+
+.rb-store-card.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.rb-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 1.5rem;
+}
+
+.rb-screen-bg {
+  background: #0a0b0d;
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+/* ─── Home screen ──────────────────────────────────────────── */
+
+.store-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.store-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.store-card:active {
+  transform: translateY(0);
+}
+
+.progress-bar-fill {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
