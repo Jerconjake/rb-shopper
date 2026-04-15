@@ -135,6 +135,14 @@ export function addEnvelopesToStore(campaignId: number, storeId: number): void {
   saveDB(db);
 }
 
+export function removeEnvelopesFromStore(campaignId: number, storeId: number): void {
+  const db = loadDB();
+  const unused = db.envelopes.filter(e => e.campaign_id === campaignId && e.store_id === storeId && !e.used);
+  const toRemove = new Set(unused.slice(-50).map(e => e.id));
+  db.envelopes = db.envelopes.filter(e => !toRemove.has(e.id));
+  saveDB(db);
+}
+
 export function createCampaignWithEnvelopes(name: string, minPurchase: number): void {
   const db = loadDB();
   const campId = nextId(db);
