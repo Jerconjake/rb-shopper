@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Settings, RefreshCw, Package, ChevronRight } from 'lucide-react';
 import { Campaign, Store, StoreSummary } from '../types';
+import { getStoreSummaries, StoreSummaryData } from '../db';
 
 interface Props {
   campaign: Campaign | null;
@@ -10,36 +11,15 @@ interface Props {
 }
 
 export const HomeScreen: React.FC<Props> = ({ campaign, onStartReveal, onAdmin, onRefresh }) => {
-  const [summaries, setSummaries] = useState<StoreSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<StoreSummaryData[]>([]);
 
   useEffect(() => {
     loadSummaries();
   }, [campaign]);
 
-  async function loadSummaries() {
-    setLoading(true);
-    try {
-      if (!campaign) { setSummaries([]); setLoading(false); return; }
-      const rows = await window.tasklet.sqlQuery(
-        `SELECT s.id as store_id, s.name as store_name,
-           COUNT(e.id) as total,
-           SUM(CASE WHEN e.used = 0 THEN 1 ELSE 0 END) as remaining
-         FROM stores s
-         LEFT JOIN envelopes e ON e.store_id = s.id AND e.campaign_id = ${campaign.id}
-         GROUP BY s.id, s.name
-         ORDER BY s.name`
-      );
-      setSummaries(rows.map((r: any) => ({
-        store_id: r.store_id,
-        store_name: r.store_name,
-        remaining: r.remaining ?? 0,
-        total: r.total ?? 0,
-      })));
-    } catch (err) {
-      console.error('Failed to load summaries', err);
-    }
-    setLoading(false);
+  function loadSummaries() {
+    if (!campaign) { setSummaries([]); return; }
+    setSummaries(getStoreSummaries(campaign.id));
   }
 
   const totalRemaining = summaries.reduce((s, r) => s + r.remaining, 0);
@@ -114,11 +94,7 @@ export const HomeScreen: React.FC<Props> = ({ campaign, onStartReveal, onAdmin, 
 
       {/* Store list */}
       <div style={{ flex: 1, padding: '1rem 1.5rem' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '3rem' }}>
-            <span className="loading loading-spinner loading-md" style={{ color: '#1a1a1a' }} />
-          </div>
-        ) : !campaign ? (
+        {!campaign ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '3rem', gap: '1rem' }}>
             <Package size={40} style={{ color: 'rgba(0,0,0,0.15)' }} />
             <p style={{ color: 'rgba(0,0,0,0.4)', textAlign: 'center', fontSize: '0.875rem' }}>
