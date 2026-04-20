@@ -13,7 +13,7 @@ const SUGGESTIONS = [
   'Help me find a dress for a wedding',
   'I need a complete date night outfit',
   'Find something that flatters my body type',
-  'Help me find pieces in fabrics I'll actually love',
+  "Help me find pieces in fabrics I'll actually love",
 ];
 
 const WELCOME: ChatMessage = {
