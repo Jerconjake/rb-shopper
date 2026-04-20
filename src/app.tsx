@@ -11,9 +11,9 @@ const DEMO_PIN = 'rb2025';
 
 const SUGGESTIONS = [
   'Help me find a dress for a wedding',
-  'What do you have in tops under $80?',
   'I need a complete date night outfit',
-  "What's new this season?",
+  'Find something that flatters my body type',
+  'Help me find pieces in fabrics I'll actually love',
 ];
 
 const WELCOME: ChatMessage = {
