@@ -7,8 +7,12 @@ interface Props {
 }
 
 export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
-  const price = product.minPrice
-    ? `$${(parseFloat(product.minPrice) / 100).toFixed(0)}`
+  // Use variant price (already in dollars) → fall back to minPrice as last resort
+  const rawPrice = product.variants?.[0]?.price
+    ?? product.priceRange?.minVariantPrice?.amount
+    ?? product.minPrice;
+  const price = rawPrice
+    ? `$${parseFloat(rawPrice).toFixed(2)}`
     : '—';
 
   const hasImage = product.image;
