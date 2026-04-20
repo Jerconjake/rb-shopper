@@ -42,7 +42,14 @@ def build_catalog(products):
                     sizes.add(opt['value'])
                 elif 'col' in n:
                     colors.add(opt['value'])
-        in_stock = sum((v.get('qty') or 0) for v in p.get('variants', []) if v.get('available'))
+        total_qty = sum((v.get('qty') or 0) for v in p.get('variants', []))
+        any_available = any(v.get('available') for v in p.get('variants', []))
+        if not any_available:
+            stock_label = "Out of stock"
+        elif total_qty <= 3:
+            stock_label = "Low stock"
+        else:
+            stock_label = "In stock"
 
         # minPrice/maxPrice stored as cents
         min_p = float(p.get('minPrice', 0)) / 100
@@ -54,7 +61,7 @@ def build_catalog(products):
             line += f" | Sizes: {', '.join(sorted(sizes))}"
         if colors:
             line += f" | Colours: {', '.join(sorted(colors))}"
-        line += f" | Stock: {in_stock}"
+        line += f" | {stock_label}"
         if p.get('tags'):
             line += f" | Tags: {', '.join(p['tags'][:4])}"
 
