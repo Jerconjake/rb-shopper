@@ -1,2 +1,2 @@
 #!/bin/bash
-gunicorn server:app --bind 0.0.0.0:$PORT
+python -m gunicorn server:app
