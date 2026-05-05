@@ -2,7 +2,7 @@ services:
   - type: web
     name: dw-botanicals-advisor
     env: python
-    buildCommand: pip install -r requirements.txt && npm install && npm run build
+    buildCommand: python -m pip install -r requirements.txt && npm install && npm run build
     startCommand: python -m gunicorn server:app
     envVars:
       - key: OPENAI_API_KEY
