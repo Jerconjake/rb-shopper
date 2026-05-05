@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m gunicorn server:app
+python server.py
