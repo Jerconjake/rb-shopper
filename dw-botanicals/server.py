@@ -100,14 +100,14 @@ IMPORTANT:
 
 @app.route("/")
 def serve_index():
-    return send_from_directory("dist", "index.html")
+    return send_from_directory("static", "index.html")
 
 @app.route("/<path:path>")
 def serve_static(path):
     try:
-        return send_from_directory("dist", path)
+        return send_from_directory("static", path)
     except:
-        return send_from_directory("dist", "index.html")
+        return send_from_directory("static", "index.html")
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
