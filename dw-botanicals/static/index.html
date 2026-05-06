@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sage — Desert Willow Botanicals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sand: #F5F0E8;
+      --sand-dark: #EDE6D6;
+      --sage: #7A9E7E;
+      --sage-dark: #5C7D60;
+      --sage-light: #EAF2EB;
+      --terra: #C4773B;
+      --charcoal: #2C2C2C;
+      --muted: #6B6B6B;
+      --border: #DDD5C4;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--sand);
+      color: var(--charcoal);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Header */
+    .header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: var(--sage-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header-text h1 {
+      font-family: 'Lora', serif;
+      font-size: 16px; font-weight: 600;
+      color: var(--charcoal);
+    }
+    .header-text p {
+      font-size: 12px; color: var(--muted);
+      margin-top: 1px;
+    }
+    .online-dot {
+      width: 8px; height: 8px;
+      background: var(--sage);
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+    /* Messages area */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    /* Bubbles */
+    .msg { display: flex; gap: 10px; max-width: 100%; }
+    .msg.user { flex-direction: row-reverse; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--sage-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; align-self: flex-end;
+    }
+    .bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .msg.assistant .bubble {
+      background: white;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      color: var(--charcoal);
+    }
+    .msg.user .bubble {
+      background: var(--sage);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    /* Typing indicator */
+    .typing { display: flex; gap: 4px; align-items: center; padding: 14px 16px; }
+    .typing span {
+      width: 7px; height: 7px; background: var(--border);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+    /* Product cards */
+    .products-row {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-top: 8px;
+    }
+    .product-card {
+      background: var(--sand);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .product-card img {
+      width: 56px; height: 56px;
+      object-fit: contain; flex-shrink: 0;
+      border-radius: 8px;
+    }
+    .product-card img.hidden { display: none; }
+    .product-info { flex: 1; }
+    .product-name {
+      font-family: 'Lora', serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--charcoal);
+    }
+    .product-tagline {
+      font-size: 12px; color: var(--muted);
+      margin-top: 2px;
+    }
+    .product-price {
+      font-size: 13px; font-weight: 600;
+      color: var(--terra);
+      margin-top: 4px;
+    }
+    .product-buttons {
+      display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .btn-shop {
+      font-size: 12px; font-weight: 500;
+      padding: 6px 12px; border-radius: 20px;
+      border: none; cursor: pointer;
+      background: var(--sage); color: white;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-subscribe {
+      font-size: 12px; font-weight: 500;
+      padding: 6px 12px; border-radius: 20px;
+      border: 1px solid var(--sage); cursor: pointer;
+      background: white; color: var(--sage);
+      text-decoration: none; display: inline-block;
+    }
+    /* Suggestions */
+    #suggestions {
+      padding: 0 20px 12px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .chip {
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white; color: var(--charcoal);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .chip:hover { background: var(--sage-light); border-color: var(--sage); }
+    /* Input bar */
+    .input-bar {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; gap: 10px; align-items: flex-end;
+      flex-shrink: 0;
+    }
+    #user-input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      resize: none;
+      outline: none;
+      background: var(--sand);
+      max-height: 120px;
+      line-height: 1.4;
+    }
+    #user-input:focus { border-color: var(--sage); }
+    #send-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--sage);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    #send-btn:hover { background: var(--sage-dark); }
+    #send-btn:disabled { background: var(--border); cursor: not-allowed; }
+    /* Handoff */
+    .handoff-card {
+      background: var(--sage-light);
+      border: 1px solid var(--sage);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .handoff-card strong { color: var(--sage-dark); }
+    /* Disclaimer */
+    .disclaimer {
+      font-size: 11px; color: var(--muted);
+      font-style: italic; margin-top: 4px;
+    }
+    /* Scrollbar */
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🌿</div>
+  <div class="header-text">
+    <h1>Sage</h1>
+    <p><span class="online-dot"></span>Desert Willow Botanicals Wellness Advisor</p>
+  </div>
+</div>
+
+<div id="messages"></div>
+
+<div id="suggestions">
+  <button class="chip" onclick="sendChip(this)">I have trouble sleeping and feel anxious</button>
+  <button class="chip" onclick="sendChip(this)">My joints ache and I have inflammation</button>
+  <button class="chip" onclick="sendChip(this)">I get bad seasonal allergies</button>
+  <button class="chip" onclick="sendChip(this)">I want to do a full body detox</button>
+  <button class="chip" onclick="sendChip(this)">I need better focus and less brain fog</button>
+</div>
+
+<div class="input-bar">
+  <textarea id="user-input" rows="1" placeholder="Tell Sage what you're dealing with…"></textarea>
+  <button id="send-btn" onclick="sendMessage()" aria-label="Send">➤</button>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const suggestionsEl = document.getElementById('suggestions');
+
+let history = [];
+let suggestionsHidden = false;
+
+// Auto-resize textarea
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+});
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function hideSuggestions() {
+  if (!suggestionsHidden) {
+    suggestionsEl.style.display = 'none';
+    suggestionsHidden = true;
+  }
+}
+
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function renderBubble(role, content, products) {
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+
+  if (role === 'assistant') {
+    const av = document.createElement('div');
+    av.className = 'avatar';
+    av.textContent = '🌿';
+    wrap.appendChild(av);
+  }
+
+  const inner = document.createElement('div');
+  inner.style.display = 'flex';
+  inner.style.flexDirection = 'column';
+  inner.style.maxWidth = '75%';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  // Simple markdown-ish: bold, line breaks
+  bubble.innerHTML = content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  inner.appendChild(bubble);
+
+  // Product cards
+  if (products && products.length > 0) {
+    const row = document.createElement('div');
+    row.className = 'products-row';
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+
+      const img = document.createElement('img');
+      img.src = p.image_url;
+      img.alt = p.name;
+      img.onerror = () => img.classList.add('hidden');
+      card.appendChild(img);
+
+      const info = document.createElement('div');
+      info.className = 'product-info';
+      info.innerHTML = `
+        <div class="product-name">${p.name}</div>
+        <div class="product-tagline">${p.tagline}</div>
+        <div class="product-price">$${p.price}</div>
+        <div class="product-buttons">
+          <a class="btn-shop" href="${p.product_url}" target="_blank">Shop Now</a>
+          ${p.subscription_url ? `<a class="btn-subscribe" href="${p.subscription_url}" target="_blank">Subscribe & Save 10%</a>` : ''}
+        </div>
+      `;
+      card.appendChild(info);
+      row.appendChild(card);
+    });
+    inner.appendChild(row);
+  }
+
+  wrap.appendChild(inner);
+
+  if (role === 'user') {
+    const av = document.createElement('div');
+    av.className = 'avatar';
+    av.textContent = '👤';
+    wrap.appendChild(av);
+  }
+
+  messagesEl.appendChild(wrap);
+  scrollToBottom();
+}
+
+function renderTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg assistant';
+  wrap.id = 'typing-indicator';
+
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = '🌿';
+  wrap.appendChild(av);
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  wrap.appendChild(bubble);
+
+  messagesEl.appendChild(wrap);
+  scrollToBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendMessage(text) {
+  text = text || inputEl.value.trim();
+  if (!text) return;
+
+  hideSuggestions();
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  sendBtn.disabled = true;
+
+  history.push({ role: 'user', content: text });
+  renderBubble('user', text);
+  renderTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+    const data = await res.json();
+    removeTyping();
+
+    if (data.error) {
+      renderBubble('assistant', 'Something went wrong — please try again in a moment.');
+    } else {
+      history.push({ role: 'assistant', content: data.reply });
+      renderBubble('assistant', data.reply, data.products);
+    }
+  } catch (e) {
+    removeTyping();
+    renderBubble('assistant', 'Connection issue — please refresh and try again.');
+  }
+
+  sendBtn.disabled = false;
+  scrollToBottom();
+}
+
+function sendChip(btn) {
+  sendMessage(btn.textContent);
+}
+
+// Welcome message
+window.addEventListener('DOMContentLoaded', () => {
+  renderBubble('assistant', "Hi, I'm Sage — a wellness advisor here to help you find the right Desert Willow Botanicals formula for what you're dealing with.\n\nWhat's been going on for you lately? Tell me what you're experiencing and how long it's been happening.");
+});
+</script>
+</body>
+</html>

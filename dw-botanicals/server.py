@@ -4,7 +4,7 @@ import re
 from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 
-app = Flask(__name__, static_folder="dist", static_url_path="")
+app = Flask(__name__, static_folder="static", static_url_path="")
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
