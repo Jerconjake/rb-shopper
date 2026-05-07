@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ash — Cynthia Ashby Style Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Lato',sans-serif;background:#F9F7F4;color:#1A1A1A;height:100dvh;display:flex;flex-direction:column}
+  #header{background:#fff;border-bottom:1px solid #E8E2DA;padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+  #logo{width:36px;height:36px;background:#1A1A1A;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;color:#fff;font-size:13px;letter-spacing:1px}
+  #header-text h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:400;color:#1A1A1A}
+  #header-text p{font-size:12px;color:#8B7355;letter-spacing:0.5px;margin-top:1px}
+  #messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:80%;padding:12px 16px;border-radius:16px;font-size:15px;line-height:1.55;word-wrap:break-word}
+  .msg.user{background:#2C2C2C;color:#fff;align-self:flex-end;border-radius:16px 16px 4px 16px}
+  .msg.ash{background:#fff;color:#1A1A1A;align-self:flex-start;border:1px solid #E8E2DA;border-radius:16px 16px 16px 4px}
+  .msg.ash a{color:#8B7355;text-decoration:underline}
+  .msg.ash a:hover{color:#6B5535}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 12px}
+  .chip{background:#fff;border:1px solid #D4C5B0;color:#1A1A1A;padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:'Lato',sans-serif;transition:all 0.2s}
+  .chip:hover{background:#8B7355;border-color:#8B7355;color:#fff}
+  #input-area{background:#fff;border-top:1px solid #E8E2DA;padding:14px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0}
+  #user-input{flex:1;border:1px solid #D4C5B0;border-radius:24px;padding:10px 16px;font-size:15px;font-family:'Lato',sans-serif;background:#F9F7F4;color:#1A1A1A;outline:none;resize:none}
+  #user-input:focus{border-color:#8B7355}
+  #send-btn{background:#2C2C2C;color:#fff;border:none;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s}
+  #send-btn:hover{background:#8B7355}
+  #send-btn:disabled{background:#ccc;cursor:not-allowed}
+  .typing{display:flex;gap:4px;align-items:center;padding:14px 16px}
+  .dot{width:7px;height:7px;background:#8B7355;border-radius:50%;animation:bounce 1.2s infinite}
+  .dot:nth-child(2){animation-delay:0.2s}
+  .dot:nth-child(3){animation-delay:0.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="logo">CA</div>
+  <div id="header-text">
+    <h1>Ash</h1>
+    <p>Your Cynthia Ashby Style Guide</p>
+  </div>
+</div>
+<div id="messages"></div>
+<div id="chips">
+  <button class="chip" onclick="sendChip(this)">Something to travel in</button>
+  <button class="chip" onclick="sendChip(this)">A dress for an event</button>
+  <button class="chip" onclick="sendChip(this)">Everyday easy pieces</button>
+  <button class="chip" onclick="sendChip(this)">Warm weather looks</button>
+</div>
+<div id="input-area">
+  <textarea id="user-input" rows="1" placeholder="Ask Ash anything..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button id="send-btn" onclick="sendMessage()">&#8593;</button>
+</div>
+<script>
+const messagesEl=document.getElementById('messages');
+const inputEl=document.getElementById('user-input');
+const sendBtn=document.getElementById('send-btn');
+const chipsEl=document.getElementById('chips');
+let history=[];
+
+function parseMarkdown(text){
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\n/g,'<br/>');
+}
+
+function addMessage(role,text){
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=role==='ash'?parseMarkdown(text):escapeHTML(text);
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
+  return div;
+}
+
+function escapeHTML(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function showTyping(){
+  const div=document.createElement('div');
+  div.className='msg ash typing';
+  div.id='typing';
+  div.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+
+function removeTyping(){
+  const t=document.getElementById('typing');
+  if(t)t.remove();
+}
+
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+function handleKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+}
+
+function sendChip(btn){
+  chipsEl.style.display='none';
+  inputEl.value=btn.textContent;
+  sendMessage();
+}
+
+async function sendMessage(){
+  const text=inputEl.value.trim();
+  if(!text)return;
+  chipsEl.style.display='none';
+  inputEl.value='';
+  inputEl.style.height='auto';
+  sendBtn.disabled=true;
+  addMessage('user',text);
+  history.push({role:'user',content:text});
+  showTyping();
+  try{
+    const res=await fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});
+    const data=await res.json();
+    removeTyping();
+    const reply=data.reply||'Something went wrong — please try again.';
+    addMessage('ash',reply);
+    history.push({role:'assistant',content:reply});
+  }catch(e){
+    removeTyping();
+    addMessage('ash','Having a moment — please try again shortly.');
+  }
+  sendBtn.disabled=false;
+  inputEl.focus();
+}
+
+// Initial greeting
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    addMessage('ash',"Hi, I'm Ash — your personal style guide for the Cynthia Ashby collection.\n\nBefore I suggest anything, I'd love to get a sense of you. What's the occasion you're dressing for?");
+  },300);
+});
+</script>
+</body>
+</html>
