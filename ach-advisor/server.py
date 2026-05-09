@@ -137,6 +137,22 @@ Once you have enough context, recommend the right path — either starting with 
 
 ---
 
+## LEAD CAPTURE — CRITICAL INSTRUCTIONS
+
+When someone is ready to take the next step (apply, book a call with Robin, or get more info), do NOT just send them a link. Instead:
+
+1. Say something warm like: "I'd love to make sure Robin gets your details so she can follow up personally."
+2. Ask for their **first name** naturally in conversation.
+3. Then ask for their **email address**.
+4. Then ask for their **phone number** (frame it as optional but helpful: "And a phone number if you're open to a quick call?").
+5. Once you have their name and email (phone optional), end your message with this exact marker on its own line:
+
+LEAD_READY
+
+This signals that contact info has been collected and a connect button should appear. Do not include the marker until you have at minimum their name and email. Do not explain the marker — just include it naturally at the end of your message.
+
+---
+
 ## CTA LINKS
 - Apply for Full Certification: https://academyofclinicalhypnotherapy.com/register-for-hypnotherapy-course/
 - Learn about Foundations: https://academyofclinicalhypnotherapy.com/training-program/#foundations
@@ -154,13 +170,87 @@ Once you have enough context, recommend the right path — either starting with 
 - Format links in a friendly way: "You can [apply here](url)" not just raw URLs
 """
 
+THANK_YOU_URL = "https://academyofclinicalhypnotherapy.com/thank-you-for-contacting-cach/"
+LEAD_EMAIL = "cachyyc@gmail.com"
+
+
+def send_lead_email(name, email, phone, program_interest, conversation_summary):
+    """Send lead notification email via SendGrid."""
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    if not sendgrid_key:
+        print("⚠️  SENDGRID_API_KEY not set — lead email not sent")
+        return False
+
+    try:
+        import urllib.request
+        import urllib.error
+
+        phone_line = f"Phone: {phone}" if phone else "Phone: not provided"
+        program_line = f"Program interest: {program_interest}" if program_interest else ""
+
+        body_text = f"""New enrollment inquiry from Clara
+
+Name: {name}
+Email: {email}
+{phone_line}
+{program_line}
+
+--- Conversation summary ---
+{conversation_summary}
+"""
+
+        body_html = f"""
+<h2 style="color:#1c2b3a;font-family:sans-serif;">New Enrollment Inquiry — Clara</h2>
+<table style="font-family:sans-serif;font-size:15px;border-collapse:collapse;">
+  <tr><td style="padding:6px 16px 6px 0;color:#6b7280;">Name</td><td style="padding:6px 0;font-weight:600;">{name}</td></tr>
+  <tr><td style="padding:6px 16px 6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;"><a href="mailto:{email}">{email}</a></td></tr>
+  <tr><td style="padding:6px 16px 6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">{phone if phone else 'not provided'}</td></tr>
+  {'<tr><td style="padding:6px 16px 6px 0;color:#6b7280;">Interest</td><td style="padding:6px 0;">' + program_interest + '</td></tr>' if program_interest else ''}
+</table>
+<hr style="margin:20px 0;border:none;border-top:1px solid #e5e7eb;">
+<h3 style="font-family:sans-serif;color:#1c2b3a;">Conversation Summary</h3>
+<div style="font-family:sans-serif;font-size:14px;line-height:1.7;white-space:pre-wrap;background:#f5f4f1;padding:16px;border-radius:8px;">{conversation_summary}</div>
+"""
+
+        payload = json.dumps({
+            "personalizations": [{"to": [{"email": LEAD_EMAIL, "name": "Robin"}]}],
+            "from": {"email": "clara@academyofclinicalhypnotherapy.com", "name": "Clara — ACH Advisor"},
+            "reply_to": {"email": email, "name": name},
+            "subject": f"New inquiry from {name} — Clara",
+            "content": [
+                {"type": "text/plain", "value": body_text},
+                {"type": "text/html", "value": body_html}
+            ]
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.sendgrid.com/v3/mail/send",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {sendgrid_key}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+
+        with urllib.request.urlopen(req) as resp:
+            print(f"✅ Lead email sent for {name} ({email}) — status {resp.status}")
+            return True
+
+    except Exception as e:
+        print(f"❌ SendGrid error: {e}")
+        return False
+
+
 @app.route("/")
 def serve_index():
     return send_from_directory("static", "index.html")
 
+
 @app.route("/<path:path>")
 def serve_static(path):
     return send_from_directory("static", path)
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -181,7 +271,39 @@ def chat():
     )
 
     reply = response.choices[0].message.content
-    return jsonify({"reply": reply})
+
+    # Check if lead info has been collected
+    lead_ready = "LEAD_READY" in reply
+    clean_reply = reply.replace("LEAD_READY", "").strip()
+
+    return jsonify({"reply": clean_reply, "lead_ready": lead_ready})
+
+
+@app.route("/submit-lead", methods=["POST"])
+def submit_lead():
+    data = request.json
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    phone = data.get("phone", "").strip()
+    program_interest = data.get("program_interest", "").strip()
+    conversation = data.get("conversation", [])
+
+    if not name or not email:
+        return jsonify({"error": "Name and email are required"}), 400
+
+    # Build conversation summary from history
+    lines = []
+    for msg in conversation:
+        role = "Visitor" if msg.get("role") == "user" else "Clara"
+        content = msg.get("content", "").replace("LEAD_READY", "").strip()
+        if content:
+            lines.append(f"{role}: {content}")
+    summary = "\n\n".join(lines)
+
+    send_lead_email(name, email, phone, program_interest, summary)
+
+    return jsonify({"success": True, "redirect": THANK_YOU_URL})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

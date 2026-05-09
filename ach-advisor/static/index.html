@@ -256,39 +256,43 @@
     button.send:hover { background: var(--accent); }
     button.send:disabled { background: var(--border); cursor: not-allowed; }
 
-    /* CTA card */
-    .cta-card {
+    /* Lead connect card */
+    .lead-card {
       background: var(--gold-light);
-      border: 1px solid var(--gold);
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 4px;
-      font-size: 0.85rem;
-      line-height: 1.6;
+      border: 1.5px solid var(--gold);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 8px 0;
+      animation: fadeUp 0.3s ease;
     }
-    .cta-card h4 {
-      font-size: 0.9rem;
-      font-weight: 600;
+    .lead-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
       color: var(--primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .cta-card a {
-      display: inline-block;
+    .lead-card p {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .lead-card .connect-btn {
+      width: 100%;
       background: var(--primary);
       color: #fff;
-      text-decoration: none;
-      padding: 8px 18px;
-      border-radius: 8px;
-      font-size: 0.82rem;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: inherit;
+      font-size: 0.92rem;
       font-weight: 600;
-      margin-top: 10px;
-      margin-right: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      letter-spacing: 0.01em;
     }
-    .cta-card a.secondary {
-      background: transparent;
-      color: var(--primary);
-      border: 1.5px solid var(--primary);
-    }
+    .lead-card .connect-btn:hover { background: var(--accent); }
+    .lead-card .connect-btn:disabled { background: var(--border); cursor: not-allowed; }
 
     /* Markdown-ish rendering */
     .bubble strong { font-weight: 600; }
@@ -310,6 +314,8 @@
 
   <div class="messages" id="messages"></div>
 
+  <div id="lead-card-container"></div>
+
   <div class="chips" id="chips"></div>
 
   <div class="input-row">
@@ -328,9 +334,17 @@
   const inputEl = document.getElementById('input');
   const chipsEl = document.getElementById('chips');
   const sendBtn = document.getElementById('sendBtn');
+  const leadCardContainer = document.getElementById('lead-card-container');
 
   let history = [];
   let isTyping = false;
+  let leadSubmitted = false;
+
+  // Extracted lead info from conversation
+  let collectedName = '';
+  let collectedEmail = '';
+  let collectedPhone = '';
+  let collectedProgram = '';
 
   const STARTER_CHIPS = [
     "I'm curious about becoming a hypnotherapist",
@@ -406,6 +420,88 @@
     if (el) el.remove();
   }
 
+  // Extract contact info from conversation history
+  function extractLeadInfo() {
+    const fullText = history.map(m => m.content).join('\n').toLowerCase();
+    const allText = history.map(m => m.content).join('\n');
+
+    // Extract email
+    const emailMatch = allText.match(/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/);
+    if (emailMatch) collectedEmail = emailMatch[0];
+
+    // Extract phone (Canadian/US formats)
+    const phoneMatch = allText.match(/(\+?1[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}/);
+    if (phoneMatch) collectedPhone = phoneMatch[0];
+
+    // Extract program interest
+    if (fullText.includes('full cert') || fullText.includes('full certification') || fullText.includes('5,495') || fullText.includes('5495')) {
+      collectedProgram = 'Full Clinical Hypnotherapy Certification';
+    } else if (fullText.includes('foundations') || fullText.includes('495')) {
+      collectedProgram = 'Foundations Intensive';
+    }
+
+    // Try to get name from early user messages
+    const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
+    for (const msg of userMessages) {
+      // Simple name extraction: short message with capitalized words, no special chars
+      const nameMatch = msg.match(/^(?:(?:I'?m|my name is|call me|it'?s)\s+)?([A-Z][a-z]+(?: [A-Z][a-z]+)?)\s*\.?$/i);
+      if (nameMatch && nameMatch[1].split(' ').length <= 3) {
+        collectedName = nameMatch[1];
+        break;
+      }
+    }
+  }
+
+  function showLeadCard() {
+    if (leadSubmitted || leadCardContainer.innerHTML) return;
+
+    leadCardContainer.innerHTML = `
+      <div class="lead-card" id="lead-card">
+        <h4>Ready to connect with Robin?</h4>
+        <p>Tap below to send your details to Robin. She'll follow up personally — no pressure, no sales pitch.</p>
+        <button class="connect-btn" id="connectBtn" onclick="submitLead()">
+          Connect me with Robin →
+        </button>
+      </div>
+    `;
+    leadCardContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function submitLead() {
+    if (leadSubmitted) return;
+
+    extractLeadInfo();
+
+    const btn = document.getElementById('connectBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch('/submit-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: collectedName || 'Not captured',
+          email: collectedEmail || 'Not captured',
+          phone: collectedPhone,
+          program_interest: collectedProgram,
+          conversation: history
+        })
+      });
+
+      const data = await res.json();
+      leadSubmitted = true;
+
+      if (data.redirect) {
+        window.location.href = data.redirect;
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Connect me with Robin →';
+      appendMessage('clara', "I'm having trouble sending that right now. You can reach Robin directly at cachyyc@gmail.com or 403-605-2809.");
+    }
+  }
+
   async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text || isTyping) return;
@@ -432,6 +528,11 @@
       const reply = data.reply || "I'm sorry, something went wrong. Please try again.";
       appendMessage('clara', reply);
       history.push({ role: 'assistant', content: reply });
+
+      // Show lead card if Clara signals contact info collected
+      if (data.lead_ready && !leadSubmitted) {
+        showLeadCard();
+      }
     } catch (e) {
       hideTyping();
       appendMessage('clara', "I'm having trouble connecting right now. Please try again in a moment.");
