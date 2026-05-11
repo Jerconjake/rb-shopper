@@ -1,0 +1,200 @@
+[
+  {
+    "name": "Chem-Trend SprayFoam Silicone",
+    "price": 29.00,
+    "category": "Release Lubricants & Solvents",
+    "url": "https://www.torontosprayfoamparts.ca/product/chem-trend-sprayfoam-silicone/",
+    "description": "Silicone release agent for spray foam applications.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "Pump Lube – Gallon",
+    "price": 49.20,
+    "category": "Release Lubricants & Solvents",
+    "url": "https://www.torontosprayfoamparts.ca/product/pump-lube-gallon/",
+    "description": "9 lbs / 4.1 KG. Lubricant for general pump maintenance.",
+    "quote_only": false,
+    "in_stock": false
+  },
+  {
+    "name": "Parts Cleaner – Pail",
+    "price": 213.00,
+    "category": "Release Lubricants & Solvents",
+    "url": "https://www.torontosprayfoamparts.ca/product/parts-cleaner-pail/",
+    "description": "General cleaning solvent for urethanes.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "The Stud Stick SprayTech",
+    "price": 26.00,
+    "category": "SprayTech Accessories",
+    "url": "https://www.torontosprayfoamparts.ca/product/the-stud-stick-spraytech/",
+    "description": "SprayTech stud stick accessory.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "Pro-Tech Gun Cover",
+    "price": 40.00,
+    "category": "SprayTech Accessories",
+    "url": "https://www.torontosprayfoamparts.ca/product/pro-tech-gun-cover/",
+    "description": "Pro-Tech Gun Cover by SprayTech — protects your spray gun.",
+    "quote_only": false,
+    "in_stock": false
+  },
+  {
+    "name": "51ft Insulated Hose Cover",
+    "price": 411.00,
+    "category": "Hose Covers & Accessories",
+    "url": "https://www.torontosprayfoamparts.ca/product/51ft-insulated-hose-cover/",
+    "description": "TSP Original 51ft insulated hose cover.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "51ft Un-Insulated Hose Cover",
+    "price": 299.00,
+    "category": "Hose Covers & Accessories",
+    "url": "https://www.torontosprayfoamparts.ca/product/51ft-un-insulated-hose-cover/",
+    "description": "TSP Original 51ft un-insulated hose cover.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "25' Heated Whip Hose 1/4\" W/ Scuff",
+    "price": null,
+    "category": "Heated Hoses",
+    "url": "https://www.torontosprayfoamparts.ca/product/25-heated-whip-hose-1-4-w-scuff/",
+    "description": "25-foot heated whip hose, 1/4\" with scuff guard. By The Handcrafted Hose Company.",
+    "quote_only": true,
+    "in_stock": false
+  },
+  {
+    "name": "50' Heated Hose 3/8\" w/ Scuff & T/C Cable",
+    "price": null,
+    "category": "Heated Hoses",
+    "url": "https://www.torontosprayfoamparts.ca/product/50-heated-hose-3-8-w-scuff-t-c-cable/",
+    "description": "50-foot heated hose 3/8\" I.D., 3,500 psi, with scuff guard and thermocouple cable. By The Handcrafted Hose Company.",
+    "quote_only": true,
+    "in_stock": false
+  },
+  {
+    "name": "3/8\" X 50' W/ Scuff And Bare End Purple Wire (Boss-SFE Style)",
+    "price": null,
+    "category": "Heated Hoses",
+    "url": "https://www.torontosprayfoamparts.ca/product/3-8-x-50-w-scuff-and-bare-end-purple-wire-boss-sfe-style-2/",
+    "description": "HHC flagship hose — ultra-flexible, lightweight, strong. Helix design minimizes kinking. Compatible with Graco, PMC, Boss, and other proportioners. Best for spray foam insulation, polyurea, and plural component coatings.",
+    "quote_only": true,
+    "in_stock": false
+  },
+  {
+    "name": "50' RTD Cable",
+    "price": null,
+    "category": "Temperature Cables",
+    "url": "https://www.torontosprayfoamparts.ca/product/50-rtd-cable/",
+    "description": "50-foot RTD cable — FTS temperature sensor, industry standard 4-pin connector.",
+    "quote_only": true,
+    "in_stock": false
+  },
+  {
+    "name": "50' Thermocouple Cable Assembly",
+    "price": null,
+    "category": "Temperature Cables",
+    "url": "https://www.torontosprayfoamparts.ca/product/50-thermocouple-cable-assembly/",
+    "description": "50-foot thermocouple cable assembly — FTS cable temperature sensors.",
+    "quote_only": true,
+    "in_stock": false
+  },
+  {
+    "name": "Heavy Duty Microporous Coverall XL (25 PCS/CTN)",
+    "price": 125.00,
+    "category": "Coveralls & PPE",
+    "url": "https://www.torontosprayfoamparts.ca/product/heavy-duty-microporous-coverall-xl/",
+    "description": "TSP Original — heavy duty microporous coverall XL, 63gsm. White, 1PC/BAG, 25PCS/CTN.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "Heavy Duty Microporous Coverall 2XL",
+    "price": 125.00,
+    "category": "Coveralls & PPE",
+    "url": "https://www.torontosprayfoamparts.ca/product/heavy-duty-microporous-coverall-2xl/",
+    "description": "TSP Original — heavy duty microporous coverall 2XL, 63gsm. White, 1PC/BAG, 25PCS/CTN.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "Ultra Breathable Coverall With Hood 2XL",
+    "price": 130.00,
+    "category": "Coveralls & PPE",
+    "url": "https://www.torontosprayfoamparts.ca/product/ultra-breathable-coverall-with-hood-2xl/",
+    "description": "TSP Original — ultra breathable coverall with hood, 2XL. White, 1PC/BAG, 25PCS/CTN.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "TSP – Trailer Vacuum Bag",
+    "price": 133.00,
+    "category": "Removal Bags",
+    "url": "https://www.torontosprayfoamparts.ca/product/trailer-vacuum-bag/",
+    "description": "TSP Original — big polypropylene trailer vacuum bag. 12' x 7.6' x 6'.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "TSP – Black Insulation Removal Bag (10 PCS/CTN)",
+    "price": 150.00,
+    "category": "Removal Bags",
+    "url": "https://www.torontosprayfoamparts.ca/product/black-insulation-removal-bag-10-pcs-ctn/",
+    "description": "TSP Original — black polypropylene insulation removal bag. 10 PCS/CTN, dimensions 106\" x 65\".",
+    "quote_only": false,
+    "in_stock": false
+  },
+  {
+    "name": "31\" Large Scraper",
+    "price": 77.99,
+    "category": "Piranha Tools",
+    "url": "https://www.torontosprayfoamparts.ca/product/31-large-scraper/",
+    "description": "31-inch large scraper, Model 0065085. Professional foam removal tool.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "3-in-1 Knife",
+    "price": 51.99,
+    "category": "Piranha Tools",
+    "url": "https://www.torontosprayfoamparts.ca/product/3-in-1-knife/",
+    "description": "The ultimate tool for professional foamers — designed by industry experts. Three tools in one compact, easy-to-carry design.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "54001 Full Face Respirator",
+    "price": 154.09,
+    "category": "Health & Safety",
+    "url": "https://www.torontosprayfoamparts.ca/product/54001-full-face-respirator/",
+    "description": "HoneyWell 54001 full face respirator — essential PPE for spray foam work.",
+    "quote_only": false,
+    "in_stock": true
+  },
+  {
+    "name": "5 HP 3 PH 60 GAL Vertical Compressor",
+    "price": null,
+    "category": "Compressors",
+    "url": "https://www.torontosprayfoamparts.ca/product/5-hp-3-ph-60-gal-vertical-comp/",
+    "description": "5 HP 3-phase 60-gallon vertical air compressor. Quote required.",
+    "quote_only": true,
+    "in_stock": true
+  },
+  {
+    "name": "2024 Weberlane Trailer R3E30/Boss",
+    "price": null,
+    "category": "Rigs & Trailers",
+    "url": "https://www.torontosprayfoamparts.ca/product/2024-weberlane-trailer-r3e30-boss/",
+    "description": "2024 Weberlane spray foam trailer rig with R3E30/Boss proportioner setup. Contact for current rig availability.",
+    "quote_only": true,
+    "in_stock": false
+  }
+]
