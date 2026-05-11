@@ -1,12 +1,81 @@
 import os
 import json
 import re
+import time
+import requests
 from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+# WooCommerce credentials for live bundle fetch
+WC_KEY = os.environ.get("WC_KEY", "ck_61a9fb615cb3bfbeb02355ff606d29ef93163117")
+WC_SECRET = os.environ.get("WC_SECRET", "cs_15eaf2ca6886d182b01477c497f9a30fd0508b69")
+WC_BASE = "https://www.desertwillowbotanicals.com/wp-json/wc/v3"
+
+# Known individual formula names (to filter them out of bundle results)
+FORMULA_NAMES = {
+    "al-r-g", "sinease", "respiratory", "immune boost", "inflammaid",
+    "joint juice", "nervaid", "mentalert", "sleep/stress", "sleep stress",
+    "digestaid", "detox", "hair of the dog"
+}
+
+_bundle_cache = {"data": None, "ts": 0}
+BUNDLE_CACHE_TTL = 3600  # refresh every hour
+
+def fetch_live_bundles():
+    """Fetch published bundle products from WooCommerce. Cache for 1 hour."""
+    global _bundle_cache
+    now = time.time()
+    if _bundle_cache["data"] is not None and (now - _bundle_cache["ts"]) < BUNDLE_CACHE_TTL:
+        return _bundle_cache["data"]
+
+    try:
+        resp = requests.get(
+            f"{WC_BASE}/products",
+            auth=(WC_KEY, WC_SECRET),
+            params={"status": "publish", "per_page": 100},
+            timeout=10
+        )
+        if resp.status_code != 200:
+            return _bundle_cache["data"] or []
+
+        products = resp.json()
+        bundles = []
+        for p in products:
+            name_lower = p.get("name", "").lower()
+            # Skip individual formulas
+            if any(f in name_lower for f in FORMULA_NAMES):
+                continue
+            # Include anything with bundle-like keywords or that isn't a formula
+            bundles.append({
+                "name": p.get("name"),
+                "price": p.get("price"),
+                "regular_price": p.get("regular_price"),
+                "description": re.sub(r"<[^>]+>", "", p.get("short_description") or p.get("description") or "").strip(),
+                "url": p.get("permalink")
+            })
+
+        _bundle_cache = {"data": bundles, "ts": now}
+        return bundles
+
+    except Exception:
+        return _bundle_cache["data"] or []
+
+def build_bundle_text():
+    bundles = fetch_live_bundles()
+    if not bundles:
+        return "No bundles are currently available."
+    lines = ["The following bundles are currently live on the site:"]
+    for b in bundles:
+        price_info = f"${b['price']}"
+        if b.get("regular_price") and b["regular_price"] != b["price"]:
+            price_info = f"${b['price']} (regular ${b['regular_price']})"
+        desc = f" — {b['description']}" if b.get("description") else ""
+        lines.append(f"- {b['name']}: {price_info}{desc}\n  Link: {b['url']}")
+    return "\n".join(lines)
 
 # Load product catalog
 with open("products.json", "r") as f:
@@ -63,30 +132,11 @@ GENERAL QUESTIONS — answer these directly:
 - Subscriptions: Every 2 months, saves 10%, easy to cancel. Recommend for chronic/ongoing concerns.
 - Can't answer something confidently: direct to https://www.desertwillowbotanicals.com/contact or suggest they call — Willow is known for getting back to people quickly.
 
-BUNDLES — Desert Willow offers curated bundles that are seasonal (not always live). If someone is dealing with concerns that match a bundle, mention it naturally. If they ask whether it's currently available, tell them to check the website or contact Willow.
-
-Current bundles (seasonal — check site for availability):
-
-1. Happy Gut Bundle — $49.90 (save ~$10)
-   Digestaid + Detox. For daily digestive comfort and gentle cleansing. Great for bloating, sluggish digestion, and liver/gut support.
-
-2. Tranquility & Clarity Duo — $49.90 (save ~$10)
-   Mentalert + Sleep/Stress. Calm focus during the day, deep rest at night. Perfect for stress, brain fog, and sleep issues.
-
-3. Travel Essentials Kit — $79.85 (save ~$10)
-   Digestaid + Immune Boost + Sleep/Stress. Stay balanced, rested, and resilient on the road — covers digestion, immunity, and nervous system.
-
-4. Immune Defense Trio — $79.85 (save ~$10)
-   Immune Boost + Respiratory + Sinease. Full-spectrum immune and respiratory support for cold/flu season.
-
-5. Pain Management Pack — $99.85 (save ~$10)
-   Inflammaid + Joint Juice + Nervaid. Comprehensive botanical approach to inflammation, joint discomfort, and nerve pain.
-
-6. Foundational Wellness Collection — $104.80 (save ~$15)
-   Detox + Inflammaid + Immune Boost + Sleep/Stress. A whole-body reset — inflammation, immunity, detox, and rest in one bundle.
+BUNDLES — Desert Willow offers curated seasonal bundles at a discount. Only recommend bundles that are currently live. Here is the real-time list of available bundles:
+{build_bundle_text()}
 
 Bundle shipping: US $5 flat, Canada $14 (bundles are 2–4 items, all fall in the 1–4 item tier).
-Sale/seasonal promo bundles (Allergy Trio, Holiday Survival Kit, etc.) appear periodically — mention they exist if relevant, and direct to the website.
+If no bundles are listed above, don't mention bundles at all — they're not currently available.
 
 RECOMMENDATIONS:
 - Recommend 1-2 products maximum at first. Be specific about why THIS product for THIS person.
