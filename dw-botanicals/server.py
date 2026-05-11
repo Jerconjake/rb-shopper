@@ -164,6 +164,10 @@ def chat():
         "products": product_cards
     })
 
+@app.route("/widget.js")
+def serve_widget():
+    return send_from_directory("static", "widget.js", mimetype="application/javascript")
+
 @app.route("/api/products", methods=["GET"])
 def get_products():
     return jsonify(PRODUCTS)

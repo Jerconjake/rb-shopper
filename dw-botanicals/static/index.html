@@ -230,6 +230,35 @@
       font-size: 11px; color: var(--muted);
       font-style: italic; margin-top: 4px;
     }
+    /* Find in person bar */
+    .find-bar {
+      background: var(--sand-dark);
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .find-bar a {
+      font-size: 12px;
+      color: var(--sage-dark);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .find-bar a:hover { text-decoration: underline; }
+    /* Widget close button */
+    .widget-close {
+      display: none;
+      margin-left: auto;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .widget-close:hover { color: var(--charcoal); }
+    body.is-widget .widget-close { display: block; }
     /* Scrollbar */
     #messages::-webkit-scrollbar { width: 4px; }
     #messages::-webkit-scrollbar-track { background: transparent; }
@@ -244,6 +273,7 @@
     <h1>Sage</h1>
     <p><span class="online-dot"></span>Desert Willow Botanicals Wellness Advisor</p>
   </div>
+  <button class="widget-close" onclick="window.parent.postMessage('sage:close','*')" aria-label="Close">✕</button>
 </div>
 
 <div id="messages"></div>
@@ -259,6 +289,10 @@
 <div class="input-bar">
   <textarea id="user-input" rows="1" placeholder="Tell Sage what you're dealing with…"></textarea>
   <button id="send-btn" onclick="sendMessage()" aria-label="Send">➤</button>
+</div>
+
+<div class="find-bar">
+  <a href="https://www.desertwillowbotanicals.com/where-to-buy/" target="_blank">🗺️ Find Desert Willow products near you</a>
 </div>
 
 <script>
@@ -421,6 +455,11 @@ async function sendMessage(text) {
 
 function sendChip(btn) {
   sendMessage(btn.textContent);
+}
+
+// Widget mode — show close button when embedded
+if (new URLSearchParams(window.location.search).get('widget') === '1') {
+  document.body.classList.add('is-widget');
 }
 
 // Welcome message
