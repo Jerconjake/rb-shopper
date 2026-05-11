@@ -50,7 +50,7 @@
   // Teaser bubble
   var teaser = document.createElement('div');
   teaser.id = 'sage-teaser';
-  teaser.innerHTML = '<span id="sage-teaser-close">&times;</span><strong>Not sure which formula is right for you?</strong><span>Tell Sage what you\'re dealing with &rarr;</span>';
+  teaser.innerHTML = '<span id="sage-teaser-close">&times;</span><strong>Chat with Sage, our AI wellness advisor</strong><span>Ask about what you\'re dealing with, how to use our formulas, shipping, and more &rarr;</span>';
   document.body.appendChild(teaser);
 
   // Bubble button
