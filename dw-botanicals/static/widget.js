@@ -81,10 +81,32 @@
     teaser.classList.remove('visible');
   }
 
+  function playChime() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var notes = [1046.5, 1318.5]; // C6, E6
+      notes.forEach(function(freq, i) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        var t = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        osc.start(t);
+        osc.stop(t + 0.5);
+      });
+    } catch(e) {}
+  }
+
   function openWidget() {
     isOpen = true;
     hideTeaser();
     teaserDismissed = true;
+    playChime();
     bubble.classList.add('open');
     bubble.innerHTML = CLOSE_SVG;
     // On mobile, hide bubble (close is inside iframe)
