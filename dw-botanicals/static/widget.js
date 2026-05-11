@@ -25,7 +25,7 @@
     '#sage-bubble:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(0,0,0,0.28);}',
     '#sage-bubble.open{background:#4e6b52;}',
     /* Chat window — desktop */
-    '#sage-window{position:fixed;bottom:92px;right:24px;z-index:999997;width:370px;height:min(570px,calc(100vh - 120px));border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;border:none;display:none;opacity:0;transform:translateY(12px) scale(0.97);transition:opacity 0.22s ease,transform 0.22s ease;}',
+    '#sage-window{position:fixed;bottom:92px;right:24px;z-index:999997;width:420px;height:min(600px,calc(100vh - 120px));border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;border:none;display:none;opacity:0;transform:translateY(12px) scale(0.97);transition:opacity 0.22s ease,transform 0.22s ease;}',
     '#sage-window.open{display:block;opacity:1;transform:translateY(0) scale(1);}',
     /* Teaser bubble */
     '#sage-teaser{position:fixed;bottom:90px;right:86px;z-index:999998;background:#fff;color:#2d2d2d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.45;padding:11px 14px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 18px rgba(0,0,0,0.14);max-width:220px;cursor:pointer;opacity:0;transform:translateY(6px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;}',

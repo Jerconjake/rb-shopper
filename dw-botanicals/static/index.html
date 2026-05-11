@@ -389,7 +389,14 @@ function renderBubble(role, content, products) {
   }
 
   messagesEl.appendChild(wrap);
-  scrollToBottom();
+
+  // When products are included, scroll to the top of this message so
+  // Sage's explanation text is visible, not the bottom of the card stack
+  if (products && products.length > 0) {
+    wrap.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  } else {
+    scrollToBottom();
+  }
 }
 
 function renderTyping() {
