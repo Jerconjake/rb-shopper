@@ -367,7 +367,7 @@ function renderBubble(role, content, products) {
       info.innerHTML = `
         <div class="product-name">${p.name}</div>
         <div class="product-tagline">${p.tagline}</div>
-        <div class="product-price">$${p.price}</div>
+        <div class="product-price">${p.price}</div>
         <div class="product-buttons">
           <a class="btn-shop" href="${p.product_url}" target="_blank">Shop Now</a>
           ${p.subscription_url ? `<a class="btn-subscribe" href="${p.subscription_url}" target="_blank">Subscribe & Save 10%</a>` : ''}
