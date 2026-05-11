@@ -127,4 +127,7 @@
   window.addEventListener('message', function(e) {
     if (e.data === 'sage:close') { closeWidget(); }
   });
+
+  // Public API — any button on the site can call SageWidget.open() or SageWidget.close()
+  window.SageWidget = { open: openWidget, close: closeWidget };
 })();
