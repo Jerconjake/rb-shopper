@@ -1,14 +1,11 @@
 (function() {
   'use strict';
 
-  // Don't load twice
   if (window.__sageWidgetLoaded) return;
   window.__sageWidgetLoaded = true;
 
-  // Config — update SAGE_URL if Render URL changes
   var SAGE_URL = 'https://dw-botanicals.onrender.com';
 
-  // Detect script src to allow self-hosted URL override
   var scripts = document.querySelectorAll('script[src]');
   for (var i = 0; i < scripts.length; i++) {
     var src = scripts[i].src;
@@ -19,24 +16,42 @@
     }
   }
 
-  // Inject styles
+  // Leaf SVG — stable across all browsers, never disappears
+  var LEAF_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="white" style="display:block"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-5 9z"/></svg>';
+  var CLOSE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" style="display:block"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
   var style = document.createElement('style');
   style.textContent = [
-    '#sage-bubble{position:fixed;bottom:24px;right:24px;z-index:999998;width:56px;height:56px;border-radius:50%;background:#7A9E7E;box-shadow:0 4px 16px rgba(0,0,0,0.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform 0.2s,box-shadow 0.2s;}',
-    '#sage-bubble:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,0.25);}',
-    '#sage-bubble.open{background:#5C7D60;}',
-    '#sage-window{position:fixed;bottom:92px;right:24px;z-index:999997;width:380px;height:600px;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;border:none;display:none;transition:opacity 0.2s,transform 0.2s;opacity:0;transform:translateY(12px) scale(0.97);}',
+    // Bubble button
+    '#sage-bubble{position:fixed;bottom:24px;right:24px;z-index:999998;width:56px;height:56px;border-radius:50%;background:#7A9E7E;box-shadow:0 4px 16px rgba(0,0,0,0.22);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s,box-shadow 0.2s,background 0.2s;padding:0;outline:none;}',
+    '#sage-bubble:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(0,0,0,0.28);}',
+    '#sage-bubble.open{background:#4e6b52;}',
+    // Chat window — capped height so it never overflows screen
+    '#sage-window{position:fixed;bottom:92px;right:24px;z-index:999997;width:370px;height:min(570px,calc(100vh - 120px));border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;border:none;display:none;opacity:0;transform:translateY(12px) scale(0.97);transition:opacity 0.22s ease,transform 0.22s ease;}',
     '#sage-window.open{display:block;opacity:1;transform:translateY(0) scale(1);}',
-    '@media(max-width:480px){#sage-window{width:calc(100vw - 16px);height:calc(100dvh - 100px);bottom:84px;right:8px;left:8px;}#sage-bubble{bottom:16px;right:16px;}}',
-    '#sage-badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;background:#C4773B;border-radius:50%;border:2px solid white;display:none;}'
+    // Teaser bubble
+    '#sage-teaser{position:fixed;bottom:90px;right:86px;z-index:999998;background:#fff;color:#2d2d2d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.45;padding:11px 14px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 18px rgba(0,0,0,0.14);max-width:220px;cursor:pointer;opacity:0;transform:translateY(6px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;}',
+    '#sage-teaser.visible{opacity:1;transform:translateY(0);pointer-events:auto;}',
+    '#sage-teaser strong{display:block;margin-bottom:3px;color:#2d2d2d;}',
+    '#sage-teaser span{color:#7A9E7E;font-weight:600;}',
+    '#sage-teaser-close{position:absolute;top:5px;right:7px;font-size:14px;color:#aaa;line-height:1;cursor:pointer;padding:0 2px;}',
+    '#sage-teaser-close:hover{color:#666;}',
+    // Mobile
+    '@media(max-width:480px){#sage-window{width:calc(100vw - 16px);height:calc(100dvh - 100px);bottom:84px;right:8px;left:8px;}#sage-bubble{bottom:16px;right:16px;}#sage-teaser{right:80px;bottom:80px;max-width:190px;font-size:13px;}}'
   ].join('');
   document.head.appendChild(style);
+
+  // Teaser bubble
+  var teaser = document.createElement('div');
+  teaser.id = 'sage-teaser';
+  teaser.innerHTML = '<span id="sage-teaser-close">&times;</span><strong>Not sure which formula is right for you?</strong><span>Tell Sage what you\'re dealing with &rarr;</span>';
+  document.body.appendChild(teaser);
 
   // Bubble button
   var bubble = document.createElement('button');
   bubble.id = 'sage-bubble';
   bubble.setAttribute('aria-label', 'Chat with Sage — Wellness Advisor');
-  bubble.innerHTML = '🌿<span id="sage-badge"></span>';
+  bubble.innerHTML = LEAF_SVG;
   document.body.appendChild(bubble);
 
   // Chat iframe
@@ -48,36 +63,57 @@
   document.body.appendChild(win);
 
   var isOpen = false;
+  var teaserDismissed = false;
+
+  function showTeaser() {
+    if (teaserDismissed || isOpen) return;
+    teaser.classList.add('visible');
+  }
+
+  function hideTeaser() {
+    teaser.classList.remove('visible');
+  }
 
   function openWidget() {
     isOpen = true;
+    hideTeaser();
+    teaserDismissed = true;
     bubble.classList.add('open');
-    bubble.innerHTML = '✕<span id="sage-badge"></span>';
-    win.classList.add('open');
+    bubble.innerHTML = CLOSE_SVG;
     win.style.display = 'block';
-    // Animate in next frame
     requestAnimationFrame(function() {
-      win.style.opacity = '1';
-      win.style.transform = 'translateY(0) scale(1)';
+      win.classList.add('open');
     });
   }
 
   function closeWidget() {
     isOpen = false;
     bubble.classList.remove('open');
-    bubble.innerHTML = '🌿<span id="sage-badge"></span>';
-    win.style.opacity = '0';
-    win.style.transform = 'translateY(12px) scale(0.97)';
+    bubble.innerHTML = LEAF_SVG;
+    win.classList.remove('open');
     setTimeout(function() {
-      if (!isOpen) { win.classList.remove('open'); win.style.display = 'none'; }
-    }, 200);
+      if (!isOpen) { win.style.display = 'none'; }
+    }, 230);
   }
 
   bubble.addEventListener('click', function() {
     if (isOpen) { closeWidget(); } else { openWidget(); }
   });
 
-  // Allow iframe to close the widget (postMessage)
+  teaser.addEventListener('click', function(e) {
+    if (e.target.id === 'sage-teaser-close') {
+      teaserDismissed = true;
+      hideTeaser();
+    } else {
+      openWidget();
+    }
+  });
+
+  // Show teaser after 3s, hide after 12s
+  setTimeout(function() { showTeaser(); }, 3000);
+  setTimeout(function() { hideTeaser(); }, 15000);
+
+  // Allow iframe to close widget
   window.addEventListener('message', function(e) {
     if (e.data === 'sage:close') { closeWidget(); }
   });
