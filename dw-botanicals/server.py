@@ -300,6 +300,43 @@ def serve_widget():
 def get_products():
     return jsonify(PRODUCTS)
 
+@app.route("/api/wc-data", methods=["GET"])
+def wc_data():
+    """Proxy endpoint — fetches paginated WooCommerce data from DWB.
+    Usage: /api/wc-data?resource=orders|customers|products
+    Bypasses SiteGround IP blocking since requests come from Render's trusted IP.
+    """
+    import base64 as b64
+    resource = request.args.get("resource", "orders")
+    if resource not in ("orders", "customers", "products"):
+        return jsonify({"error": "invalid resource"}), 400
+
+    creds = b64.b64encode(f"{WC_KEY}:{WC_SECRET}".encode()).decode()
+    headers = {"Authorization": f"Basic {creds}"}
+
+    all_items = []
+    page = 1
+    while True:
+        params = {"per_page": 100, "page": page}
+        if resource == "orders":
+            params["orderby"] = "date"
+            params["order"] = "asc"
+        try:
+            r = requests.get(f"{WC_BASE}/{resource}", headers=headers, params=params, timeout=30)
+        except Exception as e:
+            return jsonify({"error": str(e), "fetched": len(all_items)}), 502
+        if r.status_code != 200:
+            return jsonify({"error": f"WC returned {r.status_code}", "fetched": len(all_items)}), 502
+        batch = r.json()
+        if not batch:
+            break
+        all_items.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+
+    return jsonify({"items": all_items, "count": len(all_items)})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"✅ Sage — Desert Willow Botanicals running on port {port}")
