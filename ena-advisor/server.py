@@ -3,7 +3,9 @@ from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 
 app = Flask(__name__, static_folder="static")
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+def get_client():
+    return OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 SYSTEM_PROMPT = """You are Nora, the virtual assistant for Nurse Relief Inc. — a Canadian nursing staffing agency based in Edmonton, AB, founded in 2001 by Heather Pringle, RN.
 
@@ -97,6 +99,7 @@ def chat():
     
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
     
+    client = get_client()
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=full_messages,
