@@ -25,6 +25,15 @@ FORMULA_NAMES = {
 _bundle_cache = {"data": None, "ts": 0}
 BUNDLE_CACHE_TTL = 3600  # refresh every hour
 
+# ── Analytics counters (in-memory, cumulative since last restart) ──
+_analytics = {
+    "sessions": 0,
+    "messages": 0,
+    "product_clicks": 0,
+    "subscribe_clicks": 0,
+    "find_in_person_clicks": 0
+}
+
 def fetch_live_bundles():
     """Fetch published bundle products from WooCommerce. Cache for 1 hour."""
     global _bundle_cache
@@ -242,10 +251,27 @@ def chat():
                 "chronic": p["chronic"]
             })
 
+    # Count this as a message
+    _analytics["messages"] += 1
+
     return jsonify({
         "reply": reply,
         "products": product_cards
     })
+
+@app.route("/track", methods=["POST"])
+def track():
+    """Receive a tracking event from the chat UI."""
+    data = request.json or {}
+    event = data.get("event")
+    if event in _analytics:
+        _analytics[event] += 1
+    return jsonify({"ok": True})
+
+@app.route("/stats", methods=["GET"])
+def stats():
+    """Return current cumulative analytics counters."""
+    return jsonify(_analytics)
 
 @app.route("/widget.js")
 def serve_widget():

@@ -292,7 +292,7 @@
 </div>
 
 <div class="find-bar">
-  <a href="https://www.desertwillowbotanicals.com/where-to-buy/" target="_blank">🗺️ Find Desert Willow products near you</a>
+  <a href="https://www.desertwillowbotanicals.com/where-to-buy/" target="_blank" id="find-in-person-link">🗺️ Find Desert Willow products near you</a>
 </div>
 
 <script>
@@ -472,6 +472,35 @@ if (new URLSearchParams(window.location.search).get('widget') === '1') {
 // Welcome message
 window.addEventListener('DOMContentLoaded', () => {
   renderBubble('assistant', "Hi, I'm Sage — a wellness advisor for Desert Willow Botanicals. Tell me what you're dealing with and I'll point you to the right formula.");
+});
+
+// ── Analytics tracking ──────────────────────────────────────────
+function trackEvent(event) {
+  fetch('/track', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ event })
+  }).catch(() => {});
+}
+
+// Session start signal from parent widget
+window.addEventListener('message', function(e) {
+  if (e.data === 'sage:session_start') {
+    trackEvent('sessions');
+  }
+});
+
+// Click tracking via event delegation (handles dynamically created product cards)
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('a');
+  if (!link) return;
+  if (link.classList.contains('btn-shop')) {
+    trackEvent('product_clicks');
+  } else if (link.classList.contains('btn-subscribe')) {
+    trackEvent('subscribe_clicks');
+  } else if (link.id === 'find-in-person-link' || (link.href && link.href.includes('where-to-buy'))) {
+    trackEvent('find_in_person_clicks');
+  }
 });
 </script>
 </body>

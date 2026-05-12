@@ -115,6 +115,13 @@
     requestAnimationFrame(function() {
       win.classList.add('open');
     });
+    // Signal session start to iframe for analytics tracking
+    setTimeout(function() {
+      var iframe = win.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('sage:session_start', '*');
+      }
+    }, 800);
   }
 
   function closeWidget() {
