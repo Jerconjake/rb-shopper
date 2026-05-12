@@ -94,20 +94,21 @@ def widget():
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    data = request.json
-    messages = data.get("messages", [])
-    
-    full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
-    
-    client = get_client()
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=full_messages,
-        max_tokens=500,
-        temperature=0.7
-    )
-    
-    return jsonify({"reply": response.choices[0].message.content})
+    try:
+        data = request.json
+        messages = data.get("messages", [])
+        full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
+        client = get_client()
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=full_messages,
+            max_tokens=500,
+            temperature=0.7
+        )
+        return jsonify({"reply": response.choices[0].message.content})
+    except Exception as e:
+        print(f"Chat error: {e}", flush=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/health")
 def health():

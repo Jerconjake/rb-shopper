@@ -183,7 +183,7 @@
 <body>
 
 <div id="header">
-  <div id="avatar">🩺</div>
+  <div id="avatar"><img src="/static/logo.png" alt="Nora" style="width:32px;height:32px;object-fit:contain;"/></div>
   <div id="header-text">
     <h1>Nora</h1>
     <p><span class="online-dot"></span> Nurse Relief Inc. — Always on</p>
@@ -225,7 +225,7 @@ function addMessage(role, content, save = true) {
   const div = document.createElement('div');
   div.className = `msg ${role === 'user' ? 'user' : 'bot'}`;
 
-  const avatarDiv = role === 'assistant' ? `<div class="msg-avatar">🩺</div>` : '';
+  const avatarDiv = role === 'assistant' ? `<div class="msg-avatar"><img src="/static/logo.png" alt="" style="width:22px;height:22px;object-fit:contain;"/></div>` : '';
   div.innerHTML = `
     ${role === 'assistant' ? avatarDiv : ''}
     <div class="bubble">${linkify(escapeHtml(content))}</div>
@@ -283,10 +283,16 @@ async function sendMessage(text) {
     });
     const data = await res.json();
     hideTyping();
-    addMessage('assistant', data.reply);
+    if (data.reply) {
+      addMessage('assistant', data.reply);
+    } else {
+      addMessage('assistant', 'Sorry, I had a connection issue. Please try again or call us at (780) 477-0610.');
+      console.warn('Server error:', data.error);
+    }
   } catch (e) {
     hideTyping();
     addMessage('assistant', 'Sorry, I had a connection issue. Please try again or call us at (780) 477-0610.');
+    console.warn('Fetch error:', e);
   }
 }
 
