@@ -321,7 +321,7 @@ function loadSavedHistory() {
     const saved = JSON.parse(raw);
     if (!Array.isArray(saved) || saved.length === 0) return false;
     history = saved;
-    saved.forEach(msg => renderBubble(msg.role, msg.content));
+    saved.forEach(msg => renderBubble(msg.role, msg.content, msg.products));
     hideSuggestions();
     return true;
   } catch(e) { return false; }
@@ -482,7 +482,7 @@ async function sendMessage(text) {
     if (data.error) {
       renderBubble('assistant', 'Something went wrong — please try again in a moment.');
     } else {
-      history.push({ role: 'assistant', content: data.reply });
+      history.push({ role: 'assistant', content: data.reply, products: data.products || [] });
       saveHistory();
       renderBubble('assistant', data.reply, data.products);
     }
