@@ -304,6 +304,39 @@ const suggestionsEl = document.getElementById('suggestions');
 let history = [];
 let suggestionsHidden = false;
 
+// ── Conversation persistence (localStorage) ──────────────────────
+const STORAGE_KEY = 'sage_chat_v1';
+const MAX_STORED = 60; // cap at 60 messages (~30 exchanges)
+
+function saveHistory() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-MAX_STORED)));
+  } catch(e) {}
+}
+
+function loadSavedHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved) || saved.length === 0) return false;
+    history = saved;
+    saved.forEach(msg => renderBubble(msg.role, msg.content));
+    hideSuggestions();
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearHistory() {
+  if (!confirm('Clear your conversation with Sage?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  history = [];
+  messagesEl.innerHTML = '';
+  suggestionsHidden = false;
+  suggestionsEl.style.display = '';
+  renderBubble('assistant', "Hi, I'm Sage — a wellness advisor for Desert Willow Botanicals. Tell me what you're dealing with and I'll point you to the right formula.");
+}
+
 // Auto-resize textarea
 inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
@@ -433,6 +466,7 @@ async function sendMessage(text) {
   sendBtn.disabled = true;
 
   history.push({ role: 'user', content: text });
+  saveHistory();
   renderBubble('user', text);
   renderTyping();
 
@@ -449,6 +483,7 @@ async function sendMessage(text) {
       renderBubble('assistant', 'Something went wrong — please try again in a moment.');
     } else {
       history.push({ role: 'assistant', content: data.reply });
+      saveHistory();
       renderBubble('assistant', data.reply, data.products);
     }
   } catch (e) {
@@ -469,9 +504,19 @@ if (new URLSearchParams(window.location.search).get('widget') === '1') {
   document.body.classList.add('is-widget');
 }
 
-// Welcome message
+// Welcome message (or restore saved conversation)
 window.addEventListener('DOMContentLoaded', () => {
-  renderBubble('assistant', "Hi, I'm Sage — a wellness advisor for Desert Willow Botanicals. Tell me what you're dealing with and I'll point you to the right formula.");
+  const restored = loadSavedHistory();
+  if (!restored) {
+    renderBubble('assistant', "Hi, I'm Sage — a wellness advisor for Desert Willow Botanicals. Tell me what you're dealing with and I'll point you to the right formula.");
+  } else {
+    // Add a subtle "New conversation" link at the top
+    const bar = document.createElement('div');
+    bar.style.cssText = 'text-align:center;padding:8px 0 4px;';
+    bar.innerHTML = '<a href="#" onclick="clearHistory();return false;" style="font-size:11px;color:#999;text-decoration:none;">↩ Start a new conversation</a>';
+    messagesEl.insertBefore(bar, messagesEl.firstChild);
+    scrollToBottom();
+  }
 });
 
 // ── Analytics tracking ──────────────────────────────────────────

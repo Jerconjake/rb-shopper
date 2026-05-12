@@ -34,6 +34,22 @@ _analytics = {
     "find_in_person_clicks": 0
 }
 
+# ── IP exclusion (comma-separated in EXCLUDED_IPS env var) ──
+_excluded_ips = set(
+    ip.strip() for ip in os.environ.get("EXCLUDED_IPS", "172.225.43.149").split(",") if ip.strip()
+)
+
+def _get_client_ip():
+    """Get real client IP, respecting Render's proxy headers."""
+    return (
+        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        or request.remote_addr
+        or ""
+    )
+
+def _is_excluded():
+    return _get_client_ip() in _excluded_ips
+
 def fetch_live_bundles():
     """Fetch published bundle products from WooCommerce. Cache for 1 hour."""
     global _bundle_cache
@@ -251,8 +267,9 @@ def chat():
                 "chronic": p["chronic"]
             })
 
-    # Count this as a message
-    _analytics["messages"] += 1
+    # Count this as a message (skip excluded IPs)
+    if not _is_excluded():
+        _analytics["messages"] += 1
 
     return jsonify({
         "reply": reply,
@@ -262,6 +279,8 @@ def chat():
 @app.route("/track", methods=["POST"])
 def track():
     """Receive a tracking event from the chat UI."""
+    if _is_excluded():
+        return jsonify({"ok": True, "excluded": True})
     data = request.json or {}
     event = data.get("event")
     if event in _analytics:
