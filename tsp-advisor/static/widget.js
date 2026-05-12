@@ -1,209 +1,154 @@
-(function () {
-  if (document.getElementById('arben-widget-container')) return;
+(function() {
+  'use strict';
 
-  var BASE_URL = (function () {
-    var scripts = document.getElementsByTagName('script');
-    for (var i = 0; i < scripts.length; i++) {
-      if (scripts[i].src && scripts[i].src.includes('widget.js')) {
-        var url = new URL(scripts[i].src);
-        return url.origin;
-      }
+  if (window.__arbenWidgetLoaded) return;
+  window.__arbenWidgetLoaded = true;
+
+  var TSP_URL = 'https://tsp-advisor.onrender.com';
+
+  var scripts = document.querySelectorAll('script[src]');
+  for (var i = 0; i < scripts.length; i++) {
+    var src = scripts[i].src;
+    if (src && src.indexOf('widget.js') !== -1) {
+      var match = src.match(/^(https?:\/\/[^\/]+)/);
+      if (match) { TSP_URL = match[1]; }
+      break;
     }
-    return '';
-  })();
+  }
 
-  var isMobile = window.innerWidth <= 600;
-  var isOpen = false;
+  // Wrench SVG (open state)
+  var WRENCH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="white" style="display:block"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>';
+  var CLOSE_SVG  = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" style="display:block"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
-  // Styles
+  var css = [
+    /* Bubble */
+    '#arben-bubble{position:fixed;bottom:24px;right:24px;z-index:999998;width:56px;height:56px;border-radius:50%;background:#1863DC;box-shadow:0 4px 18px rgba(24,99,220,0.38);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s,box-shadow 0.2s,background 0.2s;padding:0;outline:none;}',
+    '#arben-bubble:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(24,99,220,0.48);}',
+    '#arben-bubble.open{background:#1250B0;}',
+    /* Chat window — desktop */
+    '#arben-window{position:fixed;bottom:92px;right:24px;z-index:999997;width:420px;height:min(600px,calc(100vh - 120px));border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;border:none;display:none;opacity:0;transform:translateY(12px) scale(0.97);transition:opacity 0.22s ease,transform 0.22s ease;}',
+    '#arben-window.open{display:block;opacity:1;transform:translateY(0) scale(1);}',
+    /* Teaser */
+    '#arben-teaser{position:fixed;bottom:90px;right:86px;z-index:999998;background:#fff;color:#1C2331;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.45;padding:11px 14px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 18px rgba(0,0,0,0.13);max-width:230px;cursor:pointer;opacity:0;transform:translateY(6px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;}',
+    '#arben-teaser.visible{opacity:1;transform:translateY(0);pointer-events:auto;}',
+    '#arben-teaser strong{display:block;margin-bottom:3px;color:#1C2331;}',
+    '#arben-teaser span{color:#1863DC;font-weight:600;}',
+    '#arben-teaser-close{position:absolute;top:5px;right:7px;font-size:14px;color:#aaa;line-height:1;cursor:pointer;padding:0 2px;}',
+    '#arben-teaser-close:hover{color:#666;}',
+    /* Mobile */
+    '@media(max-width:480px){',
+    '#arben-bubble{bottom:16px;right:16px;}',
+    '#arben-bubble.mobile-hidden{display:none!important;}',
+    '#arben-window{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;z-index:999999;}',
+    '#arben-teaser{right:80px;bottom:80px;max-width:200px;font-size:13px;}',
+    '}'
+  ].join('');
+
   var style = document.createElement('style');
-  style.textContent = `
-    #arben-bubble {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      background: #e05c00;
-      cursor: pointer;
-      z-index: 999998;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(224,92,0,0.45);
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: none;
-    }
-    #arben-bubble:hover {
-      transform: scale(1.08);
-      box-shadow: 0 6px 20px rgba(224,92,0,0.55);
-    }
-    #arben-bubble svg { width: 28px; height: 28px; }
-    #arben-chat-frame {
-      position: fixed;
-      bottom: 96px;
-      right: 24px;
-      width: 420px;
-      height: min(580px, calc(100vh - 120px));
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-      z-index: 999999;
-      display: none;
-      border: none;
-      background: white;
-    }
-    #arben-teaser {
-      position: fixed;
-      bottom: 92px;
-      right: 24px;
-      background: #1c1c1c;
-      color: white;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
-      line-height: 1.45;
-      max-width: 240px;
-      z-index: 999997;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-      cursor: pointer;
-    }
-    #arben-teaser::after {
-      content: '';
-      position: absolute;
-      bottom: -7px;
-      right: 22px;
-      width: 0; height: 0;
-      border-left: 7px solid transparent;
-      border-right: 7px solid transparent;
-      border-top: 7px solid #1c1c1c;
-    }
-    #arben-teaser-close {
-      float: right;
-      margin-left: 8px;
-      margin-top: -2px;
-      color: #aaa;
-      cursor: pointer;
-      font-size: 15px;
-      line-height: 1;
-    }
-    #arben-teaser-close:hover { color: white; }
-    @media (max-width: 600px) {
-      #arben-chat-frame {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-        bottom: auto;
-        right: auto;
-      }
-    }
-  `;
+  style.textContent = css;
   document.head.appendChild(style);
-
-  // Bubble
-  var bubble = document.createElement('button');
-  bubble.id = 'arben-bubble';
-  bubble.setAttribute('aria-label', 'Chat with Arben, TSP Parts Advisor');
-  bubble.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/>
-    </svg>
-  `;
-
-  // Chat iframe
-  var iframe = document.createElement('iframe');
-  iframe.id = 'arben-chat-frame';
-  iframe.src = BASE_URL + '/';
-  iframe.title = 'Arben – TSP Parts Advisor';
-  iframe.allow = 'autoplay';
 
   // Teaser
   var teaser = document.createElement('div');
   teaser.id = 'arben-teaser';
-  teaser.innerHTML = '<span id="arben-teaser-close">&times;</span><strong>Need a part or not sure what you need?</strong><br>Ask Arben — TSP\'s AI parts advisor →';
-  teaser.style.display = 'none';
-
+  teaser.innerHTML = '<span id="arben-teaser-close">&times;</span><strong>Need a part or not sure what to order?</strong><span>Ask Arben — TSP\'s AI parts advisor &rarr;</span>';
   document.body.appendChild(teaser);
-  document.body.appendChild(iframe);
+
+  // Bubble
+  var bubble = document.createElement('button');
+  bubble.id = 'arben-bubble';
+  bubble.setAttribute('aria-label', 'Chat with Arben — TSP Parts Advisor');
+  bubble.innerHTML = WRENCH_SVG;
   document.body.appendChild(bubble);
+
+  // Chat iframe
+  var win = document.createElement('iframe');
+  win.id = 'arben-window';
+  win.src = TSP_URL + '/?widget=1';
+  win.title = 'Arben — Toronto Spray Foam Parts Advisor';
+  win.setAttribute('allow', 'autoplay');
+  document.body.appendChild(win);
+
+  var isOpen = false;
+  var teaserDismissed = false;
+  var isMobile = function() { return window.innerWidth <= 480; };
+
+  function showTeaser() {
+    if (teaserDismissed || isOpen) return;
+    teaser.classList.add('visible');
+  }
+  function hideTeaser() {
+    teaser.classList.remove('visible');
+  }
 
   function playChime() {
     try {
       var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      function note(freq, startTime, duration) {
+      var notes = [1046.5, 1318.5];
+      notes.forEach(function(freq, i) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
-        gain.gain.setValueAtTime(0.18, ctx.currentTime + startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
-        osc.start(ctx.currentTime + startTime);
-        osc.stop(ctx.currentTime + startTime + duration);
-      }
-      note(523.25, 0, 0.35);
-      note(659.25, 0.12, 0.45);
-    } catch (e) {}
+        osc.frequency.value = freq;
+        var t = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        osc.start(t);
+        osc.stop(t + 0.5);
+      });
+    } catch(e) {}
   }
 
   function openWidget() {
     isOpen = true;
     hideTeaser();
-    iframe.style.display = 'block';
-    bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>`;
-    if (isMobile) bubble.style.display = 'none';
-    iframe.contentWindow.postMessage('__INIT__', '*');
+    teaserDismissed = true;
     playChime();
+    bubble.classList.add('open');
+    bubble.innerHTML = CLOSE_SVG;
+    if (isMobile()) { bubble.classList.add('mobile-hidden'); }
+    win.style.display = 'block';
+    requestAnimationFrame(function() {
+      win.classList.add('open');
+    });
   }
 
   function closeWidget() {
     isOpen = false;
-    iframe.style.display = 'none';
-    bubble.style.display = 'flex';
-    bubble.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/></svg>`;
+    bubble.classList.remove('open');
+    bubble.classList.remove('mobile-hidden');
+    bubble.innerHTML = WRENCH_SVG;
+    win.classList.remove('open');
+    setTimeout(function() {
+      if (!isOpen) { win.style.display = 'none'; }
+    }, 230);
   }
 
-  function hideTeaser() {
-    teaser.style.display = 'none';
-  }
-
-  bubble.addEventListener('click', function () {
-    if (isOpen) closeWidget();
-    else openWidget();
+  bubble.addEventListener('click', function() {
+    if (isOpen) { closeWidget(); } else { openWidget(); }
   });
 
-  teaser.addEventListener('click', function (e) {
+  teaser.addEventListener('click', function(e) {
     if (e.target.id === 'arben-teaser-close') {
+      teaserDismissed = true;
       hideTeaser();
     } else {
       openWidget();
     }
   });
 
-  // Allow iframe to send close signal
-  window.addEventListener('message', function (e) {
-    if (e.data === 'sage-close') closeWidget();
+  // Teaser: show 3s after load, auto-hide after 15s
+  setTimeout(function() { showTeaser(); }, 3000);
+  setTimeout(function() { hideTeaser(); }, 15000);
+
+  // Close signal from iframe
+  window.addEventListener('message', function(e) {
+    if (e.data === 'arben:close') { closeWidget(); }
   });
 
-  // Teaser bubble — show after 3s, hide after 15s
-  setTimeout(function () {
-    if (!isOpen) {
-      teaser.style.display = 'block';
-      setTimeout(function () {
-        if (!isOpen) hideTeaser();
-      }, 15000);
-    }
-  }, 3000);
-
   // Public API
-  window.ArbenWidget = {
-    open: openWidget,
-    close: closeWidget
-  };
-
+  window.ArbenWidget = { open: openWidget, close: closeWidget };
 })();
