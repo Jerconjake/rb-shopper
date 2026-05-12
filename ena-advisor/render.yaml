@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ena-advisor
+    runtime: python
+    rootDir: ena-advisor
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
