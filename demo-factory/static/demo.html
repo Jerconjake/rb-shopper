@@ -418,17 +418,18 @@
         `${cfg.trade} AI Assistant · Online`;
 
       // Logo — try scraped URL, fall back to Google Favicon API
+      const img = document.getElementById('bizLogoImg');
+      const domain = cfg.url ? new URL(cfg.url.startsWith('http') ? cfg.url : 'https://' + cfg.url).hostname : '';
+      img.onload = () => img.classList.add('loaded');
+      img.onerror = () => {
+        if (domain && !img.src.includes('google.com/s2/favicons')) {
+          img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+        }
+      };
       if (cfg.logo_url) {
-        const img = document.getElementById('bizLogoImg');
-        img.onload = () => img.classList.add('loaded');
-        img.onerror = () => {
-          // Try Google Favicon as fallback
-          const domain = cfg.url ? new URL(cfg.url.startsWith('http') ? cfg.url : 'https://' + cfg.url).hostname : '';
-          if (domain && !img.src.includes('google.com/s2/favicons')) {
-            img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-          }
-        };
         img.src = cfg.logo_url;
+      } else if (domain) {
+        img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       }
 
       // Booking links
