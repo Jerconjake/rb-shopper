@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Premier Dating Photography — Ask Alex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: #000;
+      border-bottom: 1px solid #222;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .header img {
+      height: 36px;
+      object-fit: contain;
+    }
+    .header-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .header-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #EFC050;
+    }
+    .header-status {
+      font-size: 12px;
+      color: #888;
+    }
+    .online-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #4CAF50;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 82%;
+    }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.bot { align-self: flex-start; align-items: flex-start; }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .msg.user .bubble {
+      background: #EFC050;
+      color: #000;
+      border-bottom-right-radius: 4px;
+      font-weight: 500;
+    }
+    .msg.bot .bubble {
+      background: #1a1a1a;
+      color: #f0f0f0;
+      border-bottom-left-radius: 4px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .msg.bot .bubble a {
+      color: #EFC050;
+      text-decoration: underline;
+    }
+
+    /* Book CTA button in messages */
+    .book-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 9px 18px;
+      background: #EFC050;
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .book-btn:hover { background: #d4a832; }
+
+    /* Typing indicator */
+    .typing .bubble {
+      padding: 12px 16px;
+    }
+    .dots { display: flex; gap: 4px; align-items: center; }
+    .dots span {
+      width: 7px; height: 7px;
+      background: #888;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    /* Input area */
+    .input-area {
+      background: #0d0d0d;
+      border-top: 1px solid #222;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    textarea {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      padding: 10px 14px;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+      max-height: 100px;
+      min-height: 42px;
+      overflow-y: auto;
+      font-family: inherit;
+    }
+    textarea::placeholder { color: #555; }
+    textarea:focus { border-color: #EFC050; }
+
+    .send-btn {
+      width: 42px; height: 42px;
+      background: #EFC050;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .send-btn:hover { background: #d4a832; }
+    .send-btn svg { width: 18px; height: 18px; fill: #000; }
+    .send-btn:disabled { background: #333; cursor: not-allowed; }
+    .send-btn:disabled svg { fill: #555; }
+
+    /* Suggested questions */
+    .suggestions {
+      padding: 0 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sug-btn {
+      background: transparent;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .sug-btn:hover { border-color: #EFC050; color: #EFC050; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <img src="/static/logo.png" alt="Premier Dating Photography" onerror="this.style.display='none'" />
+  <div class="header-text">
+    <span class="header-name">Alex</span>
+    <span class="header-status"><span class="online-dot"></span>PDP Assistant · Austin, TX</span>
+  </div>
+</div>
+
+<div class="messages" id="messages"></div>
+
+<div class="suggestions" id="suggestions">
+  <button class="sug-btn" onclick="sendSuggestion('How does the photo shoot work?')">How does it work?</button>
+  <button class="sug-btn" onclick="sendSuggestion('What does it cost?')">Pricing?</button>
+  <button class="sug-btn" onclick="sendSuggestion('What results can I expect?')">What results can I expect?</button>
+  <button class="sug-btn" onclick="sendSuggestion('Do you offer a guarantee?')">Guarantee?</button>
+</div>
+
+<div class="input-area">
+  <textarea id="input" placeholder="Ask Alex anything..." rows="1"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+    <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+  </button>
+</div>
+
+<script>
+  const BOOKING_URL = "https://premierdatingphotography.com/book-a-free-consultation/";
+  const STORAGE_KEY = "pdp_chat_history";
+  const MAX_HISTORY = 40;
+
+  let messages = [];
+  let msgCount = 0;
+
+  // Load history
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      messages = parsed.messages || [];
+    }
+  } catch(e) {}
+
+  function saveHistory() {
+    try {
+      const trimmed = messages.slice(-MAX_HISTORY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages: trimmed }));
+    } catch(e) {}
+  }
+
+  function renderMessages() {
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+
+    if (messages.length === 0) {
+      addBotMessage("Hey! I'm Alex from Premier Dating Photography 📸\n\nIf you're tired of getting ignored on dating apps, you're in the right place. What can I help you with today?", false);
+      return;
+    }
+
+    messages.forEach(m => {
+      appendMessage(m.role === "user" ? "user" : "bot", m.content, false);
+    });
+
+    scrollBottom();
+  }
+
+  function appendMessage(role, text, save = true) {
+    const container = document.getElementById("messages");
+    const div = document.createElement("div");
+    div.className = `msg ${role}`;
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    // Parse line breaks and links
+    const formatted = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>")
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
+
+    bubble.innerHTML = formatted;
+
+    // Add book button after Nth bot message
+    if (role === "bot") {
+      msgCount++;
+      if (msgCount >= 3 && msgCount % 3 === 0) {
+        const btn = document.createElement("a");
+        btn.href = BOOKING_URL;
+        btn.target = "_blank";
+        btn.className = "book-btn";
+        btn.textContent = "📅 Book Free Consultation";
+        bubble.appendChild(btn);
+      }
+    }
+
+    div.appendChild(bubble);
+    container.appendChild(div);
+    scrollBottom();
+  }
+
+  function addBotMessage(text, save = true) {
+    appendMessage("bot", text, save);
+    if (save) {
+      messages.push({ role: "assistant", content: text });
+      saveHistory();
+    }
+  }
+
+  function scrollBottom() {
+    const c = document.getElementById("messages");
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function showTyping() {
+    const container = document.getElementById("messages");
+    const div = document.createElement("div");
+    div.className = "msg bot typing";
+    div.id = "typing";
+    div.innerHTML = '<div class="bubble"><div class="dots"><span></span><span></span><span></span></div></div>';
+    container.appendChild(div);
+    scrollBottom();
+  }
+
+  function hideTyping() {
+    const t = document.getElementById("typing");
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Hide suggestions after first message
+    document.getElementById("suggestions").style.display = "none";
+
+    input.value = "";
+    input.style.height = "42px";
+
+    appendMessage("user", text);
+    messages.push({ role: "user", content: text });
+    saveHistory();
+
+    document.getElementById("sendBtn").disabled = true;
+    showTyping();
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages })
+      });
+      const data = await res.json();
+      hideTyping();
+      if (data.reply) {
+        addBotMessage(data.reply);
+      } else {
+        addBotMessage("Sorry, something went wrong. Please try again or call us at 818-300-4098.");
+      }
+    } catch(e) {
+      hideTyping();
+      addBotMessage("Connection issue. Please try again or call us at 818-300-4098.");
+    }
+
+    document.getElementById("sendBtn").disabled = false;
+    input.focus();
+  }
+
+  function sendSuggestion(text) {
+    document.getElementById("input").value = text;
+    sendMessage();
+  }
+
+  // Auto-resize textarea
+  document.getElementById("input").addEventListener("input", function() {
+    this.style.height = "42px";
+    this.style.height = Math.min(this.scrollHeight, 100) + "px";
+  });
+
+  document.getElementById("input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  renderMessages();
+</script>
+</body>
+</html>
