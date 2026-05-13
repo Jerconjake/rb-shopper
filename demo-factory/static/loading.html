@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building your assistant…</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #07080a;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Background orbs — same as landing */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle at center, rgba(79,70,229,0.30), transparent 70%);
+      top: -160px; left: -140px;
+      animation: drift1 12s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle at center, rgba(14,165,233,0.20), transparent 70%);
+      bottom: -140px; right: -100px;
+      animation: drift2 15s ease-in-out infinite;
+    }
+    @keyframes drift1 {
+      0%,100% { transform: translate(0,0); }
+      50%      { transform: translate(25px,-20px); }
+    }
+    @keyframes drift2 {
+      0%,100% { transform: translate(0,0); }
+      50%      { transform: translate(-20px,18px); }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Layout ── */
+    .wrap {
+      position: relative;
+      z-index: 10;
+      max-width: 680px;
+      width: 100%;
+      padding: 40px 28px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Top status */
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 44px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.38);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      min-height: 22px;
+    }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.12);
+      border-top-color: rgba(255,255,255,0.55);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Business name reveal */
+    .for-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 10px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .for-label.show { opacity: 1; }
+
+    .biz-name {
+      font-size: clamp(30px, 5.5vw, 52px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 52px;
+      min-height: 66px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      background: linear-gradient(140deg, #fff 20%, rgba(255,255,255,0.65) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .biz-name.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Benefit stage ── */
+    .benefit-stage {
+      min-height: 130px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 52px;
+    }
+
+    .benefit-headline {
+      font-size: clamp(26px, 4.5vw, 44px);
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .benefit-headline.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .benefit-headline.exit {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .benefit-sub {
+      font-size: 16px;
+      color: rgba(255,255,255,0.42);
+      line-height: 1.6;
+      max-width: 500px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.45s ease 0.08s, transform 0.45s ease 0.08s;
+    }
+    .benefit-sub.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .benefit-sub.exit {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    /* ── Progress ── */
+    .progress-track {
+      width: 260px;
+      height: 2px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #0ea5e9, #8b5cf6);
+      background-size: 200% 100%;
+      border-radius: 2px;
+      transition: width 0.9s ease;
+      animation: shimmer 2s linear infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Dots */
+    .dots-row {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+      transition: background 0.35s, transform 0.35s;
+    }
+    .dot.active {
+      background: rgba(255,255,255,0.75);
+      transform: scale(1.2);
+    }
+
+    /* Ready state overlay */
+    .ready-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.5s ease;
+    }
+    .ready-overlay.show { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+    .ready-check {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 8px;
+      box-shadow: 0 0 40px rgba(79,70,229,0.5);
+    }
+    .ready-text {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .ready-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="wrap">
+    <div class="status-row">
+      <div class="spinner" id="spinner"></div>
+      <span id="statusText">Reading your website…</span>
+    </div>
+
+    <div class="for-label" id="forLabel">Building an assistant for</div>
+    <div class="biz-name" id="bizName">&nbsp;</div>
+
+    <!-- Benefit carousel -->
+    <div class="benefit-stage" id="benefitStage">
+      <div class="benefit-headline" id="benefitHead"></div>
+      <div class="benefit-sub" id="benefitSub"></div>
+    </div>
+
+    <!-- Ready state (replaces carousel when done) -->
+    <div class="ready-overlay" id="readyOverlay">
+      <div class="ready-check">✓</div>
+      <div class="ready-text">Your assistant is ready</div>
+      <div class="ready-sub">Taking you there now…</div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="dots-row" id="dotsRow"></div>
+  </div>
+
+  <script>
+    const JOB_ID = sessionStorage.getItem('job_id');
+    if (!JOB_ID) window.location.href = '/';
+
+    const BENEFITS = [
+      {
+        head: "Available 24/7.",
+        sub:  "Even when you're on the job, your assistant is answering customer questions — nights, weekends, holidays."
+      },
+      {
+        head: "Zero spam. Zero solicitation.",
+        sub:  "It handles unwanted contacts so they never reach your inbox. Your phone is for real work."
+      },
+      {
+        head: "Qualifies leads automatically.",
+        sub:  "Only serious buyers make it through to you. No more tire-kickers or time-wasters."
+      },
+      {
+        head: "Books appointments while you work.",
+        sub:  "Customers schedule, get answers, and move forward — without a single phone call from your end."
+      },
+      {
+        head: "Upsells and cross-sells naturally.",
+        sub:  "Surfaces add-ons and premium services at exactly the right moment — without being pushy."
+      },
+      {
+        head: "Replaces your contact form.",
+        sub:  "A real conversation beats a form every time. More leads, more context, less spam."
+      },
+      {
+        head: "Speaks your language.",
+        sub:  "Tuned to your trade, your tone, and your specific services. Not off-the-shelf. Not generic."
+      },
+      {
+        head: "Fully customizable.",
+        sub:  "Colors, voice, features, personality — built around your business, not a template."
+      },
+      {
+        head: "And it's built for you.",
+        sub:  "What you're about to see was created from your actual website. Your services. Your brand."
+      }
+    ];
+
+    let currentBenefit = 0;
+    let bizNameSet = false;
+    let progress = 4;
+    let done = false;
+
+    // Build dots
+    const dotsRow = document.getElementById('dotsRow');
+    BENEFITS.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.id = `dot-${i}`;
+      dotsRow.appendChild(d);
+    });
+
+    const headEl = document.getElementById('benefitHead');
+    const subEl  = document.getElementById('benefitSub');
+
+    function showBenefit(idx, animate = true) {
+      if (!animate) {
+        headEl.textContent = BENEFITS[idx].head;
+        subEl.textContent  = BENEFITS[idx].sub;
+        headEl.classList.add('show');
+        subEl.classList.add('show');
+        return;
+      }
+
+      // Exit
+      headEl.classList.remove('show'); headEl.classList.add('exit');
+      subEl.classList.remove('show');  subEl.classList.add('exit');
+
+      setTimeout(() => {
+        headEl.classList.remove('exit');
+        subEl.classList.remove('exit');
+        headEl.textContent = BENEFITS[idx].head;
+        subEl.textContent  = BENEFITS[idx].sub;
+        headEl.classList.add('show');
+        subEl.classList.add('show');
+
+        document.querySelectorAll('.dot').forEach((d, i) => {
+          d.classList.toggle('active', i === idx);
+        });
+      }, 380);
+    }
+
+    // First benefit after 1s
+    setTimeout(() => showBenefit(0, false), 1000);
+
+    // Cycle every 3.2s
+    const cycleTimer = setInterval(() => {
+      if (done) return;
+      currentBenefit = (currentBenefit + 1) % BENEFITS.length;
+      showBenefit(currentBenefit);
+    }, 3200);
+
+    // Progress bar crawl
+    const progressEl = document.getElementById('progressFill');
+    const progressTimer = setInterval(() => {
+      if (done) return;
+      progress = Math.min(progress + 1.8, 88);
+      progressEl.style.width = progress + '%';
+    }, 500);
+
+    // Poll backend
+    async function poll() {
+      if (done) return;
+      try {
+        const res  = await fetch(`/api/status/${JOB_ID}`);
+        const data = await res.json();
+
+        // Reveal business name once scraped
+        if (data.business_name && !bizNameSet) {
+          bizNameSet = true;
+          const forEl = document.getElementById('forLabel');
+          const bizEl = document.getElementById('bizName');
+          forEl.classList.add('show');
+          bizEl.textContent = data.business_name;
+          bizEl.classList.add('show');
+          document.getElementById('statusText').textContent = 'Building your assistant…';
+        }
+
+        if (data.status === 'done' && data.slug) {
+          done = true;
+          clearInterval(cycleTimer);
+          clearInterval(progressTimer);
+
+          // Flash to last benefit ("built for you")
+          currentBenefit = BENEFITS.length - 1;
+          showBenefit(currentBenefit);
+
+          // Complete progress bar
+          progressEl.style.width = '100%';
+          document.getElementById('statusText').textContent = '✓ Ready';
+          document.getElementById('spinner').style.display = 'none';
+
+          // Show ready overlay after brief pause
+          setTimeout(() => {
+            document.getElementById('benefitStage').style.display = 'none';
+            document.getElementById('readyOverlay').classList.add('show');
+          }, 900);
+
+          // Navigate
+          setTimeout(() => {
+            window.location.href = `/demo/${data.slug}`;
+          }, 2200);
+
+        } else if (data.status === 'error') {
+          window.location.href = '/?error=1';
+        } else {
+          setTimeout(poll, 1600);
+        }
+      } catch (e) {
+        setTimeout(poll, 2000);
+      }
+    }
+
+    setTimeout(poll, 2000);
+  </script>
+</body>
+</html>

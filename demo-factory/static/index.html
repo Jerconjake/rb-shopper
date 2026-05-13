@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J-Squared AI — See it in 30 seconds</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #07080a;
+      --surface: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.10);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.45);
+      --faint: rgba(255,255,255,0.20);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Animated background ── */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle at center, rgba(79,70,229,0.35), transparent 70%);
+      top: -160px; left: -140px;
+      animation: drift1 12s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle at center, rgba(14,165,233,0.25), transparent 70%);
+      bottom: -140px; right: -100px;
+      animation: drift2 15s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 360px; height: 360px;
+      background: radial-gradient(circle at center, rgba(139,92,246,0.20), transparent 70%);
+      top: 45%; left: 55%;
+      transform: translate(-50%,-50%);
+      animation: drift3 10s ease-in-out infinite;
+    }
+
+    @keyframes drift1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(30px,-25px) scale(1.04); }
+      66%      { transform: translate(-20px,20px) scale(0.97); }
+    }
+    @keyframes drift2 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      40%      { transform: translate(-25px,20px) scale(1.05); }
+      70%      { transform: translate(15px,-15px) scale(0.96); }
+    }
+    @keyframes drift3 {
+      0%,100% { transform: translate(-50%,-50%) scale(1); }
+      50%      { transform: translate(-50%,-50%) scale(1.15); }
+    }
+
+    /* Subtle grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Main card ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      max-width: 620px;
+      width: 100%;
+      padding: 56px 48px 48px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .card { padding: 40px 24px 32px; }
+    }
+
+    /* Live badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 36px;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(12px);
+    }
+    .badge-dot {
+      width: 7px; height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #22c55e;
+      animation: blink 2.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Headline */
+    h1 {
+      font-size: clamp(38px, 6.5vw, 68px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      margin-bottom: 22px;
+      background: linear-gradient(160deg, #ffffff 30%, rgba(255,255,255,0.58) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 48px;
+      font-weight: 400;
+    }
+    .subtitle strong {
+      color: rgba(255,255,255,0.82);
+      font-weight: 600;
+    }
+
+    /* Input group */
+    .input-wrap {
+      position: relative;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .url-input {
+      flex: 1;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 16px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .url-input::placeholder { color: rgba(255,255,255,0.28); }
+    .url-input:focus {
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.04), 0 0 20px rgba(79,70,229,0.15);
+    }
+
+    .cta-btn {
+      background: #fff;
+      color: #07080a;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 26px;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 36px rgba(255,255,255,0.18);
+    }
+    .cta-btn:active { transform: translateY(0); }
+
+    /* Trust row */
+    .trust {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--faint);
+      margin-top: 6px;
+    }
+    .trust-item::before {
+      content: '✓ ';
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* Error */
+    .error {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #f87171;
+      min-height: 20px;
+    }
+
+    /* Footer */
+    .footer {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255,255,255,0.18);
+      z-index: 10;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <div class="card">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Built for your business · Ready in 30 seconds
+    </div>
+
+    <h1>Your AI assistant,<br>built live.</h1>
+
+    <p class="subtitle">
+      Enter your website URL. In 30 seconds you'll see an AI assistant
+      <strong>built specifically for your business</strong> — your services,
+      your voice, your brand.
+    </p>
+
+    <div class="input-wrap">
+      <input
+        id="urlInput"
+        class="url-input"
+        type="text"
+        placeholder="yourwebsite.com"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="cta-btn" onclick="go()">Build it →</button>
+    </div>
+
+    <div class="trust">
+      <span class="trust-item">No signup required</span>
+      <span class="trust-item">Free to try</span>
+      <span class="trust-item">No credit card</span>
+    </div>
+
+    <div class="error" id="errMsg"></div>
+  </div>
+
+  <div class="footer">J-Squared Digital · AI Assistants for Local Business</div>
+
+  <script>
+    const input = document.getElementById('urlInput');
+    const errEl = document.getElementById('errMsg');
+
+    // Check for error param (redirected back from a failed generation)
+    if (new URLSearchParams(window.location.search).get('error')) {
+      errEl.textContent = "Something went wrong reading that site. Please try again.";
+    }
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+
+    async function go() {
+      errEl.textContent = '';
+      let url = input.value.trim();
+      if (!url) { errEl.textContent = 'Please enter your website URL.'; return; }
+      if (!url.startsWith('http')) url = 'https://' + url;
+
+      try {
+        const res = await fetch('/api/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        if (data.job_id) {
+          sessionStorage.setItem('job_id', data.job_id);
+          sessionStorage.setItem('site_url', url);
+          window.location.href = '/loading';
+        } else {
+          errEl.textContent = 'Something went wrong. Please try again.';
+        }
+      } catch (e) {
+        errEl.textContent = 'Connection error. Please check your internet and try again.';
+      }
+    }
+  </script>
+</body>
+</html>

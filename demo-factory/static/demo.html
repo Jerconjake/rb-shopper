@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Assistant Demo — J-Squared</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dim: rgba(79,70,229,0.18);
+      --bg: #07080a;
+      --surface: rgba(255,255,255,0.055);
+      --border: rgba(255,255,255,0.09);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.42);
+      --faint: rgba(255,255,255,0.18);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7,8,10,0.85);
+      backdrop-filter: blur(16px);
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    /* Logo / avatar */
+    .biz-avatar {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      background: var(--primary);
+      overflow: hidden;
+      position: relative;
+    }
+    .biz-avatar img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: none;
+      padding: 4px;
+    }
+    .biz-avatar img.loaded { display: block; }
+    .biz-avatar .initial { position: absolute; }
+    .biz-avatar img.loaded ~ .initial { display: none; }
+
+    .header-info { min-width: 0; }
+    .header-name {
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .online-dot {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #22c55e;
+      flex-shrink: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .demo-tag {
+      font-size: 10.5px;
+      color: var(--faint);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .get-yours-btn {
+      background: #fff;
+      color: #07080a;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+      display: none;
+    }
+    .get-yours-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Messages ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      max-width: 78%;
+      animation: msgIn 0.28s ease;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 30px; height: 30px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 2px;
+      background: var(--primary);
+      color: #fff;
+      overflow: hidden;
+    }
+    .avatar img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      padding: 3px;
+      display: none;
+    }
+    .avatar img.loaded { display: block; }
+    .avatar .av-init { font-size: 13px; font-weight: 800; }
+    .avatar img.loaded ~ .av-init { display: none; }
+
+    .msg.user .avatar {
+      background: rgba(255,255,255,0.09);
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .bubble {
+      padding: 11px 15px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      line-height: 1.55;
+    }
+    .msg.assistant .bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px 16px 16px 16px;
+      color: rgba(255,255,255,0.88);
+    }
+    .msg.user .bubble {
+      background: var(--primary);
+      border-radius: 16px 4px 16px 16px;
+    }
+
+    /* Typing indicator */
+    .typing-msg {
+      display: flex;
+      gap: 10px;
+    }
+    .typing-dots {
+      display: flex;
+      gap: 5px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px 16px 16px 16px;
+    }
+    .typing-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.18s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-5px); }
+    }
+
+    /* ── Input area ── */
+    .input-area {
+      padding: 14px 22px 22px;
+      border-top: 1px solid var(--border);
+      background: rgba(7,8,10,0.6);
+      flex-shrink: 0;
+    }
+
+    /* CTA banner — appears after a few messages */
+    .cta-strip {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(14,165,233,0.18));
+      border: 1px solid rgba(79,70,229,0.28);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      animation: msgIn 0.4s ease;
+    }
+    .cta-strip.show { display: flex; }
+    .cta-strip p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.68);
+      line-height: 1.4;
+    }
+    .cta-strip p strong { color: #fff; }
+    .cta-link {
+      background: #fff;
+      color: #07080a;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .cta-link:hover { opacity: 0.88; }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .chat-input::placeholder { color: rgba(255,255,255,0.22); }
+    .chat-input:focus {
+      border-color: var(--primary);
+      background: rgba(255,255,255,0.07);
+    }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--primary);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .send-btn:hover { opacity: 0.88; transform: scale(1.06); }
+    .send-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+    .powered {
+      text-align: center;
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.16);
+      margin-top: 9px;
+      letter-spacing: 0.03em;
+    }
+    .powered a { color: inherit; text-decoration: none; }
+    .powered a:hover { color: rgba(255,255,255,0.35); }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="biz-avatar" id="bizAvatar">
+        <img id="bizLogoImg" src="" alt="Logo" />
+        <span class="initial" id="bizInitial">?</span>
+      </div>
+      <div class="header-info">
+        <div class="header-name" id="headerName">Loading…</div>
+        <div class="header-status">
+          <div class="online-dot"></div>
+          <span id="headerSub">AI Assistant · Online</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="demo-tag">Demo by J-Squared</div>
+      <a id="getYoursBtn" class="get-yours-btn" href="mailto:jake@j-squared.ca" target="_blank">
+        Get yours →
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages"></div>
+
+  <!-- Input area -->
+  <div class="input-area">
+    <div class="cta-strip" id="ctaStrip">
+      <p><strong>Like what you see?</strong> J-Squared builds custom AI assistants like this for local businesses — live on your site in 24 hours.</p>
+      <a id="ctaLink" class="cta-link" href="mailto:jake@j-squared.ca" target="_blank">Book a call →</a>
+    </div>
+    <div class="input-row">
+      <input
+        class="chat-input"
+        id="chatInput"
+        type="text"
+        placeholder="Ask a question…"
+        autocomplete="off"
+      />
+      <button class="send-btn" onclick="send()">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="powered">
+      Powered by <a href="https://j-squared.ca" target="_blank">J-Squared Digital</a>
+    </div>
+  </div>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────────────────
+    const slug = window.location.pathname.split('/demo/')[1];
+    if (!slug) window.location.href = '/';
+
+    let config    = null;
+    let history   = [];   // [{role, content}]
+    let msgCount  = 0;    // user messages sent
+    let ctaShown  = false;
+
+    // ── Chime ────────────────────────────────────────────────────────────
+    function chime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [[523.25, 0], [659.25, 0.20], [783.99, 0.40]].forEach(([freq, delay]) => {
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const t = ctx.currentTime + delay;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.18, t + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+          osc.start(t); osc.stop(t + 0.55);
+        });
+      } catch (e) {}
+    }
+
+    // ── Apply branding ───────────────────────────────────────────────────
+    function applyConfig(cfg) {
+      document.documentElement.style.setProperty('--primary', cfg.primary_color);
+
+      document.getElementById('headerName').textContent = cfg.business_name;
+      document.getElementById('bizInitial').textContent = cfg.business_name.charAt(0).toUpperCase();
+      document.getElementById('bizAvatar').style.background = cfg.primary_color;
+      document.title = `${cfg.business_name} — AI Assistant`;
+
+      // Trade in header sub
+      document.getElementById('headerSub').textContent =
+        `${cfg.trade} AI Assistant · Online`;
+
+      // Logo
+      if (cfg.logo_url) {
+        const img = document.getElementById('bizLogoImg');
+        img.onload = () => img.classList.add('loaded');
+        img.src = cfg.logo_url;
+      }
+
+      // Booking links
+      const BOOKING = 'mailto:jake@j-squared.ca';
+      document.getElementById('getYoursBtn').href  = BOOKING;
+      document.getElementById('ctaLink').href       = BOOKING;
+    }
+
+    // ── Render a message ─────────────────────────────────────────────────
+    function renderMsg(role, content) {
+      const msgs = document.getElementById('messages');
+      const wrap = document.createElement('div');
+      wrap.className = `msg ${role}`;
+
+      const initial = config ? config.business_name.charAt(0).toUpperCase() : 'AI';
+
+      let avatarHTML;
+      if (role === 'assistant') {
+        avatarHTML = `<div class="avatar" style="background:var(--primary)">
+          ${config?.logo_url ? `<img src="${config.logo_url}" alt="" class="${config.logo_url ? 'loaded' : ''}" onerror="this.style.display='none'" />` : ''}
+          <span class="av-init">${initial}</span>
+        </div>`;
+      } else {
+        avatarHTML = `<div class="avatar">You</div>`;
+      }
+
+      // Light markdown: bold, newlines
+      const html = content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+      wrap.innerHTML = `${avatarHTML}<div class="bubble">${html}</div>`;
+      msgs.appendChild(wrap);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // ── Typing indicator ─────────────────────────────────────────────────
+    function showTyping() {
+      const msgs = document.getElementById('messages');
+      const div  = document.createElement('div');
+      div.className = 'typing-msg';
+      div.id = 'typingIndicator';
+      const initial = config ? config.business_name.charAt(0).toUpperCase() : 'AI';
+      div.innerHTML = `
+        <div class="avatar" style="background:var(--primary)"><span class="av-init">${initial}</span></div>
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function hideTyping() {
+      const el = document.getElementById('typingIndicator');
+      if (el) el.remove();
+    }
+
+    // ── Send message ─────────────────────────────────────────────────────
+    async function send() {
+      const input = document.getElementById('chatInput');
+      const text  = input.value.trim();
+      if (!text || !config) return;
+
+      input.value = '';
+      history.push({ role: 'user', content: text });
+      renderMsg('user', text);
+      showTyping();
+      msgCount++;
+
+      // Show CTA strip after 3 user messages
+      if (msgCount >= 3 && !ctaShown) {
+        ctaShown = true;
+        document.getElementById('ctaStrip').classList.add('show');
+        document.getElementById('getYoursBtn').style.display = 'block';
+      }
+
+      try {
+        const res  = await fetch(`/api/demo/${slug}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history })
+        });
+
+        const data = await res.json();
+        hideTyping();
+
+        if (data.reply) {
+          history.push({ role: 'assistant', content: data.reply });
+          renderMsg('assistant', data.reply);
+        } else {
+          renderMsg('assistant', "Sorry, something went wrong. Please try again.");
+        }
+      } catch (e) {
+        hideTyping();
+        renderMsg('assistant', "Connection error. Please try again.");
+      }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const res = await fetch(`/api/demo/${slug}/config`);
+        if (!res.ok) { window.location.href = '/'; return; }
+        config = await res.json();
+        applyConfig(config);
+
+        chime();
+
+        const services = config.services?.slice(0, 3).join(', ') || 'our services';
+        const greeting = `Hi! I'm the AI assistant for **${config.business_name}**.\n\nI can answer questions about ${services}${config.location ? `, our service area around **${config.location}**` : ''}, pricing, booking, and more.\n\nWhat can I help you with today?`;
+
+        history.push({ role: 'assistant', content: greeting });
+        renderMsg('assistant', greeting);
+
+        document.getElementById('chatInput').focus();
+      } catch (e) {
+        window.location.href = '/';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

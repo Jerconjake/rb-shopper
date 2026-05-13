@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: demo-factory
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: NOTIFY_EMAIL
+        value: jake@j-squared.ca
+      - key: BOOKING_LINK
+        value: mailto:jake@j-squared.ca
+      - key: SERVICE_URL
+        value: https://demo-factory.onrender.com
