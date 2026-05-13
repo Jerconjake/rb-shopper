@@ -255,6 +255,52 @@ def submit():
         return jsonify({"ok": False, "error": "Something went wrong. Please try again."}), 500
 
 
+# -------------------------------------------------
+# Funnel analytics
+# -------------------------------------------------
+funnel = {
+    "page_loads": 0,
+    "step_1": 0,       # selected an intent
+    "step_2": 0,       # reached step 2
+    "step_2_typed": 0, # typed in situation box
+    "step_3": 0,       # reached step 3
+    "step_4": 0,       # reached step 4
+    "submitted": 0,    # form submitted successfully
+    "blocked": 0,      # AI or moderation blocked
+    "soft_gated": 0,   # saw the "just so you know" gate
+    "gate_continued": 0,  # continued past gate
+    "gate_dismissed": 0,  # left at gate
+}
+
+@app.route("/track", methods=["POST"])
+def track_event():
+    data = request.json or {}
+    event = data.get("event", "")
+    if event in funnel:
+        funnel[event] += 1
+    return jsonify({"ok": True})
+
+
+@app.route("/stats")
+def stats():
+    f = funnel.copy()
+    # Calculate drop-off rates
+    analysis = {}
+    if f["page_loads"] > 0:
+        analysis["step1_engagement"] = f"{round(f['step_1'] / f['page_loads'] * 100)}%"
+    if f["step_1"] > 0:
+        analysis["step1_to_step2"] = f"{round(f['step_2'] / f['step_1'] * 100)}%"
+    if f["step_2"] > 0:
+        analysis["step2_to_step3"] = f"{round(f['step_3'] / f['step_2'] * 100)}%"
+    if f["step_3"] > 0:
+        analysis["step3_to_step4"] = f"{round(f['step_4'] / f['step_3'] * 100)}%"
+    if f["step_4"] > 0:
+        analysis["step4_to_submit"] = f"{round(f['submitted'] / f['step_4'] * 100)}%"
+    if f["page_loads"] > 0:
+        analysis["overall_conversion"] = f"{round(f['submitted'] / f['page_loads'] * 100)}%"
+    return jsonify({"funnel": f, "conversion_rates": analysis})
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "ghl_location_configured": bool(GHL_LOCATION_ID)})

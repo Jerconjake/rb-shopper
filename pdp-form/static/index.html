@@ -406,6 +406,17 @@
 </div>
 
 <script>
+  // ── Funnel tracking ──
+  function trackEvent(event) {
+    fetch('/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event }),
+    }).catch(() => {});
+  }
+  // Track page load
+  trackEvent('page_loads');
+
   // State
   const state = {
     intents: new Set(),
@@ -414,6 +425,7 @@
     situation: '',
     aiClassification: '',
     followupShown: false,
+    tracked: new Set(),  // prevent duplicate step events
   };
 
   // ── Progress bar ──
@@ -438,6 +450,9 @@
     document.getElementById('step-' + n).classList.add('active');
     updateProgress(n);
     window.scrollTo(0, 0);
+    // Track step reached (forward only, deduplicated)
+    const stepKey = 'step_' + n;
+    if (n >= 2 && !state.tracked.has(stepKey)) { trackEvent(stepKey); state.tracked.add(stepKey); }
   }
 
   // ── Step 1: Intent ──
@@ -451,6 +466,7 @@
     } else {
       card.classList.add('selected');
       state.intents.add(val);
+      if (!state.tracked.has('step_1')) { trackEvent('step_1'); state.tracked.add('step_1'); }
     }
 
     const hasMismatched = state.intents.has('finding');
@@ -461,6 +477,7 @@
     if (hasMismatched && !state.gatePassed) {
       gate.style.display = 'block';
       nextBtn.style.display = 'none';
+      if (!state.tracked.has('soft_gated')) { trackEvent('soft_gated'); state.tracked.add('soft_gated'); }
     } else if (state.intents.size > 0) {
       gate.style.display = 'none';
       nextBtn.style.display = 'block';
@@ -473,11 +490,13 @@
   function continueAfterGate() {
     state.gatePassed = true;
     state.mismatched = true;
+    trackEvent('gate_continued');
     document.getElementById('soft-gate').style.display = 'none';
     document.getElementById('step1-next').style.display = 'block';
   }
 
   function dismissGate() {
+    trackEvent('gate_dismissed');
     // Remove "finding" selection and hide gate
     state.intents.delete('finding');
     document.querySelectorAll('#intent-options .option-card').forEach(c => {
@@ -501,6 +520,7 @@
       errEl.style.display = 'block';
       return;
     }
+    if (!state.tracked.has('step_2_typed')) { trackEvent('step_2_typed'); state.tracked.add('step_2_typed'); }
 
     // If followup already shown and they replied (or clicked continue again), just advance
     if (state.followupShown) {
@@ -529,6 +549,7 @@
         goStep(3);
       } else if (json.classification === 'blocked') {
         // Truly inappropriate
+        trackEvent('blocked');
         errEl.textContent = "We're not able to help with that request.";
         errEl.style.display = 'block';
       } else {
@@ -596,7 +617,8 @@
         return;
       }
 
-      // Redirect to thank you page
+      // Track successful submission then redirect
+      trackEvent('submitted');
       window.location.href = json.redirect;
 
     } catch (e) {
