@@ -188,7 +188,26 @@ def scrape_website(url):
             except Exception:
                 pass
 
-        # Source 2: regex on raw page text (city, province/state patterns)
+        # Source 2: Google Maps iframe src — most businesses embed one; address is in q= param
+        for iframe in soup.find_all("iframe"):
+            src = iframe.get("src", "") or iframe.get("data-src", "")
+            if "maps.google" in src or "google.com/maps" in src:
+                from urllib.parse import parse_qs, urlparse as _urlp
+                qs = parse_qs(_urlp(src).query)
+                for param in ["q", "query"]:
+                    if param in qs:
+                        raw_q = qs[param][0]
+                        if len(raw_q) < 200:
+                            jsonld_addresses.insert(0, raw_q)  # highest priority
+                        break
+
+        # Source 3: <address> HTML tags
+        for addr_tag in soup.find_all("address"):
+            addr_text = addr_tag.get_text(separator=" ", strip=True)
+            if addr_text and len(addr_text) < 300:
+                jsonld_addresses.append(addr_text)
+
+        # Source 4: regex on raw page text (city, province/state patterns)
         raw_for_addr = soup.get_text(separator=" ", strip=True)
         addr_pattern = _re.compile(
             r'\b([A-Z][a-zA-Z\s]{2,20}),\s*'
