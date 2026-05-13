@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 GHL_TOKEN = os.environ.get("GHL_TOKEN", "pit-3b2b40f2-563c-41cc-b7fb-ede506e41ce3")
-GHL_LOCATION_ID = os.environ.get("GHL_LOCATION_ID", "")
+GHL_LOCATION_ID = os.environ.get("GHL_LOCATION_ID", "pmUzbbRzxGVF4bqXfdG5")
 GHL_API_BASE = "https://services.leadconnectorhq.com"
 THANK_YOU_URL = "https://premierdatingphotography.com/thank-you-for-contacting-pdp/"
 
