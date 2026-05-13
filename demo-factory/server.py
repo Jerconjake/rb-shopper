@@ -66,71 +66,84 @@ def scrape_website(url):
         )
 
         # Logo detection — priority order:
-        # 1. og:image meta (most reliable across all CMS types)
-        # 2. <img> with "logo" in class/id/alt/src inside header/nav
-        # 3. First reasonably-sized image in header/nav
-        # 4. Any <img> with "logo" anywhere on page
-        # 5. apple-touch-icon link tag
+        # 1. header/nav img with "logo" in class/id/alt/src (most reliable)
+        # 2. Any img with "logo" keyword anywhere on page
+        # 3. apple-touch-icon (brand icon, at least recognisable)
+        # 4. Large PWA manifest icon (192px+)
+        # 5. og:image — LAST: usually a hero/blog photo, not the logo
         logo_url = ""
 
-        # Priority 1: og:image — works on WordPress, Shopify, Squarespace, Wix, etc.
-        og_image = soup.find("meta", attrs={"property": "og:image"})
-        if og_image and og_image.get("content", ""):
-            logo_url = og_image.get("content", "")
+        def get_img_src(img):
+            """Return src, checking data-src / data-lazy-src for lazy-loaded images."""
+            return (img.get("src") or img.get("data-src") or
+                    img.get("data-lazy-src") or img.get("data-original") or "")
 
-        # Priority 2: header/nav img with "logo" keyword
-        if not logo_url:
-            header_containers = soup.find_all(
-                ["header", "nav", "div"],
-                class_=lambda c: c and any(
-                    kw in " ".join(c).lower()
-                    for kw in ["header", "site-header", "navbar", "nav-wrap", "top-bar", "masthead", "branding"]
-                )
+        # Priority 1: header/nav img with "logo" keyword
+        header_containers = soup.find_all(
+            ["header", "nav", "div"],
+            class_=lambda c: c and any(
+                kw in " ".join(c).lower()
+                for kw in ["header", "site-header", "navbar", "nav-wrap", "top-bar", "masthead", "branding", "logo"]
             )
-            for container in header_containers:
-                for img in container.find_all("img"):
-                    src = img.get("src", "")
-                    alt = img.get("alt", "").lower()
-                    cls = " ".join(img.get("class", [])).lower()
-                    img_id = img.get("id", "").lower()
-                    if src and any(
-                        "logo" in x for x in [src.lower(), alt, cls, img_id]
-                    ):
-                        logo_url = src
-                        break
-                # Also grab first reasonably-sized image in header
-                if not logo_url:
-                    first_img = container.find("img")
-                    if first_img and first_img.get("src"):
-                        src = first_img.get("src", "")
-                        w = first_img.get("width", "999")
-                        h = first_img.get("height", "999")
-                        try:
-                            if int(str(w)) > 40 and int(str(h)) > 20:
-                                logo_url = src
-                        except Exception:
-                            logo_url = src
-                if logo_url:
-                    break
-
-        # Priority 3: any img with "logo" anywhere on page
-        if not logo_url:
-            for img in soup.find_all("img"):
-                src = img.get("src", "")
+        )
+        for container in header_containers:
+            for img in container.find_all("img"):
+                src = get_img_src(img)
                 alt = img.get("alt", "").lower()
                 cls = " ".join(img.get("class", [])).lower()
                 img_id = img.get("id", "").lower()
-                if src and any(
-                    "logo" in x for x in [src.lower(), alt, cls, img_id]
-                ):
+                if src and any("logo" in x for x in [src.lower(), alt, cls, img_id]):
+                    logo_url = src
+                    break
+            if not logo_url:
+                # First reasonably-sized image in a header container
+                for img in container.find_all("img"):
+                    src = get_img_src(img)
+                    if src:
+                        w = img.get("width", "999")
+                        h = img.get("height", "999")
+                        try:
+                            if int(str(w)) > 40 and int(str(h)) > 15:
+                                logo_url = src
+                        except Exception:
+                            logo_url = src
+                        if logo_url:
+                            break
+            if logo_url:
+                break
+
+        # Priority 2: any img with "logo" anywhere on page
+        if not logo_url:
+            for img in soup.find_all("img"):
+                src = get_img_src(img)
+                alt = img.get("alt", "").lower()
+                cls = " ".join(img.get("class", [])).lower()
+                img_id = img.get("id", "").lower()
+                if src and any("logo" in x for x in [src.lower(), alt, cls, img_id]):
                     logo_url = src
                     break
 
-        # Priority 4: apple-touch-icon (shows brand icon at least)
+        # Priority 3: apple-touch-icon
         if not logo_url:
             touch_icon = soup.find("link", rel=lambda r: r and "apple-touch-icon" in " ".join(r).lower())
             if touch_icon and touch_icon.get("href"):
                 logo_url = touch_icon.get("href", "")
+
+        # Priority 4: large icon link (192px or 512px PWA icon)
+        if not logo_url:
+            for link in soup.find_all("link", rel=True):
+                rel = " ".join(link.get("rel", [])).lower()
+                if "icon" in rel:
+                    sizes = link.get("sizes", "")
+                    if any(s in sizes for s in ["192", "512", "256", "384"]):
+                        logo_url = link.get("href", "")
+                        break
+
+        # Priority 5: og:image (last resort — often a hero/blog photo)
+        if not logo_url:
+            og_image = soup.find("meta", attrs={"property": "og:image"})
+            if og_image and og_image.get("content", ""):
+                logo_url = og_image.get("content", "")
 
         if logo_url and not logo_url.startswith("http"):
             logo_url = urljoin(url, logo_url)
@@ -144,8 +157,38 @@ def scrape_website(url):
                 hero_text += t + "\n"
         result["hero_text"] = hero_text[:500]
 
-        # Extract address hints using regex (city, province/state patterns)
+        # Extract address hints — try structured sources first
         import re as _re
+        import json as _json
+
+        # Source 1: JSON-LD schema.org LocalBusiness (most reliable)
+        jsonld_addresses = []
+        for script in soup.find_all("script", type="application/ld+json"):
+            try:
+                data = _json.loads(script.string or "")
+                # Handle both single object and @graph array
+                items = data if isinstance(data, list) else [data]
+                if isinstance(data, dict) and "@graph" in data:
+                    items = data["@graph"]
+                for item in items:
+                    addr = item.get("address", {})
+                    if isinstance(addr, str):
+                        jsonld_addresses.append(addr)
+                    elif isinstance(addr, dict):
+                        city = addr.get("addressLocality", "")
+                        region = addr.get("addressRegion", "")
+                        if city or region:
+                            jsonld_addresses.append(
+                                f"{city}, {region}".strip(", ")
+                            )
+                    # Also check areaServed
+                    area = item.get("areaServed", "")
+                    if isinstance(area, str) and area:
+                        jsonld_addresses.append(area)
+            except Exception:
+                pass
+
+        # Source 2: regex on raw page text (city, province/state patterns)
         raw_for_addr = soup.get_text(separator=" ", strip=True)
         addr_pattern = _re.compile(
             r'\b([A-Z][a-zA-Z\s]{2,20}),\s*'
@@ -156,11 +199,13 @@ def scrape_website(url):
             r'MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|'
             r'SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|Texas|California|Florida|New York)'
         )
-        addr_matches = list(dict.fromkeys(
+        regex_matches = list(dict.fromkeys(
             f"{m.group(1).strip()}, {m.group(2)}"
             for m in addr_pattern.finditer(raw_for_addr)
         ))[:6]
-        result["address_hints"] = addr_matches
+        # JSON-LD results take priority; merge, dedupe
+        all_hints = list(dict.fromkeys(jsonld_addresses + regex_matches))[:8]
+        result["address_hints"] = all_hints
 
         # Main text content
         for tag in soup(["script", "style", "nav", "footer", "head", "noscript"]):
