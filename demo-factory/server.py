@@ -137,6 +137,24 @@ def scrape_website(url):
                 hero_text += t + "\n"
         result["hero_text"] = hero_text[:500]
 
+        # Extract address hints using regex (city, province/state patterns)
+        import re as _re
+        raw_for_addr = soup.get_text(separator=" ", strip=True)
+        addr_pattern = _re.compile(
+            r'\b([A-Z][a-zA-Z\s]{2,20}),\s*'
+            r'(AB|BC|ON|QC|SK|MB|NS|NB|PE|NL|NT|YT|NU|'
+            r'Alberta|British Columbia|Ontario|Quebec|Saskatchewan|Manitoba|'
+            r'Nova Scotia|New Brunswick|Newfoundland|'
+            r'AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|'
+            r'MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|'
+            r'SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|Texas|California|Florida|New York)'
+        )
+        addr_matches = list(dict.fromkeys(
+            f"{m.group(1).strip()}, {m.group(2)}"
+            for m in addr_pattern.finditer(raw_for_addr)
+        ))[:6]
+        result["address_hints"] = addr_matches
+
         # Main text content
         for tag in soup(["script", "style", "nav", "footer", "head", "noscript"]):
             tag.decompose()
@@ -186,11 +204,14 @@ def generate_demo(job_id, url):
 
         client = get_client()
 
+        addr_hints = scraped.get('address_hints', [])
+        addr_line = ", ".join(addr_hints) if addr_hints else "none found"
         content_block = f"""Website URL: {scraped.get('url', '')}
 Page title: {scraped.get('title', '')}
 Meta description: {scraped.get('description', '')}
-Hero / H1 headings (most prominent page text — use this for location):
+Hero / H1 headings (most prominent text — highest priority for location):
 {scraped.get('hero_text', '')}
+Physical address patterns found on page: {addr_line}
 Homepage content:
 {scraped.get('content', '')}
 
@@ -210,7 +231,7 @@ Return ONLY valid JSON with these exact fields:
   "trade": "Their trade/industry (e.g. HVAC, Plumbing, Electrical, Roofing, Landscaping, General Contractor, etc.)",
   "tagline": "Their tagline or a short phrase capturing what they do",
   "services": ["service 1", "service 2", "service 3"],
-  "location": "Primary service city and Province/State. IMPORTANT: prioritize the city found in hero headings and H1 text — that reflects where they primarily serve TODAY. Ignore secondary or historical cities mentioned elsewhere.",
+  "location": "Primary service city and Province/State. Use this priority order: (1) city in Hero/H1 headings, (2) physical address patterns provided, (3) page title or meta description. NEVER use cities only mentioned in 'areas we serve' lists, testimonials, or SEO keyword sections. If uncertain, leave blank rather than guess.",
   "phone": "Phone number if found, else empty string",
   "hours": "Business hours if found, else empty string",
   "email": "Contact email if found, else empty string",
