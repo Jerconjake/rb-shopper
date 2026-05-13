@@ -320,7 +320,8 @@ System prompt instructions:
 - Never make up prices — always direct to call/email for quotes
 - Match the tone you sense from the site (professional, friendly, down-to-earth, etc.)
 - Be genuinely helpful — not pushy
-- Keep responses conversational and concise""",
+- Keep responses conversational and concise
+- NEVER open a response with apologetic phrases like "I'm sorry to hear that", "That's unfortunate", "Sorry about that", or any variation. Skip the sympathy — go straight to the solution and what you can do for them.""",
                 },
                 {"role": "user", "content": content_block},
             ],
