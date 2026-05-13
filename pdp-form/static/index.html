@@ -322,34 +322,27 @@
     <button class="btn btn-arrow" id="step1-next" onclick="goStep(2)" style="display:none;">Continue</button>
   </div>
 
-  <!-- ── STEP 2: Apps ── -->
+  <!-- ── STEP 2: Tell us about yourself ── -->
   <div class="step" id="step-2">
     <div class="step-label">Step 2 of 4</div>
-    <h2>Which apps are you using?</h2>
-    <p class="step-sub">Select all that apply.</p>
+    <h2>Tell us a bit about your situation</h2>
+    <p class="step-sub">What's going on with your dating life right now? What are you hoping to change?</p>
 
-    <div class="options" id="app-options">
-      <div class="option-card" data-val="Tinder" onclick="toggleApp(this)">
-        <span class="check square"></span>Tinder
-      </div>
-      <div class="option-card" data-val="Hinge" onclick="toggleApp(this)">
-        <span class="check square"></span>Hinge
-      </div>
-      <div class="option-card" data-val="Bumble" onclick="toggleApp(this)">
-        <span class="check square"></span>Bumble
-      </div>
-      <div class="option-card" data-val="Match.com" onclick="toggleApp(this)">
-        <span class="check square"></span>Match.com
-      </div>
-      <div class="option-card" data-val="OkCupid" onclick="toggleApp(this)">
-        <span class="check square"></span>OkCupid
-      </div>
-      <div class="option-card" data-val="Not using apps yet" onclick="toggleApp(this)">
-        <span class="check square"></span>Not using apps yet
+    <div class="input-group">
+      <textarea id="situation" rows="5" placeholder="e.g. I've been on Hinge for 6 months and barely getting matches. I think my photos are the problem..."></textarea>
+    </div>
+
+    <!-- AI follow-up (hidden by default) -->
+    <div id="ai-followup" style="display:none;">
+      <div id="ai-followup-msg" style="background:#1a1400; border:1.5px solid var(--gold); border-radius:var(--radius); padding:18px; margin-bottom:16px; font-size:14px; line-height:1.6; color:#ccc;"></div>
+      <div class="input-group">
+        <textarea id="situation-reply" rows="3" placeholder="Tell us more..."></textarea>
       </div>
     </div>
 
-    <button class="btn btn-arrow" id="step2-next" onclick="goStep(3)" disabled>Continue</button>
+    <div class="error-msg" id="step2-error"></div>
+
+    <button class="btn btn-arrow" id="step2-next" onclick="analyzeStep2()">Continue</button>
     <button class="back-link" onclick="goStep(1)">← Back</button>
   </div>
 
@@ -393,8 +386,8 @@
       <input type="tel" id="phone" placeholder="Your phone number" autocomplete="tel"/>
     </div>
     <div class="input-group">
-      <label>Anything else you'd like us to know? (optional)</label>
-      <textarea id="message" placeholder="Questions, goals, current situation — whatever helps us prepare for your session."></textarea>
+      <label>Any questions for us? (optional)</label>
+      <textarea id="message" placeholder="Scheduling preferences, specific concerns, anything else..."></textarea>
     </div>
     <div class="consent">
       <input type="checkbox" id="sms-consent"/>
@@ -418,7 +411,9 @@
     intents: new Set(),
     mismatched: false,
     gatePassed: false,
-    apps: new Set(),
+    situation: '',
+    aiClassification: '',
+    followupShown: false,
   };
 
   // ── Progress bar ──
@@ -493,17 +488,66 @@
     nextBtn.style.display = state.intents.size > 0 ? 'block' : 'none';
   }
 
-  // ── Step 2: Apps ──
-  function toggleApp(card) {
-    const val = card.dataset.val;
-    if (card.classList.contains('selected')) {
-      card.classList.remove('selected');
-      state.apps.delete(val);
-    } else {
-      card.classList.add('selected');
-      state.apps.add(val);
+  // ── Step 2: AI-qualified free text ──
+  async function analyzeStep2() {
+    const mainText = document.getElementById('situation').value.trim();
+    const replyText = (document.getElementById('situation-reply')?.value || '').trim();
+    const combined = mainText + (replyText ? '\n' + replyText : '');
+    const errEl = document.getElementById('step2-error');
+    errEl.style.display = 'none';
+
+    if (!mainText) {
+      errEl.textContent = 'Please tell us a bit about your situation.';
+      errEl.style.display = 'block';
+      return;
     }
-    document.getElementById('step2-next').disabled = state.apps.size === 0;
+
+    // If followup already shown and they replied (or clicked continue again), just advance
+    if (state.followupShown) {
+      state.situation = combined;
+      goStep(3);
+      return;
+    }
+
+    const btn = document.getElementById('step2-next');
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="display:inline-block"></div>';
+
+    try {
+      const resp = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: combined }),
+      });
+      const json = await resp.json();
+      state.aiClassification = json.classification;
+
+      if (json.classification === 'good') {
+        // Good prospect → straight through
+        state.situation = combined;
+        goStep(3);
+      } else if (json.classification === 'blocked') {
+        // Truly inappropriate
+        errEl.textContent = "We're not able to help with that request.";
+        errEl.style.display = 'block';
+      } else {
+        // Unclear/off-topic → show AI follow-up question
+        state.followupShown = true;
+        const followup = document.getElementById('ai-followup');
+        const followupMsg = document.getElementById('ai-followup-msg');
+        followupMsg.textContent = json.followup || "Could you tell us a bit more about what you're looking for? We specialize in dating profile photos and coaching to help you get more matches.";
+        followup.style.display = 'block';
+        document.getElementById('situation-reply').focus();
+      }
+    } catch (e) {
+      // On error, just let them through
+      state.situation = combined;
+      goStep(3);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
   }
 
   // ── Step 4: Submit ──
@@ -532,7 +576,7 @@
           city: document.getElementById('city').value.trim(),
           message: document.getElementById('message').value.trim(),
           services: [...state.intents],
-          apps: [...state.apps],
+          situation: state.situation,
           mismatched: state.mismatched,
           sms_consent: document.getElementById('sms-consent').checked,
         }),

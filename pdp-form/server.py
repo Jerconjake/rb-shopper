@@ -86,7 +86,7 @@ def create_ghl_contact(data: dict) -> dict:
     phone = data.get("phone", "").strip()
     city = data.get("city", "").strip()
     services = data.get("services", [])
-    apps = data.get("apps", [])
+    situation = data.get("situation", "").strip()
     message = data.get("message", "").strip()
     mismatched = data.get("mismatched", False)
 
@@ -97,8 +97,8 @@ def create_ghl_contact(data: dict) -> dict:
     notes_parts = []
     if services:
         notes_parts.append(f"Interested in: {', '.join(services)}")
-    if apps:
-        notes_parts.append(f"Dating apps: {', '.join(apps)}")
+    if situation:
+        notes_parts.append(f"Their situation: {situation}")
     if city:
         notes_parts.append(f"City: {city}")
     if message:
@@ -162,6 +162,59 @@ def create_ghl_contact(data: dict) -> dict:
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
+
+
+# -------------------------------------------------
+# AI qualification of free-text input
+# -------------------------------------------------
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    try:
+        text = (request.json or {}).get("text", "").strip()
+        if not text:
+            return jsonify({"classification": "unclear", "followup": "Could you tell us a bit about what's going on with your dating life?"})
+
+        # Quick blocklist check first
+        if is_inappropriate(text):
+            return jsonify({"classification": "blocked"})
+
+        resp = get_client().chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You classify messages from visitors to a dating photography & coaching website. "
+                        "Respond with ONLY valid JSON, no markdown.\n\n"
+                        "Categories:\n"
+                        '- "good" — They want better dating photos, profile help, coaching, more matches, '
+                        "or anything related to improving their dating presence. Be generous here — "
+                        "anyone talking about dating struggles, apps, photos, or wanting to improve counts.\n"
+                        '- "unclear" — Vague, off-topic, or you can\'t tell what they want. '
+                        "Include a friendly follow-up question that steers them toward our services.\n"
+                        '- "blocked" — Sexual, inappropriate, or clearly trolling.\n\n'
+                        'JSON format: {"classification": "good|unclear|blocked", "followup": "..." (only for unclear)}\n'
+                        "The followup should be warm and conversational, gently redirecting toward photos/coaching."
+                    ),
+                },
+                {"role": "user", "content": text},
+            ],
+            max_tokens=150,
+            temperature=0.3,
+        )
+        raw = resp.choices[0].message.content.strip()
+        # Parse JSON from response
+        import json as _json
+        # Strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        result = _json.loads(raw)
+        return jsonify(result)
+
+    except Exception as e:
+        logger.warning(f"Analyze error: {e}")
+        # On error, let them through
+        return jsonify({"classification": "good"})
 
 
 @app.route("/submit", methods=["POST"])
