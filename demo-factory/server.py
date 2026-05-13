@@ -65,17 +65,61 @@ def scrape_website(url):
             theme_color.get("content", "") if theme_color else ""
         )
 
-        # Logo: og:image first, then img with "logo" in it
-        og_image = soup.find("meta", attrs={"property": "og:image"})
-        logo_url = og_image.get("content", "") if og_image else ""
+        # Logo detection — priority order:
+        # 1. <img> with "logo" in class/id/alt/src inside header elements
+        # 2. og:image meta tag
+        # 3. Any <img> with "logo" anywhere on page
+        # 4. Site favicon as last resort
+        logo_url = ""
 
+        # Priority 1: look inside header/nav elements for logo images
+        header_containers = soup.find_all(
+            ["header", "nav", "div"],
+            class_=lambda c: c and any(
+                kw in " ".join(c).lower()
+                for kw in ["header", "site-header", "navbar", "nav-wrap", "top-bar", "masthead", "branding"]
+            )
+        )
+        for container in header_containers:
+            for img in container.find_all("img"):
+                src = img.get("src", "")
+                alt = img.get("alt", "").lower()
+                cls = " ".join(img.get("class", [])).lower()
+                img_id = img.get("id", "").lower()
+                if src and any(
+                    "logo" in x for x in [src.lower(), alt, cls, img_id]
+                ):
+                    logo_url = src
+                    break
+            # Also grab first image in header even without "logo" keyword
+            if not logo_url:
+                first_img = container.find("img")
+                if first_img and first_img.get("src"):
+                    src = first_img.get("src", "")
+                    # Skip tiny icons / tracking pixels
+                    w = first_img.get("width", "999")
+                    h = first_img.get("height", "999")
+                    try:
+                        if int(str(w)) > 40 and int(str(h)) > 20:
+                            logo_url = src
+                    except Exception:
+                        logo_url = src
+            if logo_url:
+                break
+
+        # Priority 2: og:image
+        if not logo_url:
+            og_image = soup.find("meta", attrs={"property": "og:image"})
+            logo_url = og_image.get("content", "") if og_image else ""
+
+        # Priority 3: any img with "logo" anywhere
         if not logo_url:
             for img in soup.find_all("img"):
                 src = img.get("src", "")
                 alt = img.get("alt", "").lower()
                 cls = " ".join(img.get("class", [])).lower()
                 img_id = img.get("id", "").lower()
-                if any(
+                if src and any(
                     "logo" in x for x in [src.lower(), alt, cls, img_id]
                 ):
                     logo_url = src
@@ -84,6 +128,14 @@ def scrape_website(url):
         if logo_url and not logo_url.startswith("http"):
             logo_url = urljoin(url, logo_url)
         result["logo_url"] = logo_url
+
+        # Extract hero/h1 text separately for accurate location detection
+        hero_text = ""
+        for tag in soup.find_all(["h1", "h2"]):
+            t = tag.get_text(strip=True)
+            if t:
+                hero_text += t + "\n"
+        result["hero_text"] = hero_text[:500]
 
         # Main text content
         for tag in soup(["script", "style", "nav", "footer", "head", "noscript"]):
@@ -137,6 +189,8 @@ def generate_demo(job_id, url):
         content_block = f"""Website URL: {scraped.get('url', '')}
 Page title: {scraped.get('title', '')}
 Meta description: {scraped.get('description', '')}
+Hero / H1 headings (most prominent page text — use this for location):
+{scraped.get('hero_text', '')}
 Homepage content:
 {scraped.get('content', '')}
 
@@ -156,7 +210,7 @@ Return ONLY valid JSON with these exact fields:
   "trade": "Their trade/industry (e.g. HVAC, Plumbing, Electrical, Roofing, Landscaping, General Contractor, etc.)",
   "tagline": "Their tagline or a short phrase capturing what they do",
   "services": ["service 1", "service 2", "service 3"],
-  "location": "City, Province/State if found",
+  "location": "Primary service city and Province/State. IMPORTANT: prioritize the city found in hero headings and H1 text — that reflects where they primarily serve TODAY. Ignore secondary or historical cities mentioned elsewhere.",
   "phone": "Phone number if found, else empty string",
   "hours": "Business hours if found, else empty string",
   "email": "Contact email if found, else empty string",

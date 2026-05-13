@@ -205,14 +205,21 @@
     .trust {
       display: flex;
       justify-content: center;
-      gap: 22px;
+      align-items: center;
+      gap: 6px 18px;
       flex-wrap: wrap;
       font-size: 12px;
       color: var(--faint);
-      margin-top: 6px;
+      margin-top: 8px;
+    }
+    .trust-item {
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
     .trust-item::before {
-      content: '✓ ';
+      content: '✓';
       color: rgba(255,255,255,0.35);
     }
 
