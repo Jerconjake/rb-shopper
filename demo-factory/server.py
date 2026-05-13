@@ -147,6 +147,12 @@ def scrape_website(url):
 
         if logo_url and not logo_url.startswith("http"):
             logo_url = urljoin(url, logo_url)
+
+        # Universal fallback: Google Favicon API (always works, even when site blocks us)
+        if not logo_url:
+            domain = urlparse(url).netloc or urlparse(url).path.split("/")[0]
+            logo_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+
         result["logo_url"] = logo_url
 
         # Extract hero/h1 text separately for accurate location detection
@@ -277,7 +283,22 @@ def generate_demo(job_id, url):
 
         addr_hints = scraped.get('address_hints', [])
         addr_line = ", ".join(addr_hints) if addr_hints else "none found"
-        content_block = f"""Website URL: {scraped.get('url', '')}
+
+        # Detect if scrape was blocked (thin content = bot protection)
+        content_len = len(scraped.get("content", ""))
+        scrape_blocked_note = ""
+        if content_len < 200:
+            scrape_blocked_note = (
+                "\n\n⚠️ SCRAPE BLOCKED: The website's bot protection prevented our "
+                "scraper from reading the page. You MUST use the URL/domain name and "
+                "your training knowledge to identify this business. If you recognize "
+                "the business name or domain, fill in their real location, services, "
+                "phone, etc. from your knowledge. Do NOT leave location blank if you "
+                "can reasonably infer or recall it. The domain TLD (.ca = Canada, "
+                ".com = likely US/Canada, .co.uk = UK, etc.) is also a hint.\n"
+            )
+
+        content_block = f"""Website URL: {scraped.get('url', '')}{scrape_blocked_note}
 Page title: {scraped.get('title', '')}
 Meta description: {scraped.get('description', '')}
 Hero / H1 headings (most prominent text — highest priority for location):

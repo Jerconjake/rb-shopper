@@ -544,6 +544,21 @@
     }
 
     init();
+
+    // ── Mobile keyboard fix ──────────────────────────────────────────────
+    // On iOS/Android, the virtual keyboard shrinks the visual viewport.
+    // We resize the body to match so the input stays visible.
+    if (window.visualViewport) {
+      function onViewportResize() {
+        const vvh = window.visualViewport.height;
+        document.body.style.height = vvh + 'px';
+        // Scroll messages to bottom so latest is visible
+        const msgs = document.getElementById('messages');
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+      }
+      window.visualViewport.addEventListener('resize', onViewportResize);
+      window.visualViewport.addEventListener('scroll', onViewportResize);
+    }
   </script>
 </body>
 </html>
