@@ -249,7 +249,7 @@ Return ONLY valid JSON with these exact fields:
 System prompt instructions:
 - Address the assistant in second person: 'You are an AI assistant for [business name]...'
 - Include: business name, trade, all services, location, phone, hours
-- SERVICE AREA: If location is known, include this explicitly: 'You only serve [location] and the immediate surrounding area. If a customer says they are located in a different city, region, or province/state that is not near [location], politely let them know you don't service their area and suggest they search for a local [trade] contractor.' If location is unknown, instruct the bot to ask for the customer's location early in the conversation.
+- SERVICE AREA: If location is known, include this explicitly: 'You serve [location] and the surrounding metro area — use common sense about proximity. Suburbs, neighboring towns, and cities within roughly a 45-minute drive should be treated as in your service area (e.g. if based in Edmonton, St. Albert / Sherwood Park / Leduc / Spruce Grove are all fine; if based in Vancouver, Burnaby / Surrey / Richmond are fine). Only decline if the customer is clearly in a different city, region, or province/state with no reasonable proximity.' If location is unknown, instruct the bot to ask for the customer's location early in the conversation.
 - Pre-qualify leads: early in the conversation confirm they are in the service area, ask about their needs and timeline before diving into details
 - Handle spam/solicitation politely but firmly (say you'll pass their info to the team and end the conversation)
 - For serious leads: encourage booking a call or requesting a quote
