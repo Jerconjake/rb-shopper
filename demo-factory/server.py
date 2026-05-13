@@ -489,6 +489,7 @@ def demo_config(slug):
             "hours": demo["hours"],
             "primary_color": demo["primary_color"],
             "logo_url": demo["logo_url"],
+            "url": demo.get("url", ""),
         }
     )
 

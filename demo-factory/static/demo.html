@@ -23,10 +23,15 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'Inter', sans-serif;
+      height: 100vh;
       height: 100dvh;
+      width: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      /* Prevent iOS overscroll / bounce */
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* ── Header ── */
@@ -412,10 +417,17 @@
       document.getElementById('headerSub').textContent =
         `${cfg.trade} AI Assistant · Online`;
 
-      // Logo
+      // Logo — try scraped URL, fall back to Google Favicon API
       if (cfg.logo_url) {
         const img = document.getElementById('bizLogoImg');
         img.onload = () => img.classList.add('loaded');
+        img.onerror = () => {
+          // Try Google Favicon as fallback
+          const domain = cfg.url ? new URL(cfg.url.startsWith('http') ? cfg.url : 'https://' + cfg.url).hostname : '';
+          if (domain && !img.src.includes('google.com/s2/favicons')) {
+            img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          }
+        };
         img.src = cfg.logo_url;
       }
 
@@ -546,18 +558,37 @@
     init();
 
     // ── Mobile keyboard fix ──────────────────────────────────────────────
-    // On iOS/Android, the virtual keyboard shrinks the visual viewport.
-    // We resize the body to match so the input stays visible.
+    // iOS Safari scrolls the page when focusing an input, pushing the
+    // layout above the viewport. Fix: lock body to position:fixed and
+    // set dimensions from visualViewport so it fills only visible area.
     if (window.visualViewport) {
-      function onViewportResize() {
-        const vvh = window.visualViewport.height;
-        document.body.style.height = vvh + 'px';
-        // Scroll messages to bottom so latest is visible
+      const vv = window.visualViewport;
+
+      function syncViewport() {
+        // Lock body to exactly the visible viewport
+        document.body.style.position = 'fixed';
+        document.body.style.top = vv.offsetTop + 'px';
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.height = vv.height + 'px';
+        document.body.style.overflow = 'hidden';
+
+        // Keep messages scrolled to bottom
         const msgs = document.getElementById('messages');
-        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        if (msgs) {
+          requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+        }
       }
-      window.visualViewport.addEventListener('resize', onViewportResize);
-      window.visualViewport.addEventListener('scroll', onViewportResize);
+
+      vv.addEventListener('resize', syncViewport);
+      vv.addEventListener('scroll', syncViewport);
+
+      // Also prevent iOS body scroll bounce
+      document.body.addEventListener('touchmove', function(e) {
+        const msgs = document.getElementById('messages');
+        if (msgs && msgs.contains(e.target)) return; // allow message scroll
+        e.preventDefault();
+      }, { passive: false });
     }
   </script>
 </body>
