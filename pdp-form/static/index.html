@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Get Started – Premier Dating Photography</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #EFC050;
+    --gold-dark: #d4a93e;
+    --bg: #0d0d0d;
+    --card: #161616;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --error: #e05555;
+    --radius: 10px;
+    --font: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .form-wrap {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+  .progress-seg {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    transition: background 0.4s ease;
+  }
+  .progress-seg.done { background: var(--gold); }
+  .progress-seg.active { background: var(--gold); opacity: 0.5; }
+
+  /* Step */
+  .step { display: none; animation: fadeIn 0.35s ease; }
+  .step.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .step-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  /* Option cards */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .option-card:hover { border-color: var(--gold); background: #1e1a10; }
+  .option-card.selected {
+    border-color: var(--gold);
+    background: #1e1a10;
+    color: #fff;
+  }
+  .option-card .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .option-card.selected .check {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .option-card.selected .check::after {
+    content: '✓';
+    font-size: 11px;
+    color: #000;
+    font-weight: 700;
+  }
+  /* Checkbox style for multi-select */
+  .option-card .check.square {
+    border-radius: 4px;
+  }
+
+  /* Soft gate */
+  .soft-gate {
+    background: #1a1400;
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #ccc;
+    display: none;
+  }
+  .soft-gate strong { color: var(--gold); display: block; margin-bottom: 8px; font-size: 15px; }
+  .soft-gate .gate-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn-secondary {
+    padding: 10px 18px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: var(--font);
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--muted); }
+
+  /* Inputs */
+  .input-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 15px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus { border-color: var(--gold); }
+  input::placeholder, textarea::placeholder { color: #444; }
+  textarea { resize: vertical; min-height: 90px; }
+
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 440px) { .input-row { grid-template-columns: 1fr; } }
+
+  /* Consent */
+  .consent {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 6px;
+  }
+  .consent input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--gold);
+    margin-top: 2px;
+    cursor: pointer;
+  }
+  .consent span {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--gold);
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 28px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+    font-family: var(--font);
+    transition: background 0.2s, opacity 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn:hover { background: var(--gold-dark); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-arrow::after { content: '→'; font-size: 16px; }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: var(--font);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .back-link:hover { color: var(--text); }
+
+  .error-msg {
+    color: var(--error);
+    font-size: 13px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #1f0e0e;
+    border-radius: 6px;
+    border: 1px solid #4a1a1a;
+    display: none;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="form-wrap">
+
+  <!-- Progress -->
+  <div class="progress-bar">
+    <div class="progress-seg active" id="seg1"></div>
+    <div class="progress-seg" id="seg2"></div>
+    <div class="progress-seg" id="seg3"></div>
+    <div class="progress-seg" id="seg4"></div>
+  </div>
+
+  <!-- ── STEP 1: Intent ── -->
+  <div class="step active" id="step-1">
+    <div class="step-label">Step 1 of 4</div>
+    <h2>What brings you here today?</h2>
+    <p class="step-sub">Pick everything that applies — no wrong answers.</p>
+
+    <div class="options" id="intent-options">
+      <div class="option-card" data-val="photos" onclick="toggleIntent(this)">
+        <span class="check square"></span>
+        Professional dating profile photos
+      </div>
+      <div class="option-card" data-val="coaching" onclick="toggleIntent(this)">
+        <span class="check square"></span>
+        Dating coaching or profile review
+      </div>
+      <div class="option-card" data-val="both" onclick="toggleIntent(this)">
+        <span class="check square"></span>
+        Both photos and coaching
+      </div>
+      <div class="option-card" data-val="finding" onclick="toggleIntent(this)">
+        <span class="check square"></span>
+        Help finding or meeting people
+      </div>
+    </div>
+
+    <!-- Soft gate -->
+    <div class="soft-gate" id="soft-gate">
+      <strong>Just so you know</strong>
+      Premier Dating Photography is a professional photo and coaching service. We help you get
+      <em>more matches</em> on apps like Tinder, Hinge, and Bumble by improving your photos and
+      how your profile comes across — we don't connect you with other people directly.
+      <br><br>
+      If that sounds like it could help, we'd love to chat.
+      <div class="gate-actions">
+        <button class="btn" style="width:auto; margin-top:0;" onclick="continueAfterGate()">That sounds great, let's go</button>
+        <button class="btn-secondary" onclick="dismissGate()">No thanks</button>
+      </div>
+    </div>
+
+    <button class="btn btn-arrow" id="step1-next" onclick="goStep(2)" style="display:none;">Continue</button>
+  </div>
+
+  <!-- ── STEP 2: Apps ── -->
+  <div class="step" id="step-2">
+    <div class="step-label">Step 2 of 4</div>
+    <h2>Which apps are you using?</h2>
+    <p class="step-sub">Select all that apply.</p>
+
+    <div class="options" id="app-options">
+      <div class="option-card" data-val="Tinder" onclick="toggleApp(this)">
+        <span class="check square"></span>Tinder
+      </div>
+      <div class="option-card" data-val="Hinge" onclick="toggleApp(this)">
+        <span class="check square"></span>Hinge
+      </div>
+      <div class="option-card" data-val="Bumble" onclick="toggleApp(this)">
+        <span class="check square"></span>Bumble
+      </div>
+      <div class="option-card" data-val="Match.com" onclick="toggleApp(this)">
+        <span class="check square"></span>Match.com
+      </div>
+      <div class="option-card" data-val="OkCupid" onclick="toggleApp(this)">
+        <span class="check square"></span>OkCupid
+      </div>
+      <div class="option-card" data-val="Not using apps yet" onclick="toggleApp(this)">
+        <span class="check square"></span>Not using apps yet
+      </div>
+    </div>
+
+    <button class="btn btn-arrow" id="step2-next" onclick="goStep(3)" disabled>Continue</button>
+    <button class="back-link" onclick="goStep(1)">← Back</button>
+  </div>
+
+  <!-- ── STEP 3: About you ── -->
+  <div class="step" id="step-3">
+    <div class="step-label">Step 3 of 4</div>
+    <h2>A little about you</h2>
+    <p class="step-sub">So we know who we're talking to.</p>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>First name *</label>
+        <input type="text" id="first-name" placeholder="First name" autocomplete="given-name"/>
+      </div>
+      <div class="input-group">
+        <label>Last name</label>
+        <input type="text" id="last-name" placeholder="Last name" autocomplete="family-name"/>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>City</label>
+      <input type="text" id="city" placeholder="Your city" autocomplete="address-level2"/>
+    </div>
+
+    <button class="btn btn-arrow" id="step3-next" onclick="goStep(4)">Continue</button>
+    <button class="back-link" onclick="goStep(2)">← Back</button>
+  </div>
+
+  <!-- ── STEP 4: Contact ── -->
+  <div class="step" id="step-4">
+    <div class="step-label">Step 4 of 4</div>
+    <h2>How can we reach you?</h2>
+    <p class="step-sub">We'll be in touch within one business day — no spam, ever.</p>
+
+    <div class="input-group">
+      <label>Email *</label>
+      <input type="email" id="email" placeholder="you@email.com" autocomplete="email"/>
+    </div>
+    <div class="input-group">
+      <label>Phone *</label>
+      <input type="tel" id="phone" placeholder="Your phone number" autocomplete="tel"/>
+    </div>
+    <div class="input-group">
+      <label>Anything else you'd like us to know? (optional)</label>
+      <textarea id="message" placeholder="Questions, goals, current situation — whatever helps us prepare for your session."></textarea>
+    </div>
+    <div class="consent">
+      <input type="checkbox" id="sms-consent"/>
+      <span>I agree to receive SMS messages from Premier Dating Photography. Message &amp; data rates may apply. Reply STOP to opt out.</span>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <button class="btn" id="submit-btn" onclick="submitForm()">
+      <span id="submit-label">Send my info</span>
+      <div class="spinner" id="submit-spinner"></div>
+    </button>
+    <button class="back-link" onclick="goStep(3)">← Back</button>
+  </div>
+
+</div>
+
+<script>
+  // State
+  const state = {
+    intents: new Set(),
+    mismatched: false,
+    gatePassed: false,
+    apps: new Set(),
+  };
+
+  // ── Progress bar ──
+  function updateProgress(step) {
+    [1,2,3,4].forEach(i => {
+      const seg = document.getElementById('seg' + i);
+      seg.className = 'progress-seg';
+      if (i < step) seg.classList.add('done');
+      else if (i === step) seg.classList.add('active');
+    });
+  }
+
+  // ── Navigation ──
+  function goStep(n) {
+    // Validate before advancing
+    if (n === 4) {
+      const fn = document.getElementById('first-name').value.trim();
+      if (!fn) { document.getElementById('first-name').focus(); return; }
+    }
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    updateProgress(n);
+    window.scrollTo(0, 0);
+  }
+
+  // ── Step 1: Intent ──
+  function toggleIntent(card) {
+    const val = card.dataset.val;
+
+    // Toggle selection
+    if (card.classList.contains('selected')) {
+      card.classList.remove('selected');
+      state.intents.delete(val);
+    } else {
+      card.classList.add('selected');
+      state.intents.add(val);
+    }
+
+    const hasMismatched = state.intents.has('finding');
+    const hasReal = [...state.intents].some(v => v !== 'finding');
+    const gate = document.getElementById('soft-gate');
+    const nextBtn = document.getElementById('step1-next');
+
+    if (hasMismatched && !state.gatePassed) {
+      gate.style.display = 'block';
+      nextBtn.style.display = 'none';
+    } else if (state.intents.size > 0) {
+      gate.style.display = 'none';
+      nextBtn.style.display = 'block';
+    } else {
+      gate.style.display = 'none';
+      nextBtn.style.display = 'none';
+    }
+  }
+
+  function continueAfterGate() {
+    state.gatePassed = true;
+    state.mismatched = true;
+    document.getElementById('soft-gate').style.display = 'none';
+    document.getElementById('step1-next').style.display = 'block';
+  }
+
+  function dismissGate() {
+    // Remove "finding" selection and hide gate
+    state.intents.delete('finding');
+    document.querySelectorAll('#intent-options .option-card').forEach(c => {
+      if (c.dataset.val === 'finding') c.classList.remove('selected');
+    });
+    document.getElementById('soft-gate').style.display = 'none';
+    const nextBtn = document.getElementById('step1-next');
+    nextBtn.style.display = state.intents.size > 0 ? 'block' : 'none';
+  }
+
+  // ── Step 2: Apps ──
+  function toggleApp(card) {
+    const val = card.dataset.val;
+    if (card.classList.contains('selected')) {
+      card.classList.remove('selected');
+      state.apps.delete(val);
+    } else {
+      card.classList.add('selected');
+      state.apps.add(val);
+    }
+    document.getElementById('step2-next').disabled = state.apps.size === 0;
+  }
+
+  // ── Step 4: Submit ──
+  async function submitForm() {
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const firstName = document.getElementById('first-name').value.trim();
+    const errEl = document.getElementById('error-msg');
+
+    if (!firstName) { showError('Please go back and enter your first name.'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); return; }
+    if (!phone) { showError('Please enter your phone number.'); return; }
+
+    setLoading(true);
+    errEl.style.display = 'none';
+
+    try {
+      const resp = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: document.getElementById('last-name').value.trim(),
+          email,
+          phone,
+          city: document.getElementById('city').value.trim(),
+          message: document.getElementById('message').value.trim(),
+          services: [...state.intents],
+          apps: [...state.apps],
+          mismatched: state.mismatched,
+          sms_consent: document.getElementById('sms-consent').checked,
+        }),
+      });
+
+      const json = await resp.json();
+
+      if (json.blocked) {
+        showError("We're not able to process this request.");
+        setLoading(false);
+        return;
+      }
+
+      if (!json.ok) {
+        showError(json.error || 'Something went wrong. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to thank you page
+      window.location.href = json.redirect;
+
+    } catch (e) {
+      showError('Network error — please check your connection and try again.');
+      setLoading(false);
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('submit-btn');
+    const label = document.getElementById('submit-label');
+    const spinner = document.getElementById('submit-spinner');
+    btn.disabled = on;
+    label.style.display = on ? 'none' : 'block';
+    spinner.style.display = on ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
