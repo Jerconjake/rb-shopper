@@ -15,6 +15,7 @@ GHL_TOKEN = os.environ.get("GHL_TOKEN", "pit-3b2b40f2-563c-41cc-b7fb-ede506e41ce
 GHL_LOCATION_ID = os.environ.get("GHL_LOCATION_ID", "pmUzbbRzxGVF4bqXfdG5")
 GHL_API_BASE = "https://services.leadconnectorhq.com"
 THANK_YOU_URL = "https://premierdatingphotography.com/thank-you-for-contacting-pdp/"
+BOOKING_URL = "https://premierdatingphotography.com/book-a-free-consultation/"
 
 _openai_client = None
 
@@ -23,6 +24,67 @@ def get_client():
     if _openai_client is None:
         _openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     return _openai_client
+
+
+SYSTEM_PROMPT = """You are the AI assistant for Premier Dating Photography — a professional dating profile photography and coaching service based in Austin, Texas.
+
+YOUR ROLE: Pre-qualify visitors. Figure out what they want. If they're a good fit, collect their info. If not, handle them politely.
+
+WHAT PDP OFFERS:
+- Professional dating profile photoshoots (indoor/outdoor, wardrobe guidance, multiple looks)
+- Dating coaching and profile optimization
+- Headshots (professional and social)
+- 5-step process: consultation → wardrobe planning → photoshoot → photo selection → profile optimization
+- Money-back guarantee if not satisfied
+- Booking page for free consultation: {booking_url}
+
+PRICING:
+- This is a professional, paid service. Packages start in the hundreds.
+- Do NOT quote exact prices. If asked, say "packages vary — the free consultation covers pricing based on what you need."
+- If someone asks "is this free?" or "does this cost money?" — yes, it's a paid professional service. The initial consultation is free.
+
+QUALIFICATION RULES:
+
+GOOD FIT (guide toward contact form):
+- Wants better dating photos
+- Wants help with dating profile / apps
+- Wants professional photos for dating or social media
+- Wants coaching on their dating approach
+- Mentions specific apps (Hinge, Bumble, Tinder, etc.)
+- Wants headshots
+→ After 1-2 exchanges confirming their interest, say something like "Sounds like we can definitely help. Want me to connect you with the team?" and include the marker [SHOW_CONTACT_FORM] at the very end of your message (after your visible text).
+
+NOT SURE / OFF TOPIC:
+- Vague messages — ask a clarifying question to understand what they need
+- Looking for a dating service / want to meet people — clarify that PDP does PHOTOGRAPHY and COACHING, not matchmaking. If they still seem confused, keep gently redirecting.
+- Asking general questions about dating — you can chat briefly but steer toward "we help with the visual/profile side of dating"
+
+BAD FIT (turn away politely):
+- Clearly looking for escorts, hookups, or sexual services → "That's not what we do here. Premier Dating Photography helps people put their best foot forward with professional photos and coaching."
+- Trolling or abusive → short, professional response. Don't engage.
+- After 3+ exchanges of clearly off-topic conversation with no sign they want photography/coaching → "It doesn't sound like what we offer is quite what you're looking for. If you ever want to upgrade your dating photos, we're here!"
+
+STYLE:
+- Conversational but professional. Like a friendly receptionist.
+- Short responses (1-3 sentences). Don't write essays.
+- No filler affirmations ("Great question!", "Absolutely!", "That's wonderful!")
+- No apologies or sympathy language
+- Ask ONE question at a time
+
+CONTACT FORM TRIGGER:
+- When someone is clearly a good fit and ready, include [SHOW_CONTACT_FORM] at the END of your message (hidden from user, parsed by frontend).
+- Only trigger this ONCE per conversation.
+- Don't trigger it immediately — have at least one exchange first to confirm they're a real prospect.
+- If someone says exactly what they want (e.g. "I need dating photos") you can trigger after your first response.
+- NEVER trigger the form for someone who hasn't expressed interest in photography, coaching, or headshots.
+
+BOOKING:
+- If someone wants to skip the form and book directly, share this link: {booking_url}
+- Frame it as: "You can book a free consultation directly here: {booking_url}"
+
+Remember: Your job is to save the human team's time. Real prospects get through fast. Everyone else gets a polite, efficient conversation.""".format(
+    booking_url=BOOKING_URL
+)
 
 
 # -------------------------------------------------
@@ -42,70 +104,24 @@ def is_inappropriate(text: str) -> bool:
     return False
 
 
-def ai_moderation_check(message: str) -> bool:
-    """Returns True if message is inappropriate."""
-    if not message or len(message.strip()) < 10:
-        return False
-    try:
-        resp = get_client().chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a content moderator for a professional dating photography business. "
-                        "Respond ONLY with the word BLOCK or ALLOW.\n"
-                        "BLOCK if the message contains: sexual requests, solicitation, harassment, "
-                        "inappropriate propositions, or anything clearly not about photography or coaching services.\n"
-                        "ALLOW everything else — curiosity, budget questions, scheduling, even blunt messages."
-                    ),
-                },
-                {"role": "user", "content": message},
-            ],
-            max_tokens=5,
-            temperature=0,
-        )
-        verdict = resp.choices[0].message.content.strip().upper()
-        return verdict == "BLOCK"
-    except Exception as e:
-        logger.warning(f"AI moderation failed: {e}")
-        return False
-
-
 # -------------------------------------------------
 # GHL contact creation
 # -------------------------------------------------
 def create_ghl_contact(data: dict) -> dict:
-    """
-    Create or update a contact in GoHighLevel.
-    Returns {"ok": True} or {"ok": False, "error": str}
-    """
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
-    city = data.get("city", "").strip()
-    services = data.get("services", [])
-    situation = data.get("situation", "").strip()
-    message = data.get("message", "").strip()
-    mismatched = data.get("mismatched", False)
 
-    tags = ["pdp-form-lead"]
-    if mismatched:
-        tags.append("mismatched-intent")
-
+    # Build notes from chat summary
     notes_parts = []
-    if services:
-        notes_parts.append(f"Interested in: {', '.join(services)}")
-    if situation:
-        notes_parts.append(f"Their situation: {situation}")
-    if city:
-        notes_parts.append(f"City: {city}")
-    if message:
-        notes_parts.append(f"Message: {message}")
-    if mismatched:
-        notes_parts.append("Note: Visitor initially indicated interest in meeting people (soft-gated, chose to continue)")
+    if data.get("summary"):
+        notes_parts.append(f"Chat summary: {data['summary']}")
+    if data.get("message"):
+        notes_parts.append(f"Additional message: {data['message']}")
     notes = "\n".join(notes_parts)
+
+    tags = ["pdp-chat-lead"]
 
     payload = {
         "locationId": GHL_LOCATION_ID,
@@ -113,9 +129,8 @@ def create_ghl_contact(data: dict) -> dict:
         "lastName": last_name,
         "email": email,
         "phone": phone,
-        "address1": city,
         "tags": tags,
-        "source": "Premier Dating Photography Form",
+        "source": "PDP AI Chat Qualifier",
     }
 
     headers = {
@@ -138,7 +153,6 @@ def create_ghl_contact(data: dict) -> dict:
         contact_id = resp.json().get("contact", {}).get("id")
         logger.info(f"GHL contact created: {contact_id}")
 
-        # Add note if there's content
         if notes and contact_id:
             note_resp = requests.post(
                 f"{GHL_API_BASE}/contacts/{contact_id}/notes",
@@ -164,57 +178,52 @@ def index():
     return app.send_static_file("index.html")
 
 
-# -------------------------------------------------
-# AI qualification of free-text input
-# -------------------------------------------------
-@app.route("/analyze", methods=["POST"])
-def analyze():
+@app.route("/chat", methods=["POST"])
+def chat():
     try:
-        text = (request.json or {}).get("text", "").strip()
-        if not text:
-            return jsonify({"classification": "unclear", "followup": "Could you tell us a bit about what's going on with your dating life?"})
+        data = request.json or {}
+        messages = data.get("messages", [])
 
-        # Quick blocklist check first
-        if is_inappropriate(text):
-            return jsonify({"classification": "blocked"})
+        if not messages:
+            return jsonify({"error": "No messages provided"}), 400
+
+        # Check latest user message for blocklist
+        latest = messages[-1].get("content", "") if messages else ""
+        if is_inappropriate(latest):
+            return jsonify({
+                "reply": "That's not what we do here. Premier Dating Photography helps people put their best foot forward with professional photos and coaching. Is there something along those lines I can help with?",
+                "show_form": False,
+            })
+
+        # Build messages for OpenAI
+        openai_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        for m in messages:
+            role = m.get("role", "user")
+            if role in ("user", "assistant"):
+                openai_messages.append({"role": role, "content": m.get("content", "")})
 
         resp = get_client().chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You classify messages from visitors to a dating photography & coaching website. "
-                        "Respond with ONLY valid JSON, no markdown.\n\n"
-                        "Categories:\n"
-                        '- "good" — They want better dating photos, profile help, coaching, more matches, '
-                        "or anything related to improving their dating presence. Be generous here — "
-                        "anyone talking about dating struggles, apps, photos, or wanting to improve counts.\n"
-                        '- "unclear" — Vague, off-topic, or you can\'t tell what they want. '
-                        "Include a friendly follow-up question that steers them toward our services.\n"
-                        '- "blocked" — Sexual, inappropriate, or clearly trolling.\n\n'
-                        'JSON format: {"classification": "good|unclear|blocked", "followup": "..." (only for unclear)}\n'
-                        "The followup should be warm and conversational, gently redirecting toward photos/coaching."
-                    ),
-                },
-                {"role": "user", "content": text},
-            ],
-            max_tokens=150,
-            temperature=0.3,
+            model="gpt-4o",
+            messages=openai_messages,
+            max_tokens=300,
+            temperature=0.7,
         )
-        raw = resp.choices[0].message.content.strip()
-        # Parse JSON from response
-        import json as _json
-        # Strip markdown code fences if present
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-        result = _json.loads(raw)
-        return jsonify(result)
+
+        reply = resp.choices[0].message.content.strip()
+
+        # Check for contact form trigger
+        show_form = "[SHOW_CONTACT_FORM]" in reply
+        # Strip the marker from visible text
+        reply = reply.replace("[SHOW_CONTACT_FORM]", "").strip()
+
+        return jsonify({"reply": reply, "show_form": show_form})
 
     except Exception as e:
-        logger.warning(f"Analyze error: {e}")
-        # On error, let them through
-        return jsonify({"classification": "good"})
+        logger.error(f"Chat error: {e}")
+        return jsonify({
+            "reply": "Sorry, something went wrong on my end. You can reach the team directly at premierdatingphotography.com.",
+            "show_form": False,
+        })
 
 
 @app.route("/submit", methods=["POST"])
@@ -222,31 +231,23 @@ def submit():
     try:
         data = request.json or {}
 
-        # Basic validation
         required = ["first_name", "email", "phone"]
         for field in required:
             if not data.get(field, "").strip():
-                return jsonify({"ok": False, "error": f"Missing required field: {field}"}), 400
+                return jsonify({"ok": False, "error": f"Missing: {field}"}), 400
 
         email = data.get("email", "")
         if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-            return jsonify({"ok": False, "error": "Please enter a valid email address"}), 400
+            return jsonify({"ok": False, "error": "Please enter a valid email"}), 400
 
-        # Content moderation
-        message = data.get("message", "")
-        if is_inappropriate(message) or ai_moderation_check(message):
-            return jsonify({
-                "ok": False,
-                "blocked": True,
-                "error": "We're not able to process this request."
-            }), 400
+        # Moderate the message field if present
+        msg = data.get("message", "")
+        if msg and is_inappropriate(msg):
+            return jsonify({"ok": False, "blocked": True, "error": "Unable to process this request."}), 400
 
-        # Create GHL contact
         result = create_ghl_contact(data)
         if not result["ok"]:
             logger.error(f"GHL failed, form data: {data}")
-            # Still redirect — don't break the user experience for a CRM failure
-            return jsonify({"ok": True, "redirect": THANK_YOU_URL})
 
         return jsonify({"ok": True, "redirect": THANK_YOU_URL})
 
@@ -260,16 +261,13 @@ def submit():
 # -------------------------------------------------
 funnel = {
     "page_loads": 0,
-    "step_1": 0,       # selected an intent
-    "step_2": 0,       # reached step 2
-    "step_2_typed": 0, # typed in situation box
-    "step_3": 0,       # reached step 3
-    "step_4": 0,       # reached step 4
-    "submitted": 0,    # form submitted successfully
-    "blocked": 0,      # AI or moderation blocked
-    "soft_gated": 0,   # saw the "just so you know" gate
-    "gate_continued": 0,  # continued past gate
-    "gate_dismissed": 0,  # left at gate
+    "chat_started": 0,     # sent first message
+    "messages_sent": 0,     # total messages sent
+    "form_shown": 0,        # AI triggered contact form
+    "form_started": 0,      # user began filling form
+    "submitted": 0,         # form submitted to GHL
+    "blocked": 0,           # hit blocklist
+    "bounced": 0,           # loaded page, no message sent (tracked client-side)
 }
 
 @app.route("/track", methods=["POST"])
@@ -284,18 +282,14 @@ def track_event():
 @app.route("/stats")
 def stats():
     f = funnel.copy()
-    # Calculate drop-off rates
     analysis = {}
     if f["page_loads"] > 0:
-        analysis["step1_engagement"] = f"{round(f['step_1'] / f['page_loads'] * 100)}%"
-    if f["step_1"] > 0:
-        analysis["step1_to_step2"] = f"{round(f['step_2'] / f['step_1'] * 100)}%"
-    if f["step_2"] > 0:
-        analysis["step2_to_step3"] = f"{round(f['step_3'] / f['step_2'] * 100)}%"
-    if f["step_3"] > 0:
-        analysis["step3_to_step4"] = f"{round(f['step_4'] / f['step_3'] * 100)}%"
-    if f["step_4"] > 0:
-        analysis["step4_to_submit"] = f"{round(f['submitted'] / f['step_4'] * 100)}%"
+        analysis["engagement_rate"] = f"{round(f['chat_started'] / f['page_loads'] * 100)}%"
+    if f["chat_started"] > 0:
+        analysis["avg_messages"] = round(f["messages_sent"] / f["chat_started"], 1)
+        analysis["form_trigger_rate"] = f"{round(f['form_shown'] / f['chat_started'] * 100)}%"
+    if f["form_shown"] > 0:
+        analysis["form_completion_rate"] = f"{round(f['submitted'] / f['form_shown'] * 100)}%"
     if f["page_loads"] > 0:
         analysis["overall_conversion"] = f"{round(f['submitted'] / f['page_loads'] * 100)}%"
     return jsonify({"funnel": f, "conversion_rates": analysis})
@@ -303,7 +297,7 @@ def stats():
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "ghl_location_configured": bool(GHL_LOCATION_ID)})
+    return jsonify({"status": "ok", "ghl_configured": bool(GHL_LOCATION_ID)})
 
 
 if __name__ == "__main__":

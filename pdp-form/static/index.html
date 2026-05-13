@@ -1,645 +1,548 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Get Started – Premier Dating Photography</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Premier Dating Photography</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --gold: #EFC050;
-    --gold-dark: #d4a93e;
-    --bg: #0d0d0d;
-    --card: #161616;
-    --border: #2a2a2a;
-    --text: #f0f0f0;
-    --muted: #888;
-    --error: #e05555;
-    --radius: 10px;
-    --font: 'Helvetica Neue', Arial, sans-serif;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 16px;
-  }
-
-  .form-wrap {
-    width: 100%;
-    max-width: 520px;
-  }
-
-  /* Progress bar */
-  .progress-bar {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 32px;
-  }
-  .progress-seg {
-    flex: 1;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    transition: background 0.4s ease;
-  }
-  .progress-seg.done { background: var(--gold); }
-  .progress-seg.active { background: var(--gold); opacity: 0.5; }
-
-  /* Step */
-  .step { display: none; animation: fadeIn 0.35s ease; }
-  .step.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .step-label {
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 10px;
-    font-weight: 600;
-  }
-
-  h2 {
-    font-size: clamp(22px, 5vw, 28px);
-    font-weight: 700;
-    line-height: 1.25;
-    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #000;
     color: #fff;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
-  .step-sub {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 28px;
-    line-height: 1.5;
-  }
-
-  /* Option cards */
-  .options { display: flex; flex-direction: column; gap: 10px; }
-
-  .option-card {
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    user-select: none;
-    font-size: 15px;
-    color: var(--text);
-    background: var(--card);
+  /* Header */
+  .header {
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     gap: 12px;
-  }
-  .option-card:hover { border-color: var(--gold); background: #1e1a10; }
-  .option-card.selected {
-    border-color: var(--gold);
-    background: #1e1a10;
-    color: #fff;
-  }
-  .option-card .check {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
+    border-bottom: 1px solid #222;
     flex-shrink: 0;
-    transition: all 0.2s;
+  }
+  .header img {
+    height: 36px;
+    width: auto;
+  }
+  .header .title {
+    font-size: 14px;
+    color: #999;
+  }
+
+  /* Chat area */
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.5;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.assistant {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .message.user {
+    background: #EFC050;
+    color: #000;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message a {
+    color: #EFC050;
+    text-decoration: underline;
+  }
+  .message.user a {
+    color: #000;
+  }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    align-self: flex-start;
+  }
+  .typing span {
+    width: 8px;
+    height: 8px;
+    background: #555;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.16s; }
+  .typing span:nth-child(3) { animation-delay: 0.32s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 12px 16px;
+    border-top: 1px solid #222;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    background: #000;
+  }
+
+  .input-area textarea {
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    max-height: 100px;
+    min-height: 42px;
+    line-height: 1.4;
+  }
+  .input-area textarea::placeholder { color: #666; }
+  .input-area textarea:focus { border-color: #EFC050; }
+
+  .send-btn {
+    background: #EFC050;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
   }
-  .option-card.selected .check {
-    background: var(--gold);
-    border-color: var(--gold);
-  }
-  .option-card.selected .check::after {
-    content: '✓';
-    font-size: 11px;
-    color: #000;
-    font-weight: 700;
-  }
-  /* Checkbox style for multi-select */
-  .option-card .check.square {
-    border-radius: 4px;
-  }
+  .send-btn:disabled { opacity: 0.3; cursor: default; }
+  .send-btn svg { width: 20px; height: 20px; fill: #000; }
 
-  /* Soft gate */
-  .soft-gate {
-    background: #1a1400;
-    border: 1.5px solid var(--gold);
-    border-radius: var(--radius);
+  /* Contact form overlay */
+  .form-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
-    margin-top: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+  .form-overlay.active { display: flex; }
+
+  .contact-form {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .contact-form h2 {
+    font-size: 20px;
+    margin-bottom: 4px;
+    color: #EFC050;
+  }
+  .contact-form .subtitle {
     font-size: 14px;
-    line-height: 1.6;
-    color: #ccc;
+    color: #888;
+    margin-bottom: 20px;
+  }
+  .contact-form label {
+    display: block;
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+  }
+  .contact-form input:focus,
+  .contact-form textarea:focus { border-color: #EFC050; }
+  .contact-form textarea { resize: none; height: 60px; }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+  }
+  .form-row > div { flex: 1; }
+
+  .form-error {
+    color: #ff6b6b;
+    font-size: 13px;
+    margin-top: 8px;
     display: none;
   }
-  .soft-gate strong { color: var(--gold); display: block; margin-bottom: 8px; font-size: 15px; }
-  .soft-gate .gate-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-  .btn-secondary {
-    padding: 10px 18px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: var(--font);
-    transition: border-color 0.2s;
-  }
-  .btn-secondary:hover { border-color: var(--muted); }
 
-  /* Inputs */
-  .input-group { margin-bottom: 16px; }
-  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  textarea {
-    width: 100%;
-    background: var(--card);
-    border: 1.5px solid var(--border);
+  .form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn-submit {
+    flex: 1;
+    background: #EFC050;
+    color: #000;
+    border: none;
     border-radius: 8px;
-    padding: 13px 15px;
-    color: var(--text);
+    padding: 12px;
     font-size: 15px;
-    font-family: var(--font);
-    outline: none;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
+    font-weight: 600;
+    cursor: pointer;
   }
-  input:focus, textarea:focus { border-color: var(--gold); }
-  input::placeholder, textarea::placeholder { color: #444; }
-  textarea { resize: vertical; min-height: 90px; }
-
-  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 440px) { .input-row { grid-template-columns: 1fr; } }
+  .btn-submit:disabled { opacity: 0.5; }
+  .btn-back {
+    background: none;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #999;
+    font-size: 14px;
+    cursor: pointer;
+  }
 
   /* Consent */
   .consent {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-start;
-    margin-top: 6px;
+    margin-top: 14px;
   }
   .consent input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    accent-color: var(--gold);
+    width: 16px;
+    height: 16px;
     margin-top: 2px;
-    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #EFC050;
   }
   .consent span {
     font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
+    color: #888;
+    line-height: 1.4;
   }
 
-  /* Buttons */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: var(--gold);
-    color: #000;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 14px 28px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 20px;
-    font-family: var(--font);
-    transition: background 0.2s, opacity 0.2s;
-    letter-spacing: 0.02em;
-  }
-  .btn:hover { background: var(--gold-dark); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-arrow::after { content: '→'; font-size: 16px; }
-
-  .back-link {
+  /* CTA button in chat */
+  .cta-btn {
     display: inline-block;
-    margin-top: 16px;
-    font-size: 13px;
-    color: var(--muted);
+    background: #EFC050;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
     cursor: pointer;
-    background: none;
     border: none;
-    font-family: var(--font);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    margin-top: 8px;
   }
-  .back-link:hover { color: var(--text); }
-
-  .error-msg {
-    color: var(--error);
-    font-size: 13px;
-    margin-top: 12px;
-    padding: 10px 14px;
-    background: #1f0e0e;
-    border-radius: 6px;
-    border: 1px solid #4a1a1a;
-    display: none;
-  }
-
-  /* Spinner */
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(0,0,0,0.3);
-    border-top-color: #000;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .cta-btn:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
-<div class="form-wrap">
 
-  <!-- Progress -->
-  <div class="progress-bar">
-    <div class="progress-seg active" id="seg1"></div>
-    <div class="progress-seg" id="seg2"></div>
-    <div class="progress-seg" id="seg3"></div>
-    <div class="progress-seg" id="seg4"></div>
-  </div>
+<div class="header">
+  <img src="https://premierdatingphotography.com/wp-content/uploads/2024/05/pdp-logo-new.png" alt="PDP" onerror="this.style.display='none'">
+  <div class="title">Premier Dating Photography</div>
+</div>
 
-  <!-- ── STEP 1: Intent ── -->
-  <div class="step active" id="step-1">
-    <div class="step-label">Step 1 of 4</div>
-    <h2>What brings you here today?</h2>
-    <p class="step-sub">Pick everything that applies — no wrong answers.</p>
+<div class="chat-container" id="chatBox"></div>
 
-    <div class="options" id="intent-options">
-      <div class="option-card" data-val="photos" onclick="toggleIntent(this)">
-        <span class="check square"></span>
-        Professional dating profile photos
-      </div>
-      <div class="option-card" data-val="coaching" onclick="toggleIntent(this)">
-        <span class="check square"></span>
-        Dating coaching or profile review
-      </div>
-      <div class="option-card" data-val="both" onclick="toggleIntent(this)">
-        <span class="check square"></span>
-        Both photos and coaching
-      </div>
-      <div class="option-card" data-val="finding" onclick="toggleIntent(this)">
-        <span class="check square"></span>
-        Help finding or meeting people
-      </div>
-    </div>
+<div class="input-area">
+  <textarea id="userInput" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
+  <button class="send-btn" id="sendBtn" disabled>
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
 
-    <!-- Soft gate -->
-    <div class="soft-gate" id="soft-gate">
-      <strong>Just so you know</strong>
-      Premier Dating Photography is a professional photo and coaching service. We help you get
-      <em>more matches</em> on apps like Tinder, Hinge, and Bumble by improving your photos and
-      how your profile comes across — we don't connect you with other people directly.
-      <br><br>
-      If that sounds like it could help, we'd love to chat.
-      <div class="gate-actions">
-        <button class="btn" style="width:auto; margin-top:0;" onclick="continueAfterGate()">That sounds great, let's go</button>
-        <button class="btn-secondary" onclick="dismissGate()">No thanks</button>
-      </div>
-    </div>
+<!-- Contact form overlay -->
+<div class="form-overlay" id="formOverlay">
+  <div class="contact-form">
+    <h2>Let's connect you</h2>
+    <p class="subtitle">The team will reach out to set up your free consultation.</p>
 
-    <button class="btn btn-arrow" id="step1-next" onclick="goStep(2)" style="display:none;">Continue</button>
-  </div>
-
-  <!-- ── STEP 2: Tell us about yourself ── -->
-  <div class="step" id="step-2">
-    <div class="step-label">Step 2 of 4</div>
-    <h2>Tell us a bit about your situation</h2>
-    <p class="step-sub">What's going on with your dating life right now? What are you hoping to change?</p>
-
-    <div class="input-group">
-      <textarea id="situation" rows="5" placeholder="e.g. I've been on Hinge for 6 months and barely getting matches. I think my photos are the problem..."></textarea>
-    </div>
-
-    <!-- AI follow-up (hidden by default) -->
-    <div id="ai-followup" style="display:none;">
-      <div id="ai-followup-msg" style="background:#1a1400; border:1.5px solid var(--gold); border-radius:var(--radius); padding:18px; margin-bottom:16px; font-size:14px; line-height:1.6; color:#ccc;"></div>
-      <div class="input-group">
-        <textarea id="situation-reply" rows="3" placeholder="Tell us more..."></textarea>
-      </div>
-    </div>
-
-    <div class="error-msg" id="step2-error"></div>
-
-    <button class="btn btn-arrow" id="step2-next" onclick="analyzeStep2()">Continue</button>
-    <button class="back-link" onclick="goStep(1)">← Back</button>
-  </div>
-
-  <!-- ── STEP 3: About you ── -->
-  <div class="step" id="step-3">
-    <div class="step-label">Step 3 of 4</div>
-    <h2>A little about you</h2>
-    <p class="step-sub">So we know who we're talking to.</p>
-
-    <div class="input-row">
-      <div class="input-group">
+    <div class="form-row">
+      <div>
         <label>First name *</label>
-        <input type="text" id="first-name" placeholder="First name" autocomplete="given-name"/>
+        <input type="text" id="fname" placeholder="First name" autocomplete="given-name">
       </div>
-      <div class="input-group">
+      <div>
         <label>Last name</label>
-        <input type="text" id="last-name" placeholder="Last name" autocomplete="family-name"/>
+        <input type="text" id="lname" placeholder="Last name" autocomplete="family-name">
       </div>
     </div>
-    <div class="input-group">
-      <label>City</label>
-      <input type="text" id="city" placeholder="Your city" autocomplete="address-level2"/>
-    </div>
 
-    <button class="btn btn-arrow" id="step3-next" onclick="goStep(4)">Continue</button>
-    <button class="back-link" onclick="goStep(2)">← Back</button>
-  </div>
+    <label>Email *</label>
+    <input type="email" id="femail" placeholder="you@email.com" autocomplete="email">
 
-  <!-- ── STEP 4: Contact ── -->
-  <div class="step" id="step-4">
-    <div class="step-label">Step 4 of 4</div>
-    <h2>How can we reach you?</h2>
-    <p class="step-sub">We'll be in touch within one business day — no spam, ever.</p>
+    <label>Phone *</label>
+    <input type="tel" id="fphone" placeholder="(555) 123-4567" autocomplete="tel">
 
-    <div class="input-group">
-      <label>Email *</label>
-      <input type="email" id="email" placeholder="you@email.com" autocomplete="email"/>
-    </div>
-    <div class="input-group">
-      <label>Phone *</label>
-      <input type="tel" id="phone" placeholder="Your phone number" autocomplete="tel"/>
-    </div>
-    <div class="input-group">
-      <label>Any questions for us? (optional)</label>
-      <textarea id="message" placeholder="Scheduling preferences, specific concerns, anything else..."></textarea>
-    </div>
+    <label>Anything else?</label>
+    <textarea id="fmessage" placeholder="Optional — anything you want the team to know"></textarea>
+
     <div class="consent">
-      <input type="checkbox" id="sms-consent"/>
-      <span>I agree to receive SMS messages from Premier Dating Photography. Message &amp; data rates may apply. Reply STOP to opt out.</span>
+      <input type="checkbox" id="fconsent" checked>
+      <span>I agree to be contacted about Premier Dating Photography services.</span>
     </div>
 
-    <div class="error-msg" id="error-msg"></div>
+    <div class="form-error" id="formError"></div>
 
-    <button class="btn" id="submit-btn" onclick="submitForm()">
-      <span id="submit-label">Send my info</span>
-      <div class="spinner" id="submit-spinner"></div>
-    </button>
-    <button class="back-link" onclick="goStep(3)">← Back</button>
+    <div class="form-buttons">
+      <button class="btn-back" onclick="closeForm()">← Back to chat</button>
+      <button class="btn-submit" id="submitBtn" onclick="submitForm()">Send →</button>
+    </div>
   </div>
-
 </div>
 
 <script>
+  const chatBox = document.getElementById('chatBox');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const formOverlay = document.getElementById('formOverlay');
+
+  let messages = [];  // conversation history for API
+  let chatStarted = false;
+  let formTriggered = false;
+  let pageLoadTracked = false;
+
   // ── Funnel tracking ──
-  function trackEvent(event) {
+  function track(event) {
     fetch('/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event }),
     }).catch(() => {});
   }
-  // Track page load
-  trackEvent('page_loads');
+  track('page_loads');
+  pageLoadTracked = true;
 
-  // State
-  const state = {
-    intents: new Set(),
-    mismatched: false,
-    gatePassed: false,
-    situation: '',
-    aiClassification: '',
-    followupShown: false,
-    tracked: new Set(),  // prevent duplicate step events
-  };
+  // ── Opening message ──
+  const opener = "Hey! What brings you to Premier Dating Photography today?";
+  addMessage('assistant', opener);
 
-  // ── Progress bar ──
-  function updateProgress(step) {
-    [1,2,3,4].forEach(i => {
-      const seg = document.getElementById('seg' + i);
-      seg.className = 'progress-seg';
-      if (i < step) seg.classList.add('done');
-      else if (i === step) seg.classList.add('active');
-    });
+  // ── Auto-resize textarea ──
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 100) + 'px';
+    sendBtn.disabled = !userInput.value.trim();
+  });
+
+  // ── Enter to send ──
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (userInput.value.trim()) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', () => {
+    if (userInput.value.trim()) sendMessage();
+  });
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    // Convert URLs to links
+    div.innerHTML = text.replace(
+      /(https?:\/\/[^\s<)]+)/g,
+      '<a href="$1" target="_blank" rel="noopener">$1</a>'
+    );
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
   }
 
-  // ── Navigation ──
-  function goStep(n) {
-    // Validate before advancing
-    if (n === 4) {
-      const fn = document.getElementById('first-name').value.trim();
-      if (!fn) { document.getElementById('first-name').focus(); return; }
-    }
-
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step-' + n).classList.add('active');
-    updateProgress(n);
-    window.scrollTo(0, 0);
-    // Track step reached (forward only, deduplicated)
-    const stepKey = 'step_' + n;
-    if (n >= 2 && !state.tracked.has(stepKey)) { trackEvent(stepKey); state.tracked.add(stepKey); }
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typing';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // ── Step 1: Intent ──
-  function toggleIntent(card) {
-    const val = card.dataset.val;
-
-    // Toggle selection
-    if (card.classList.contains('selected')) {
-      card.classList.remove('selected');
-      state.intents.delete(val);
-    } else {
-      card.classList.add('selected');
-      state.intents.add(val);
-      if (!state.tracked.has('step_1')) { trackEvent('step_1'); state.tracked.add('step_1'); }
-    }
-
-    const hasMismatched = state.intents.has('finding');
-    const hasReal = [...state.intents].some(v => v !== 'finding');
-    const gate = document.getElementById('soft-gate');
-    const nextBtn = document.getElementById('step1-next');
-
-    if (hasMismatched && !state.gatePassed) {
-      gate.style.display = 'block';
-      nextBtn.style.display = 'none';
-      if (!state.tracked.has('soft_gated')) { trackEvent('soft_gated'); state.tracked.add('soft_gated'); }
-    } else if (state.intents.size > 0) {
-      gate.style.display = 'none';
-      nextBtn.style.display = 'block';
-    } else {
-      gate.style.display = 'none';
-      nextBtn.style.display = 'none';
-    }
+  function hideTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
   }
 
-  function continueAfterGate() {
-    state.gatePassed = true;
-    state.mismatched = true;
-    trackEvent('gate_continued');
-    document.getElementById('soft-gate').style.display = 'none';
-    document.getElementById('step1-next').style.display = 'block';
+  function showContactButton() {
+    if (formTriggered) return;
+    formTriggered = true;
+    track('form_shown');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'align-self: flex-start; animation: fadeIn 0.3s ease;';
+    wrapper.innerHTML = '<button class="cta-btn" onclick="openForm()">Get in Touch →</button>';
+    chatBox.appendChild(wrapper);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  function dismissGate() {
-    trackEvent('gate_dismissed');
-    // Remove "finding" selection and hide gate
-    state.intents.delete('finding');
-    document.querySelectorAll('#intent-options .option-card').forEach(c => {
-      if (c.dataset.val === 'finding') c.classList.remove('selected');
-    });
-    document.getElementById('soft-gate').style.display = 'none';
-    const nextBtn = document.getElementById('step1-next');
-    nextBtn.style.display = state.intents.size > 0 ? 'block' : 'none';
-  }
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
 
-  // ── Step 2: AI-qualified free text ──
-  async function analyzeStep2() {
-    const mainText = document.getElementById('situation').value.trim();
-    const replyText = (document.getElementById('situation-reply')?.value || '').trim();
-    const combined = mainText + (replyText ? '\n' + replyText : '');
-    const errEl = document.getElementById('step2-error');
-    errEl.style.display = 'none';
-
-    if (!mainText) {
-      errEl.textContent = 'Please tell us a bit about your situation.';
-      errEl.style.display = 'block';
-      return;
+    if (!chatStarted) {
+      chatStarted = true;
+      track('chat_started');
     }
-    if (!state.tracked.has('step_2_typed')) { trackEvent('step_2_typed'); state.tracked.add('step_2_typed'); }
+    track('messages_sent');
 
-    // If followup already shown and they replied (or clicked continue again), just advance
-    if (state.followupShown) {
-      state.situation = combined;
-      goStep(3);
-      return;
-    }
+    // Show user message
+    addMessage('user', text);
+    messages.push({ role: 'user', content: text });
 
-    const btn = document.getElementById('step2-next');
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="display:inline-block"></div>';
+    // Clear input
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    // Show typing
+    showTyping();
 
     try {
-      const resp = await fetch('/analyze', {
+      const resp = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: combined }),
+        body: JSON.stringify({ messages }),
       });
-      const json = await resp.json();
-      state.aiClassification = json.classification;
+      const data = await resp.json();
+      hideTyping();
 
-      if (json.classification === 'good') {
-        // Good prospect → straight through
-        state.situation = combined;
-        goStep(3);
-      } else if (json.classification === 'blocked') {
-        // Truly inappropriate
-        trackEvent('blocked');
-        errEl.textContent = "We're not able to help with that request.";
-        errEl.style.display = 'block';
-      } else {
-        // Unclear/off-topic → show AI follow-up question
-        state.followupShown = true;
-        const followup = document.getElementById('ai-followup');
-        const followupMsg = document.getElementById('ai-followup-msg');
-        followupMsg.textContent = json.followup || "Could you tell us a bit more about what you're looking for? We specialize in dating profile photos and coaching to help you get more matches.";
-        followup.style.display = 'block';
-        document.getElementById('situation-reply').focus();
+      const reply = data.reply || "Sorry, something went wrong.";
+      addMessage('assistant', reply);
+      messages.push({ role: 'assistant', content: reply });
+
+      // Show contact form button if AI triggered it
+      if (data.show_form) {
+        showContactButton();
       }
-    } catch (e) {
-      // On error, just let them through
-      state.situation = combined;
-      goStep(3);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = origText;
+    } catch (err) {
+      hideTyping();
+      addMessage('assistant', "Something went wrong on my end. You can reach the team directly at premierdatingphotography.com.");
     }
   }
 
-  // ── Step 4: Submit ──
+  // ── Contact form ──
+  function openForm() {
+    formOverlay.classList.add('active');
+    track('form_started');
+    document.getElementById('fname').focus();
+  }
+
+  function closeForm() {
+    formOverlay.classList.remove('active');
+  }
+
   async function submitForm() {
-    const email = document.getElementById('email').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const firstName = document.getElementById('first-name').value.trim();
-    const errEl = document.getElementById('error-msg');
+    const fname = document.getElementById('fname').value.trim();
+    const lname = document.getElementById('lname').value.trim();
+    const email = document.getElementById('femail').value.trim();
+    const phone = document.getElementById('fphone').value.trim();
+    const message = document.getElementById('fmessage').value.trim();
+    const consent = document.getElementById('fconsent').checked;
+    const errEl = document.getElementById('formError');
+    const btn = document.getElementById('submitBtn');
 
-    if (!firstName) { showError('Please go back and enter your first name.'); return; }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); return; }
-    if (!phone) { showError('Please enter your phone number.'); return; }
-
-    setLoading(true);
     errEl.style.display = 'none';
+
+    if (!fname) { showFormError('Please enter your first name.'); return; }
+    if (!email || !email.includes('@')) { showFormError('Please enter a valid email.'); return; }
+    if (!phone) { showFormError('Please enter your phone number.'); return; }
+    if (!consent) { showFormError('Please agree to be contacted.'); return; }
+
+    // Build summary from chat
+    const userMessages = messages.filter(m => m.role === 'user').map(m => m.content);
+    const summary = userMessages.join(' | ');
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
 
     try {
       const resp = await fetch('/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          first_name: firstName,
-          last_name: document.getElementById('last-name').value.trim(),
+          first_name: fname,
+          last_name: lname,
           email,
           phone,
-          city: document.getElementById('city').value.trim(),
-          message: document.getElementById('message').value.trim(),
-          services: [...state.intents],
-          situation: state.situation,
-          mismatched: state.mismatched,
-          sms_consent: document.getElementById('sms-consent').checked,
+          message,
+          summary,
         }),
       });
+      const data = await resp.json();
 
-      const json = await resp.json();
-
-      if (json.blocked) {
-        showError("We're not able to process this request.");
-        setLoading(false);
-        return;
+      if (data.ok) {
+        track('submitted');
+        window.location.href = data.redirect;
+      } else {
+        showFormError(data.error || 'Something went wrong.');
+        btn.disabled = false;
+        btn.textContent = 'Send →';
       }
-
-      if (!json.ok) {
-        showError(json.error || 'Something went wrong. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Track successful submission then redirect
-      trackEvent('submitted');
-      window.location.href = json.redirect;
-
-    } catch (e) {
-      showError('Network error — please check your connection and try again.');
-      setLoading(false);
+    } catch (err) {
+      showFormError('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send →';
     }
   }
 
-  function showError(msg) {
-    const el = document.getElementById('error-msg');
+  function showFormError(msg) {
+    const el = document.getElementById('formError');
     el.textContent = msg;
     el.style.display = 'block';
   }
 
-  function setLoading(on) {
-    const btn = document.getElementById('submit-btn');
-    const label = document.getElementById('submit-label');
-    const spinner = document.getElementById('submit-spinner');
-    btn.disabled = on;
-    label.style.display = on ? 'none' : 'block';
-    spinner.style.display = on ? 'block' : 'none';
+  // ── Mobile keyboard handling ──
+  const vv = window.visualViewport;
+  if (vv) {
+    vv.addEventListener('resize', () => {
+      document.body.style.height = vv.height + 'px';
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
   }
 </script>
 </body>
