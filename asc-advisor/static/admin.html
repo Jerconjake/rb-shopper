@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hope Admin — Intake Briefs</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F7F5F2;color:#2C2C2C;padding:20px;max-width:900px;margin:0 auto}
+h1{color:#2E5A4B;margin-bottom:20px;font-size:24px}
+.pin-form{display:flex;gap:10px;margin-bottom:24px}
+.pin-form input{padding:10px 14px;border:1.5px solid #E8E4DE;border-radius:8px;font-size:15px;flex:1;max-width:200px}
+.pin-form button{padding:10px 20px;background:#2E5A4B;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+.pin-form button:hover{background:#3D7A64}
+.brief{background:white;border:1px solid #E8E4DE;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.brief-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.brief-email{font-weight:700;color:#2E5A4B;font-size:16px}
+.brief-time{font-size:13px;color:#888}
+.brief-summary{background:#F0F7F4;padding:14px;border-radius:8px;margin-bottom:14px;font-size:14px;line-height:1.55}
+.brief-summary strong{display:block;margin-bottom:6px;color:#2E5A4B}
+.convo-toggle{font-size:13px;color:#2E5A4B;cursor:pointer;font-weight:600;text-decoration:underline;background:none;border:none}
+.convo{display:none;margin-top:12px;padding-top:12px;border-top:1px solid #E8E4DE;font-size:13px;line-height:1.5}
+.convo-msg{margin-bottom:8px}
+.convo-msg .role{font-weight:600;text-transform:capitalize;color:#2E5A4B}
+.no-briefs{color:#888;font-style:italic;padding:40px;text-align:center}
+.count{font-size:14px;color:#888;margin-bottom:16px}
+</style>
+</head>
+<body>
+<h1>🤍 Hope — Intake Briefs</h1>
+<div class="pin-form">
+  <input type="password" id="pin" placeholder="Enter admin PIN">
+  <button onclick="loadBriefs()">View Briefs</button>
+</div>
+<div id="count" class="count"></div>
+<div id="briefs"></div>
+
+<script>
+async function loadBriefs(){
+  const pin=document.getElementById('pin').value;
+  const r=await fetch('/admin/briefs?pin='+encodeURIComponent(pin));
+  if(!r.ok){alert('Invalid PIN');return}
+  const d=await r.json();
+  document.getElementById('count').textContent=d.count+' intake brief'+(d.count!==1?'s':'');
+  const el=document.getElementById('briefs');
+  if(!d.briefs.length){el.innerHTML='<div class="no-briefs">No intake briefs captured yet.</div>';return}
+  el.innerHTML=d.briefs.map((b,i)=>{
+    const convo=b.conversation.map(m=>`<div class="convo-msg"><span class="role">${m.role==='assistant'?'Hope':m.role}:</span> ${esc(m.content)}</div>`).join('');
+    return `<div class="brief">
+      <div class="brief-header">
+        <span class="brief-email">${esc(b.email)}</span>
+        <span class="brief-time">${new Date(b.timestamp).toLocaleString()}</span>
+      </div>
+      <div class="brief-summary"><strong>AI Summary:</strong>${esc(b.ai_summary||'(none)')}</div>
+      <button class="convo-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">View Full Conversation</button>
+      <div class="convo">${convo}</div>
+    </div>`}).join('');
+}
+function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+</script>
+</body>
+</html>

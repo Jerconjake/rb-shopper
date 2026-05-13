@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hope — Advanced Solutions Counselling</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#2E5A4B;
+  --primary-light:#3D7A64;
+  --primary-dark:#1E3F34;
+  --accent:#C5A55A;
+  --bg:#F7F5F2;
+  --card:#FFFFFF;
+  --text:#2C2C2C;
+  --text-light:#6B6B6B;
+  --user-bg:#2E5A4B;
+  --user-text:#FFFFFF;
+  --ai-bg:#FFFFFF;
+  --ai-text:#2C2C2C;
+  --border:#E8E4DE;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
+body{display:flex;flex-direction:column}
+
+/* Header */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04);flex-shrink:0;z-index:10}
+.header-logo{width:42px;height:42px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-logo svg{width:24px;height:24px;fill:white}
+.header-info{flex:1;min-width:0}
+.header-name{font-size:16px;font-weight:700;color:var(--primary-dark);line-height:1.2}
+.header-sub{font-size:12px;color:var(--text-light);line-height:1.3}
+
+/* Messages */
+.messages{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.msg{max-width:82%;padding:12px 16px;border-radius:18px;font-size:14.5px;line-height:1.55;word-wrap:break-word;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;background:var(--user-bg);color:var(--user-text);border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--ai-bg);color:var(--ai-text);border-bottom-left-radius:4px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.msg.ai a{color:var(--primary);font-weight:600;text-decoration:none}
+.msg.ai a:hover{text-decoration:underline}
+.msg.ai strong{font-weight:600}
+.msg.ai p{margin-bottom:8px}
+.msg.ai p:last-child{margin-bottom:0}
+
+/* CTA button */
+.cta-btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:6px;transition:background .2s}
+.cta-btn:hover{background:var(--primary-light)}
+
+/* Crisis box */
+.crisis-box{background:#FFF3F0;border:1px solid #FFCCC2;border-radius:12px;padding:12px 16px;margin-top:8px}
+.crisis-box strong{color:#C0392B}
+
+/* Typing indicator */
+.typing{align-self:flex-start;padding:12px 20px;background:var(--ai-bg);border-radius:18px;border-bottom-left-radius:4px;box-shadow:var(--shadow);border:1px solid var(--border);display:none}
+.typing span{display:inline-block;width:7px;height:7px;background:var(--primary);border-radius:50%;margin:0 2px;animation:bounce .6s infinite alternate}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{to{transform:translateY(-5px);opacity:.4}}
+
+/* Input */
+.input-area{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);flex-shrink:0;z-index:10}
+.input-row{display:flex;gap:8px;max-width:700px;margin:0 auto}
+.input-row textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;font-size:15px;font-family:inherit;resize:none;outline:none;transition:border-color .2s;min-height:44px;max-height:120px;line-height:1.4}
+.input-row textarea:focus{border-color:var(--primary)}
+.input-row textarea::placeholder{color:#aaa}
+.input-row button{width:44px;height:44px;border-radius:12px;border:none;background:var(--primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0}
+.input-row button:hover{background:var(--primary-light)}
+.input-row button:disabled{background:#ccc;cursor:default}
+.input-row button svg{width:20px;height:20px;fill:white}
+
+/* Disclaimer */
+.disclaimer{text-align:center;font-size:11px;color:#aaa;padding:6px 16px 10px;background:var(--card)}
+
+/* Restore banner */
+.restore-banner{background:var(--primary);color:white;text-align:center;padding:8px;font-size:13px;cursor:pointer;flex-shrink:0}
+.restore-banner:hover{background:var(--primary-light)}
+
+/* Scrollbar */
+.messages::-webkit-scrollbar{width:5px}
+.messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+
+/* Mobile */
+@media(max-width:600px){
+  .msg{max-width:90%;font-size:14px}
+  .header{padding:12px 14px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  </div>
+  <div class="header-info">
+    <div class="header-name">Hope</div>
+    <div class="header-sub">Advanced Solutions Counselling</div>
+  </div>
+</div>
+
+<div class="messages" id="messages"></div>
+
+<div class="typing" id="typing"><span></span><span></span><span></span></div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="input" rows="1" placeholder="Type a message..." enterkeyhint="send"></textarea>
+    <button id="send" aria-label="Send">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+<div class="disclaimer">Hope is an AI assistant, not a therapist. If you're in crisis, call 988.</div>
+
+<script>
+const msgEl=document.getElementById('messages'),input=document.getElementById('input'),sendBtn=document.getElementById('send'),typingEl=document.getElementById('typing');
+let messages=[];
+let history=[];
+const STORAGE_KEY='asc_hope_chat';
+
+// Restore previous conversation
+(function restore(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(saved&&saved.messages&&saved.messages.length>0){
+      const banner=document.createElement('div');
+      banner.className='restore-banner';
+      banner.textContent='↩ Previous conversation restored. Tap here to start fresh.';
+      banner.onclick=()=>{localStorage.removeItem(STORAGE_KEY);location.reload()};
+      document.body.insertBefore(banner,msgEl);
+      messages=saved.messages;
+      history=saved.history||[];
+      messages.forEach(m=>appendBubble(m.role,m.content,false));
+      scrollBottom();
+      return;
+    }
+  }catch(e){}
+  // Fresh start
+  const greeting="Hi, I'm Hope. I'm here to help you take the first step — whether you have questions about our services or just want to talk about what's been going on. What brings you here today?";
+  appendBubble('ai',greeting,false);
+  messages.push({role:'assistant',content:greeting});
+  history.push({role:'assistant',content:greeting});
+  save();
+})();
+
+function save(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({messages,history:history.slice(-60)}));}catch(e){}
+}
+
+function appendBubble(role,text,animate=true){
+  const div=document.createElement('div');
+  div.className='msg '+(role==='user'?'user':'ai');
+  if(role!=='user'){
+    div.innerHTML=formatMarkdown(text);
+    // Convert CTA links to buttons
+    div.querySelectorAll('a').forEach(a=>{
+      if(a.href.includes('book-an-appointment')){
+        a.className='cta-btn';
+        a.target='_blank';
+        a.rel='noopener';
+      }
+    });
+  }else{
+    div.textContent=text;
+  }
+  msgEl.appendChild(div);
+  if(animate)scrollBottom();
+}
+
+function formatMarkdown(t){
+  // Crisis resources box
+  if(t.includes('988')&&t.includes('686868')){
+    t=t.replace(/(🆘[\s\S]*?(?=\n\n|You don))/,'<div class="crisis-box">$1</div>');
+  }
+  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  t=t.replace(/\n{2,}/g,'</p><p>');
+  t=t.replace(/\n/g,'<br>');
+  return '<p>'+t+'</p>';
+}
+
+function scrollBottom(){
+  requestAnimationFrame(()=>{msgEl.scrollTop=msgEl.scrollHeight});
+}
+
+async function send(){
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  autoResize();
+  appendBubble('user',text);
+  messages.push({role:'user',content:text});
+  history.push({role:'user',content:text});
+  save();
+  sendBtn.disabled=true;
+  typingEl.style.display='block';
+  msgEl.appendChild(typingEl);
+  scrollBottom();
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});
+    const d=await r.json();
+    typingEl.style.display='none';
+    appendBubble('ai',d.reply);
+    messages.push({role:'assistant',content:d.reply});
+    history.push({role:'assistant',content:d.reply});
+    save();
+  }catch(e){
+    typingEl.style.display='none';
+    const err="I'm having a little trouble right now. You can reach the team directly at 705-410-3810.";
+    appendBubble('ai',err);
+  }
+  sendBtn.disabled=false;
+  input.focus();
+}
+
+sendBtn.onclick=send;
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}
+});
+
+// Auto-resize textarea
+function autoResize(){
+  input.style.height='auto';
+  input.style.height=Math.min(input.scrollHeight,120)+'px';
+}
+input.addEventListener('input',autoResize);
+
+// Track session
+fetch('/api/session',{method:'POST'}).catch(()=>{});
+</script>
+</body>
+</html>
