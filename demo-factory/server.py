@@ -66,53 +66,54 @@ def scrape_website(url):
         )
 
         # Logo detection — priority order:
-        # 1. <img> with "logo" in class/id/alt/src inside header elements
-        # 2. og:image meta tag
-        # 3. Any <img> with "logo" anywhere on page
-        # 4. Site favicon as last resort
+        # 1. og:image meta (most reliable across all CMS types)
+        # 2. <img> with "logo" in class/id/alt/src inside header/nav
+        # 3. First reasonably-sized image in header/nav
+        # 4. Any <img> with "logo" anywhere on page
+        # 5. apple-touch-icon link tag
         logo_url = ""
 
-        # Priority 1: look inside header/nav elements for logo images
-        header_containers = soup.find_all(
-            ["header", "nav", "div"],
-            class_=lambda c: c and any(
-                kw in " ".join(c).lower()
-                for kw in ["header", "site-header", "navbar", "nav-wrap", "top-bar", "masthead", "branding"]
-            )
-        )
-        for container in header_containers:
-            for img in container.find_all("img"):
-                src = img.get("src", "")
-                alt = img.get("alt", "").lower()
-                cls = " ".join(img.get("class", [])).lower()
-                img_id = img.get("id", "").lower()
-                if src and any(
-                    "logo" in x for x in [src.lower(), alt, cls, img_id]
-                ):
-                    logo_url = src
-                    break
-            # Also grab first image in header even without "logo" keyword
-            if not logo_url:
-                first_img = container.find("img")
-                if first_img and first_img.get("src"):
-                    src = first_img.get("src", "")
-                    # Skip tiny icons / tracking pixels
-                    w = first_img.get("width", "999")
-                    h = first_img.get("height", "999")
-                    try:
-                        if int(str(w)) > 40 and int(str(h)) > 20:
-                            logo_url = src
-                    except Exception:
-                        logo_url = src
-            if logo_url:
-                break
+        # Priority 1: og:image — works on WordPress, Shopify, Squarespace, Wix, etc.
+        og_image = soup.find("meta", attrs={"property": "og:image"})
+        if og_image and og_image.get("content", ""):
+            logo_url = og_image.get("content", "")
 
-        # Priority 2: og:image
+        # Priority 2: header/nav img with "logo" keyword
         if not logo_url:
-            og_image = soup.find("meta", attrs={"property": "og:image"})
-            logo_url = og_image.get("content", "") if og_image else ""
+            header_containers = soup.find_all(
+                ["header", "nav", "div"],
+                class_=lambda c: c and any(
+                    kw in " ".join(c).lower()
+                    for kw in ["header", "site-header", "navbar", "nav-wrap", "top-bar", "masthead", "branding"]
+                )
+            )
+            for container in header_containers:
+                for img in container.find_all("img"):
+                    src = img.get("src", "")
+                    alt = img.get("alt", "").lower()
+                    cls = " ".join(img.get("class", [])).lower()
+                    img_id = img.get("id", "").lower()
+                    if src and any(
+                        "logo" in x for x in [src.lower(), alt, cls, img_id]
+                    ):
+                        logo_url = src
+                        break
+                # Also grab first reasonably-sized image in header
+                if not logo_url:
+                    first_img = container.find("img")
+                    if first_img and first_img.get("src"):
+                        src = first_img.get("src", "")
+                        w = first_img.get("width", "999")
+                        h = first_img.get("height", "999")
+                        try:
+                            if int(str(w)) > 40 and int(str(h)) > 20:
+                                logo_url = src
+                        except Exception:
+                            logo_url = src
+                if logo_url:
+                    break
 
-        # Priority 3: any img with "logo" anywhere
+        # Priority 3: any img with "logo" anywhere on page
         if not logo_url:
             for img in soup.find_all("img"):
                 src = img.get("src", "")
@@ -124,6 +125,12 @@ def scrape_website(url):
                 ):
                     logo_url = src
                     break
+
+        # Priority 4: apple-touch-icon (shows brand icon at least)
+        if not logo_url:
+            touch_icon = soup.find("link", rel=lambda r: r and "apple-touch-icon" in " ".join(r).lower())
+            if touch_icon and touch_icon.get("href"):
+                logo_url = touch_icon.get("href", "")
 
         if logo_url and not logo_url.startswith("http"):
             logo_url = urljoin(url, logo_url)
@@ -242,7 +249,8 @@ Return ONLY valid JSON with these exact fields:
 System prompt instructions:
 - Address the assistant in second person: 'You are an AI assistant for [business name]...'
 - Include: business name, trade, all services, location, phone, hours
-- Pre-qualify leads: ask about their needs, timeline, and service area before suggesting anything
+- SERVICE AREA: If location is known, include this explicitly: 'You only serve [location] and the immediate surrounding area. If a customer says they are located in a different city, region, or province/state that is not near [location], politely let them know you don't service their area and suggest they search for a local [trade] contractor.' If location is unknown, instruct the bot to ask for the customer's location early in the conversation.
+- Pre-qualify leads: early in the conversation confirm they are in the service area, ask about their needs and timeline before diving into details
 - Handle spam/solicitation politely but firmly (say you'll pass their info to the team and end the conversation)
 - For serious leads: encourage booking a call or requesting a quote
 - Never make up prices — always direct to call/email for quotes
