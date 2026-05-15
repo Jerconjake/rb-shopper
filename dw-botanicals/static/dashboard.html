@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sage Analytics — Desert Willow Botanicals</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #4A7C59;
+      --green-lt: #6B9E78;
+      --cream:   #FAF6F0;
+      --cream-dk: #F0EAE0;
+      --border:  #DDD5C8;
+      --text:    #2C2C2A;
+      --muted:   #7A7468;
+      --white:   #FFFFFF;
+      --up:      #3A7D44;
+      --down:    #B53E3E;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── PIN GATE ── */
+    #gate {
+      position: fixed; inset: 0;
+      background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .gate-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .gate-leaf { font-size: 36px; margin-bottom: 12px; }
+    .gate-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .gate-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .gate-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 16px; text-align: center; letter-spacing: 4px;
+      color: var(--text); background: var(--cream);
+      outline: none; margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .gate-input:focus { border-color: var(--green); }
+    .gate-input.error { border-color: var(--down); animation: shake 0.3s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .gate-btn {
+      width: 100%; padding: 11px;
+      background: var(--green); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .gate-btn:hover { background: var(--green-lt); }
+    .gate-err { font-size: 12px; color: var(--down); margin-top: 8px; min-height: 16px; }
+
+    /* ── DASHBOARD ── */
+    #dash { display: none; max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--green); display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .header-title { font-size: 20px; font-weight: 700; }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .refresh-btn {
+      padding: 8px 16px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--white); color: var(--text); font-size: 13px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .refresh-btn:hover { border-color: var(--green); color: var(--green); }
+
+    /* Status bar */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+    }
+    .status-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      margin-right: 6px; background: #aaa;
+    }
+    .status-dot.up { background: var(--up); box-shadow: 0 0 0 3px rgba(58,125,68,0.15); }
+    .status-dot.down { background: var(--down); }
+    .status-label { font-size: 13px; font-weight: 600; }
+    .status-meta { font-size: 12px; color: var(--muted); }
+
+    /* Stat cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px; margin-bottom: 28px;
+    }
+    @media (min-width: 560px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 760px) { .cards { grid-template-columns: repeat(5, 1fr); } }
+
+    .card {
+      background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 14px; position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--green); border-radius: 12px 12px 0 0;
+    }
+    .card-icon { font-size: 18px; margin-bottom: 8px; }
+    .card-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .card-today { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; }
+    .card-today-label { font-size: 10px; color: var(--muted); margin-top: 2px; margin-bottom: 10px; }
+    .card-divider { border: none; border-top: 1px solid var(--cream-dk); margin: 8px 0; }
+    .card-month { font-size: 17px; font-weight: 700; color: var(--green); }
+    .card-month-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* Section */
+    .section-title {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;
+    }
+
+    /* History table */
+    .table-wrap {
+      background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; margin-bottom: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--cream-dk); }
+    th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    td { padding: 10px 14px; font-size: 13px; border-top: 1px solid var(--cream-dk); }
+    tr:hover td { background: var(--cream); }
+    .td-num { font-weight: 600; color: var(--text); }
+    .td-zero { color: var(--muted); }
+
+    /* Empty state */
+    .empty {
+      text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* Note */
+    .note {
+      font-size: 11px; color: var(--muted); margin-top: 10px;
+      padding: 10px 14px; background: var(--cream-dk); border-radius: 8px;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      border: 2px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; width: 20px; height: 20px;
+      animation: spin 0.7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-wrap { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-leaf">🌿</div>
+    <div class="gate-title">Sage Analytics</div>
+    <div class="gate-sub">Desert Willow Botanicals</div>
+    <input id="pin-input" class="gate-input" type="password" placeholder="Enter PIN" maxlength="20">
+    <button class="gate-btn" onclick="checkPin()">View Dashboard</button>
+    <div class="gate-err" id="pin-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">🌿</div>
+      <div>
+        <div class="header-title">Sage Analytics</div>
+        <div class="header-sub" id="header-sub">Desert Willow Botanicals</div>
+      </div>
+    </div>
+    <button class="refresh-btn" onclick="loadData()">
+      <span>↻</span> Refresh
+    </button>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div style="display:flex;align-items:center">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">Checking…</span>
+    </div>
+    <div class="status-meta" id="status-meta">Checking Sage service…</div>
+  </div>
+
+  <!-- Cards -->
+  <div class="section-title">Activity</div>
+  <div id="cards-area">
+    <div class="loading-wrap"><div class="spinner"></div><br>Loading…</div>
+  </div>
+
+  <!-- History -->
+  <div class="section-title" style="margin-top:28px">Daily History</div>
+  <div id="history-area">
+    <div class="loading-wrap"><div class="spinner"></div><br>Loading…</div>
+  </div>
+
+  <div class="note">
+    📋 Today's numbers come from the live Sage service and reset if the service restarts. Historical data is recorded each morning at 9am Mountain Time.
+  </div>
+</div>
+
+<script>
+  const PIN = 'willow';
+
+  function checkPin() {
+    const val = document.getElementById('pin-input').value.trim();
+    const errEl = document.getElementById('pin-err');
+    const input = document.getElementById('pin-input');
+    if (val === PIN) {
+      sessionStorage.setItem('dw_auth', '1');
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dash').style.display = 'block';
+      loadData();
+    } else {
+      input.classList.add('error');
+      errEl.textContent = 'Incorrect PIN — try again';
+      setTimeout(() => { input.classList.remove('error'); errEl.textContent = ''; }, 2000);
+      input.value = '';
+    }
+  }
+
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPin();
+  });
+
+  // Auto-unlock if already authed this session
+  if (sessionStorage.getItem('dw_auth') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+  }
+
+  const ICONS = {
+    sessions: '💬', messages: '✉️', product_clicks: '🛍️',
+    subscribe_clicks: '♻️', find_in_person_clicks: '📍'
+  };
+  const LABELS = {
+    sessions: 'Chats Opened', messages: 'Messages Sent',
+    product_clicks: 'Products Explored', subscribe_clicks: 'Subscribe Interest',
+    find_in_person_clicks: 'Find in Store'
+  };
+
+  async function loadData() {
+    if (sessionStorage.getItem('dw_auth') !== '1') return;
+
+    try {
+      const r = await fetch('/dashboard-data');
+      const data = await r.json();
+      renderStatus(r.ok);
+      renderCards(data.live, data.history);
+      renderHistory(data.history);
+      const now = new Date();
+      document.getElementById('header-sub').textContent =
+        'Desert Willow Botanicals · Updated ' +
+        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch(e) {
+      renderStatus(false);
+      document.getElementById('cards-area').innerHTML = '<div class="loading-wrap">Could not reach Sage service.</div>';
+      document.getElementById('history-area').innerHTML = '';
+    }
+  }
+
+  function renderStatus(ok) {
+    const dot = document.getElementById('status-dot');
+    const label = document.getElementById('status-label');
+    const meta = document.getElementById('status-meta');
+    if (ok) {
+      dot.className = 'status-dot up';
+      label.textContent = 'Sage is live';
+      meta.textContent = 'Chat is active and taking visitors on your site';
+    } else {
+      dot.className = 'status-dot down';
+      label.textContent = 'Service unreachable';
+      meta.textContent = 'Sage may be starting up — try refreshing in 30 seconds';
+    }
+  }
+
+  function renderCards(live, history) {
+    const monthStart = new Date().toISOString().slice(0, 7);
+    // Sum history for this month
+    const monthRows = (history || []).filter(r => r.date && r.date.startsWith(monthStart));
+    const monthTotals = {};
+    for (const key of ['sessions','messages','product_clicks','subscribe_clicks','find_in_person_clicks']) {
+      monthTotals[key] = monthRows.reduce((s, r) => s + (r[key] || 0), 0);
+    }
+
+    const keys = ['sessions','messages','product_clicks','subscribe_clicks','find_in_person_clicks'];
+    const html = `<div class="cards">${keys.map(k => `
+      <div class="card">
+        <div class="card-icon">${ICONS[k]}</div>
+        <div class="card-label">${LABELS[k]}</div>
+        <div class="card-today ${live[k] === 0 ? 'td-zero' : ''}">${live[k] ?? 0}</div>
+        <div class="card-today-label">Today (live)</div>
+        <hr class="card-divider">
+        <div class="card-month ${monthTotals[k] === 0 ? '' : ''}">${monthTotals[k]}</div>
+        <div class="card-month-label">This month (from history)</div>
+      </div>`).join('')}</div>`;
+    document.getElementById('cards-area').innerHTML = html;
+  }
+
+  function renderHistory(history) {
+    const el = document.getElementById('history-area');
+    if (!history || history.length === 0) {
+      el.innerHTML = `
+        <div class="table-wrap">
+          <div class="empty">
+            <div class="empty-icon">📊</div>
+            Daily history will appear here after the first morning check-in (9am Mountain Time).
+          </div>
+        </div>`;
+      return;
+    }
+
+    const rows = history.map(r => `
+      <tr>
+        <td>${r.date || '—'}</td>
+        <td class="${r.sessions ? 'td-num' : 'td-zero'}">${r.sessions ?? 0}</td>
+        <td class="${r.messages ? 'td-num' : 'td-zero'}">${r.messages ?? 0}</td>
+        <td class="${r.product_clicks ? 'td-num' : 'td-zero'}">${r.product_clicks ?? 0}</td>
+        <td class="${r.subscribe_clicks ? 'td-num' : 'td-zero'}">${r.subscribe_clicks ?? 0}</td>
+        <td class="${r.find_in_person_clicks ? 'td-num' : 'td-zero'}">${r.find_in_person_clicks ?? 0}</td>
+      </tr>`).join('');
+
+    el.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>💬 Chats</th>
+              <th>✉️ Messages</th>
+              <th>🛍️ Products</th>
+              <th>♻️ Subscribe</th>
+              <th>📍 Find in Store</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // Auto-load if already authed
+  if (sessionStorage.getItem('dw_auth') === '1') loadData();
+</script>
+</body>
+</html>

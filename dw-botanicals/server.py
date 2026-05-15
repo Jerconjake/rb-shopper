@@ -34,6 +34,10 @@ _analytics = {
     "find_in_person_clicks": 0
 }
 
+# ── Daily log (in-memory, populated by monitoring agent each morning) ──
+_daily_log = []  # list of {date, sessions, messages, product_clicks, subscribe_clicks, find_in_person_clicks}
+DASHBOARD_TOKEN = os.environ.get("DASHBOARD_TOKEN", "dw-stats-2025")
+
 # ── IP exclusion (comma-separated in EXCLUDED_IPS env var) ──
 _excluded_ips = set(
     ip.strip() for ip in os.environ.get("EXCLUDED_IPS", "172.225.43.149").split(",") if ip.strip()
@@ -291,6 +295,27 @@ def track():
 def stats():
     """Return current cumulative analytics counters."""
     return jsonify(_analytics)
+
+@app.route("/log-daily", methods=["POST"])
+def log_daily():
+    """Receive a daily snapshot from the monitoring agent. Token protected."""
+    token = request.headers.get("X-Token", "")
+    if token != DASHBOARD_TOKEN:
+        return jsonify({"error": "unauthorized"}), 401
+    data = request.json or {}
+    # Prepend (newest first), keep 90 days
+    _daily_log.insert(0, data)
+    if len(_daily_log) > 90:
+        _daily_log.pop()
+    return jsonify({"ok": True, "days_stored": len(_daily_log)})
+
+@app.route("/dashboard-data", methods=["GET"])
+def dashboard_data():
+    """Return live stats + historical daily log for the Willow dashboard."""
+    return jsonify({
+        "live": _analytics,
+        "history": _daily_log[:30]
+    })
 
 @app.route("/widget.js")
 def serve_widget():
