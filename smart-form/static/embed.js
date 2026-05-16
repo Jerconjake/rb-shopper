@@ -59,6 +59,9 @@
       if (d.type === 'smartform_redirect' && d.url) {
         window.location.href = d.url;
       }
+      if (d.type === 'smartform-scroll-top') {
+        iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 

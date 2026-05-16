@@ -490,6 +490,16 @@ body.demo-mode .demo-banner{display:block}
   }
   init();
 
+  // --- Scroll to top of card after submit ---
+  function scrollToTop() {
+    // Works in both iframe embed and landing page modes
+    $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Also try window scroll for landing pages
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+    // For iframe embeds, ask parent to scroll
+    try { window.parent.postMessage({ type: 'smartform-scroll-top' }, '*'); } catch(e) {}
+  }
+
   // --- Demo mode helpers ---
   const CATEGORY_META = {
     QUALIFIED_LEAD:     { label: 'Qualified Lead', cls: 'qualified', icon: '✅' },
@@ -655,6 +665,7 @@ body.demo-mode .demo-banner{display:block}
       leadId = data.lead_id;
       conversation = [{ role: 'user', content: msg }];
 
+      scrollToTop();
       if (data.category === 'QUALIFIED_LEAD' && !data.response) {
         // Immediate send — success!
         if (!isDemo) fireLeadEvent();
