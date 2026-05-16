@@ -42,6 +42,7 @@ def init_db():
             thank_you_url TEXT NOT NULL DEFAULT '',
             solicitor_sheet_url TEXT NOT NULL DEFAULT '',
             job_sheet_url TEXT NOT NULL DEFAULT '',
+            knowledge_base TEXT NOT NULL DEFAULT '',
             demo_mode INTEGER NOT NULL DEFAULT 0,
             active INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -176,6 +177,35 @@ Set "end_conversation": true when no further input is needed from the visitor
 Set it false when you need their reply (NEEDS_CLARIFICATION, SCOPE_MISMATCH with offer to redirect)."""
 
 # ---------------------------------------------------------------------------
+# Q&A assistant system prompt builder
+# ---------------------------------------------------------------------------
+def build_qa_prompt(cfg):
+    return f"""You are a helpful assistant for {cfg['business_name']}.
+{cfg['business_description']}
+
+You answer general questions using ONLY the knowledge base below. If the answer isn't in the knowledge base, say you're not sure and suggest they fill out the contact form to speak with someone directly.
+
+KNOWLEDGE BASE:
+{cfg.get('knowledge_base', '')}
+
+STRICT RULES:
+- NEVER quote prices, cost ranges, or estimates — not even ballpark figures. If asked about pricing, say: "Every project is different — fill out the contact form and {cfg['business_name']} will get back to you with a proper quote."
+- NEVER make promises about timelines, availability, or scheduling.
+- NEVER speak on behalf of the owner or commit them to anything.
+- Any question that requires professional judgment → "That's a great question for the team — fill out the contact form and they'll get back to you."
+- Keep responses concise: 1–3 sentences. Conversational and helpful, not corporate.
+- No filler phrases ("Great question!", "Absolutely!", "Wonderful!").
+
+Return ONLY this JSON — no markdown, no extra text:
+{{
+  "response": "Your answer to the visitor's question",
+  "is_buying_signal": false,
+  "topic": "Brief topic label (e.g. 'service area', 'process', 'materials')"
+}}
+
+Set "is_buying_signal": true if the question suggests genuine purchase/project intent (e.g. asking about specific services, process for getting started, what they'd need to prepare). This flags it for the owner's transcript."""
+
+# ---------------------------------------------------------------------------
 # Routes — public config (subset, no secrets)
 # ---------------------------------------------------------------------------
 @app.route('/config/<client_id>')
@@ -191,6 +221,7 @@ def client_config(client_id):
         'google_ads_label': cfg.get('google_ads_label', ''),
         'thank_you_url': cfg.get('thank_you_url', ''),
         'demo_mode': bool(cfg.get('demo_mode', 0)),
+        'has_knowledge_base': bool(cfg.get('knowledge_base', '').strip()),
     })
 
 # ---------------------------------------------------------------------------
@@ -349,7 +380,198 @@ Maximum 2 total follow-ups. If this is the second follow-up, resolve — lean to
     return jsonify(resp_data)
 
 # ---------------------------------------------------------------------------
-# Email notification to business owner
+# Routes — Q&A assistant (knowledge base chat)
+# ---------------------------------------------------------------------------
+@app.route('/api/qa/start', methods=['POST'])
+def qa_start():
+    data = request.json or {}
+    client_id = data.get('client_id', '')
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    if not cfg.get('knowledge_base', '').strip():
+        return jsonify({'error': 'No knowledge base configured'}), 400
+
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+
+    if not name or not email:
+        return jsonify({'error': 'Name and email required'}), 400
+
+    # Create a lead record for this Q&A session
+    db = get_db()
+    db.execute(
+        '''INSERT INTO leads (client_id,category,name,email,phone,message,ai_summary,estimated_value,conversation)
+           VALUES (?,?,?,?,?,?,?,?,?)''',
+        (client_id, 'AI_CHAT', name, email, '', '', 'AI chat session', '', json.dumps([]))
+    )
+    lead_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+    db.commit()
+    db.close()
+
+    return jsonify({'lead_id': lead_id, 'ok': True})
+
+
+@app.route('/api/qa/chat', methods=['POST'])
+def qa_chat():
+    data = request.json or {}
+    client_id = data.get('client_id', '')
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    lead_id = data.get('lead_id')
+    message = data.get('message', '').strip()
+    conversation = data.get('conversation', [])
+    name = data.get('name', '')
+    email = data.get('email', '')
+
+    if not message:
+        return jsonify({'error': 'Message required'}), 400
+
+    ai = get_ai()
+    system = build_qa_prompt(cfg)
+
+    msgs = [{'role': 'system', 'content': system}]
+    for m in conversation:
+        msgs.append(m)
+    msgs.append({'role': 'user', 'content': message})
+
+    resp = ai.chat.completions.create(
+        model='gpt-4o',
+        messages=msgs,
+        temperature=0.3,
+        response_format={"type": "json_object"},
+    )
+
+    result = json.loads(resp.choices[0].message.content)
+
+    # Update conversation log
+    conversation.append({'role': 'user', 'content': message})
+    conversation.append({'role': 'assistant', 'content': result['response']})
+
+    # Build summary from topics discussed
+    topics = data.get('topics', [])
+    if result.get('topic'):
+        topics.append(result['topic'])
+    topic_summary = ', '.join(dict.fromkeys(topics))  # dedupe, preserve order
+
+    db = get_db()
+    db.execute(
+        '''UPDATE leads SET ai_summary=?, conversation=?, message=? WHERE id=?''',
+        (f"AI chat — topics: {topic_summary}" if topic_summary else "AI chat session",
+         json.dumps(conversation),
+         '\n'.join(m['content'] for m in conversation if m['role'] == 'user'),
+         lead_id)
+    )
+    db.commit()
+    db.close()
+
+    is_demo = bool(cfg.get('demo_mode', 0))
+
+    # If buying signal detected, email the owner with transcript (skip in demo)
+    if result.get('is_buying_signal') and not is_demo:
+        _email_qa_transcript(cfg, name, email, conversation, topic_summary)
+
+    resp_data = {
+        'response': result['response'],
+        'is_buying_signal': result.get('is_buying_signal', False),
+        'topic': result.get('topic', ''),
+    }
+
+    if is_demo:
+        resp_data['demo'] = {
+            'is_buying_signal': result.get('is_buying_signal', False),
+            'topic': result.get('topic', ''),
+            'would_email': result.get('is_buying_signal', False) and bool(cfg.get('notification_email')),
+        }
+
+    return jsonify(resp_data)
+
+
+@app.route('/api/qa/end', methods=['POST'])
+def qa_end():
+    """Called when user closes/leaves Q&A chat — emails transcript to owner."""
+    # sendBeacon sends as text/plain, so handle both
+    if request.is_json:
+        data = request.json or {}
+    else:
+        try:
+            data = json.loads(request.get_data(as_text=True))
+        except:
+            data = {}
+    client_id = data.get('client_id', '')
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    lead_id = data.get('lead_id')
+    name = data.get('name', '')
+    email = data.get('email', '')
+    conversation = data.get('conversation', [])
+    topics = data.get('topics', [])
+    topic_summary = ', '.join(dict.fromkeys(topics))
+
+    is_demo = bool(cfg.get('demo_mode', 0))
+
+    # Always email transcript at end (if not already sent via buying signal, and not demo)
+    if conversation and not is_demo:
+        _email_qa_transcript(cfg, name, email, conversation, topic_summary)
+
+    return jsonify({'ok': True})
+
+
+# ---------------------------------------------------------------------------
+# Email Q&A transcript to business owner
+# ---------------------------------------------------------------------------
+def _email_qa_transcript(cfg, name, email, conversation, topics):
+    notify = cfg.get('notification_email') or os.environ.get('NOTIFICATION_EMAIL', '')
+    sg_key = os.environ.get('SENDGRID_API_KEY', '')
+    if not notify or not sg_key:
+        print(f"[AI CHAT] {cfg['business_name']}: {name} <{email}> — Topics: {topics}")
+        return
+    try:
+        import sendgrid
+        from sendgrid.helpers.mail import Mail, Email, To, Content
+
+        sg = sendgrid.SendGridAPIClient(api_key=sg_key)
+        biz = cfg['business_name']
+
+        # Build transcript HTML
+        transcript_html = ''
+        for m in conversation:
+            if m['role'] == 'user':
+                transcript_html += f'<div style="background:#eff6ff;padding:10px 14px;border-radius:10px;margin:6px 0;margin-left:40px"><strong>{name}:</strong> {m["content"]}</div>'
+            else:
+                transcript_html += f'<div style="background:#f1f5f9;padding:10px 14px;border-radius:10px;margin:6px 0;margin-right:40px"><strong>AI:</strong> {m["content"]}</div>'
+
+        html = f"""<div style="font-family:-apple-system,system-ui,sans-serif;max-width:560px;margin:0 auto">
+<div style="background:#6366f1;color:#fff;padding:20px 24px;border-radius:10px 10px 0 0">
+<h2 style="margin:0;font-size:18px">💬 AI Chat Engagement</h2>
+<p style="margin:4px 0 0;font-size:13px;opacity:.85">Someone chatted with your AI assistant</p></div>
+<div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 10px 10px">
+<p style="margin:0 0 8px"><strong>Name:</strong> {name}</p>
+<p style="margin:0 0 8px"><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
+<p style="margin:0 0 16px"><strong>Topics discussed:</strong> {topics or 'General'}</p>
+<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+<p style="margin:0 0 12px;font-weight:600">Conversation:</p>
+{transcript_html}
+</div></div>"""
+
+        mail = Mail(
+            from_email=Email("leads@j-squared.ca", f"{biz} AI Chat"),
+            to_emails=To(notify),
+            subject=f"AI Chat — {name} asked about {topics or 'your business'}",
+            html_content=Content("text/html", html),
+        )
+        sg.client.mail.send.post(request_body=mail.get())
+    except Exception as e:
+        print(f"QA email send error: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Email notification to business owner (form leads)
 # ---------------------------------------------------------------------------
 def _email_owner(cfg, result, name, email, phone, message):
     notify = cfg.get('notification_email') or os.environ.get('NOTIFICATION_EMAIL', '')
@@ -449,7 +671,8 @@ def admin_save_client():
             business_name=?, business_description=?, services=?, wont_do=?,
             notification_email=?, brand_color=?, facebook_pixel_id=?,
             google_ads_id=?, google_ads_label=?, thank_you_url=?,
-            solicitor_sheet_url=?, job_sheet_url=?, demo_mode=?, active=?,
+            solicitor_sheet_url=?, job_sheet_url=?, knowledge_base=?,
+            demo_mode=?, active=?,
             updated_at=CURRENT_TIMESTAMP
             WHERE id=?''',
             (biz_name, data.get('business_description',''), json.dumps(services), json.dumps(wont_do),
@@ -457,6 +680,7 @@ def admin_save_client():
              data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
              data.get('google_ads_label',''), data.get('thank_you_url',''),
              data.get('solicitor_sheet_url',''), data.get('job_sheet_url',''),
+             data.get('knowledge_base', ''),
              1 if data.get('demo_mode', False) else 0,
              1 if data.get('active', True) else 0, client_id)
         )
@@ -465,14 +689,16 @@ def admin_save_client():
             (id, business_name, business_description, services, wont_do,
              notification_email, brand_color, facebook_pixel_id,
              google_ads_id, google_ads_label, thank_you_url,
-             solicitor_sheet_url, job_sheet_url, demo_mode, active)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+             solicitor_sheet_url, job_sheet_url, knowledge_base,
+             demo_mode, active)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             (client_id, biz_name, data.get('business_description',''),
              json.dumps(services), json.dumps(wont_do),
              data.get('notification_email',''), data.get('brand_color','#2563eb'),
              data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
              data.get('google_ads_label',''), data.get('thank_you_url',''),
              data.get('solicitor_sheet_url',''), data.get('job_sheet_url',''),
+             data.get('knowledge_base', ''),
              1 if data.get('demo_mode', False) else 0,
              1 if data.get('active', True) else 0)
         )

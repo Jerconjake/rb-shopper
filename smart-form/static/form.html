@@ -180,6 +180,66 @@ body.demo-mode .demo-banner{display:block}
   width:calc(100% - 56px);text-align:center;transition:all var(--transition)}
 .demo-reset:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-10)}
 
+/* ---- Q&A ASSISTANT ---- */
+.qa-trigger{display:none;padding:0 28px 24px;text-align:center}
+.qa-trigger.visible{display:block}
+.qa-trigger a{color:var(--brand);font-size:13px;font-weight:500;cursor:pointer;
+  text-decoration:none;transition:color var(--transition);display:inline-flex;align-items:center;gap:6px}
+.qa-trigger a:hover{color:var(--brand-hover);text-decoration:underline}
+.qa-trigger a svg{width:16px;height:16px;flex-shrink:0}
+
+.qa-section{display:none;flex-direction:column;height:100%}
+.qa-section.active{display:flex}
+
+.qa-gate{padding:28px;animation:fadeSlideIn .35s ease}
+.qa-gate h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.qa-gate p{font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.5}
+.qa-gate .field{margin-bottom:16px}
+.qa-gate .btn-qa-start{
+  width:100%;padding:13px;border:none;border-radius:var(--radius-sm);
+  background:var(--brand);color:#fff;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all var(--transition)}
+.qa-gate .btn-qa-start:hover{background:var(--brand-hover);transform:translateY(-1px)}
+.qa-gate .btn-qa-start:disabled{opacity:.6;cursor:not-allowed}
+
+.qa-back{padding:10px 28px;border-bottom:1px solid var(--border);animation:fadeSlideIn .3s ease}
+.qa-back a{font-size:13px;color:var(--text-2);text-decoration:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px}
+.qa-back a:hover{color:var(--brand)}
+.qa-back a svg{width:14px;height:14px}
+
+.qa-contact-bar{padding:12px 28px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;gap:8px;animation:fadeSlideIn .35s ease}
+.qa-contact-bar .qa-avatar{width:28px;height:28px;border-radius:50%;background:var(--brand);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.qa-contact-bar .qa-info{font-size:13px;color:var(--text-2)}
+.qa-contact-bar .qa-info strong{color:var(--text)}
+
+.qa-messages{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:12px}
+
+.qa-input{padding:16px 28px;border-top:1px solid var(--border);display:flex;gap:10px;
+  background:var(--bg);animation:fadeSlideIn .35s ease .15s both}
+.qa-input input{flex:1;padding:12px 16px;border:1.5px solid var(--border);border-radius:24px;
+  font-size:14px;font-family:inherit;outline:none;transition:border-color var(--transition),box-shadow var(--transition)}
+.qa-input input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-10)}
+.qa-input button{width:42px;height:42px;border:none;border-radius:50%;background:var(--brand);
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);flex-shrink:0}
+.qa-input button:hover{background:var(--brand-hover);transform:scale(1.05)}
+.qa-input button svg{width:18px;height:18px}
+.qa-input.disabled{pointer-events:none;opacity:.5}
+
+.qa-cta{padding:12px 28px;background:var(--brand-10);border-top:1px solid var(--border);
+  text-align:center;animation:fadeSlideIn .35s ease}
+.qa-cta a{font-size:13px;color:var(--brand);font-weight:600;cursor:pointer;text-decoration:none}
+.qa-cta a:hover{text-decoration:underline}
+
+/* Demo Q&A badge */
+.demo-qa-signal{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:5px;
+  font-size:11px;font-weight:600;margin-left:8px}
+.demo-qa-signal.hot{background:#fef3c7;color:#92400e}
+.demo-qa-signal.cool{background:#f1f5f9;color:#64748b}
+
 /* ---- ERROR ---- */
 .error-bar{display:none;padding:12px 28px;background:#fef2f2;color:#b91c1c;font-size:13px;
   border-bottom:1px solid #fecaca;text-align:center}
@@ -229,6 +289,12 @@ body.demo-mode .demo-banner{display:block}
         <div class="spinner"></div>
       </button>
     </form>
+    <div class="qa-trigger" id="qaTrigger">
+      <a id="qaOpen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Need an answer right now? Ask our AI assistant
+      </a>
+    </div>
   </div>
 
   <!-- CHAT -->
@@ -264,6 +330,46 @@ body.demo-mode .demo-banner{display:block}
     </div>
     <h2 id="endTitle">Thanks for reaching out!</h2>
     <p id="endMsg"></p>
+  </div>
+
+  <!-- Q&A ASSISTANT -->
+  <div class="qa-section" id="qaSection">
+    <!-- Gate: name + email -->
+    <div class="qa-gate" id="qaGate">
+      <div class="qa-back"><a id="qaBackToForm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to contact form</a></div>
+      <div style="padding:20px 0 0">
+        <h2>Ask us anything</h2>
+        <p>Get quick answers about our services, process, and more. Just need your name and email so we can follow up if needed.</p>
+        <div class="field">
+          <label for="qaName">Name</label>
+          <input type="text" id="qaName" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="qaEmail">Email</label>
+          <input type="email" id="qaEmail" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <button class="btn-qa-start" id="qaStartBtn">Start chatting</button>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="qaChat" style="display:none;flex-direction:column;flex:1">
+      <div class="qa-back"><a id="qaBackToForm2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to contact form</a></div>
+      <div class="qa-contact-bar">
+        <div class="qa-avatar" id="qaAvatar"></div>
+        <div class="qa-info"><strong id="qaChatName"></strong> · <span id="qaChatEmail"></span></div>
+      </div>
+      <div class="qa-messages" id="qaMessages"></div>
+      <div class="qa-cta" id="qaCta" style="display:none">
+        <a id="qaCtaLink">Ready to get started? Fill out the contact form →</a>
+      </div>
+      <div class="qa-input" id="qaInput">
+        <input type="text" id="qaField" placeholder="Ask a question...">
+        <button id="qaSend">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- DEMO REVEAL PANEL -->
@@ -324,6 +430,13 @@ body.demo-mode .demo-banner{display:block}
   const $ = id => document.getElementById(id);
   const BASE = window.location.origin;
 
+  // --- Q&A state ---
+  let qaLeadId = null;
+  let qaConversation = [];
+  let qaTopics = [];
+  let qaName = '';
+  let qaEmail = '';
+
   // --- Init ---
   async function init() {
     if (!clientId) return;
@@ -333,7 +446,6 @@ body.demo-mode .demo-banner{display:block}
       // Apply branding
       if (config.brand_color) {
         document.documentElement.style.setProperty('--brand', config.brand_color);
-        // Derive hover (darken 10%)
         document.documentElement.style.setProperty('--brand-hover', darken(config.brand_color, 15));
         document.documentElement.style.setProperty('--brand-10', config.brand_color + '1a');
       }
@@ -341,6 +453,10 @@ body.demo-mode .demo-banner{display:block}
       if (config.demo_mode) {
         isDemo = true;
         document.body.classList.add('demo-mode');
+      }
+      // Show Q&A trigger if knowledge base exists
+      if (config.has_knowledge_base) {
+        $('qaTrigger').classList.add('visible');
       }
       // Inject Facebook Pixel (skip in demo)
       if (config.facebook_pixel_id && !isDemo) injectPixel(config.facebook_pixel_id);
@@ -692,6 +808,202 @@ body.demo-mode .demo-banner{display:block}
     $('errorBar').classList.remove('visible');
     reportHeight();
   }
+
+  // =====================================================================
+  // Q&A ASSISTANT
+  // =====================================================================
+
+  // Open Q&A gate
+  $('qaOpen').addEventListener('click', function(e) {
+    e.preventDefault();
+    $('formSection').classList.add('hidden');
+    $('qaSection').classList.add('active');
+    // Pre-fill from form if they already typed something
+    if ($('fname').value.trim()) $('qaName').value = $('fname').value.trim();
+    if ($('femail').value.trim()) $('qaEmail').value = $('femail').value.trim();
+    reportHeight();
+    $('qaName').focus();
+  });
+
+  // Back to form (from gate)
+  $('qaBackToForm').addEventListener('click', function(e) {
+    e.preventDefault();
+    $('qaSection').classList.remove('active');
+    $('formSection').classList.remove('hidden');
+    reportHeight();
+    $('fname').focus();
+  });
+
+  // Back to form (from chat)
+  $('qaBackToForm2').addEventListener('click', function(e) {
+    e.preventDefault();
+    // Send end transcript
+    if (qaConversation.length > 0) {
+      navigator.sendBeacon(`${BASE}/api/qa/end`, JSON.stringify({
+        client_id: clientId, lead_id: qaLeadId, name: qaName, email: qaEmail,
+        conversation: qaConversation, topics: qaTopics
+      }));
+    }
+    $('qaSection').classList.remove('active');
+    $('qaChat').style.display = 'none';
+    $('qaGate').style.display = '';
+    $('formSection').classList.remove('hidden');
+    // Reset Q&A state
+    qaLeadId = null; qaConversation = []; qaTopics = [];
+    $('qaMessages').innerHTML = '';
+    $('qaCta').style.display = 'none';
+    reportHeight();
+  });
+
+  // CTA link back to form
+  $('qaCtaLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    $('qaSection').classList.remove('active');
+    $('qaChat').style.display = 'none';
+    $('qaGate').style.display = '';
+    $('formSection').classList.remove('hidden');
+    reportHeight();
+    $('fmsg').focus();
+  });
+
+  // Start Q&A chat
+  $('qaStartBtn').addEventListener('click', async function() {
+    qaName = $('qaName').value.trim();
+    qaEmail = $('qaEmail').value.trim();
+
+    if (!qaName || !qaEmail) {
+      showError('Please enter your name and email.');
+      return;
+    }
+    if (!qaEmail.includes('@') || !qaEmail.includes('.')) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+    hideError();
+
+    this.disabled = true;
+    this.textContent = 'Starting...';
+
+    try {
+      const r = await fetch(`${BASE}/api/qa/start`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ client_id: clientId, name: qaName, email: qaEmail })
+      });
+      const data = await r.json();
+      if (data.error) { showError(data.error); this.disabled = false; this.textContent = 'Start chatting'; return; }
+
+      qaLeadId = data.lead_id;
+
+      // Transition to chat
+      $('qaGate').style.display = 'none';
+      $('qaChat').style.display = 'flex';
+      $('qaAvatar').textContent = qaName.charAt(0).toUpperCase();
+      $('qaChatName').textContent = qaName;
+      $('qaChatEmail').textContent = qaEmail;
+
+      // Welcome message
+      addQaMessage("Hi " + qaName.split(' ')[0] + "! Ask me anything about our services, process, or how we work. I'm here to help.", 'ai');
+
+      reportHeight();
+      $('qaField').focus();
+    } catch(err) {
+      showError('Something went wrong — please try again.');
+      this.disabled = false;
+      this.textContent = 'Start chatting';
+    }
+  });
+
+  // Send Q&A message
+  async function sendQaMessage() {
+    const input = $('qaField');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    addQaMessage(msg, 'user');
+
+    const typing = showQaTyping();
+    $('qaInput').classList.add('disabled');
+
+    try {
+      const r = await fetch(`${BASE}/api/qa/chat`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          client_id: clientId, lead_id: qaLeadId, message: msg,
+          conversation: qaConversation, name: qaName, email: qaEmail, topics: qaTopics
+        })
+      });
+      const data = await r.json();
+
+      typing.remove();
+
+      qaConversation.push({ role: 'user', content: msg });
+      qaConversation.push({ role: 'assistant', content: data.response });
+      if (data.topic) qaTopics.push(data.topic);
+
+      addQaMessage(data.response, 'ai');
+
+      // Show CTA if buying signal detected
+      if (data.is_buying_signal) {
+        $('qaCta').style.display = '';
+      }
+
+      // Demo mode: show signal badge
+      if (isDemo && data.demo) {
+        const lastMsg = $('qaMessages').lastElementChild;
+        if (lastMsg) {
+          const badge = document.createElement('span');
+          badge.className = 'demo-qa-signal ' + (data.demo.is_buying_signal ? 'hot' : 'cool');
+          badge.textContent = data.demo.is_buying_signal ? '🔥 Buying signal' : '💬 General Q&A';
+          lastMsg.appendChild(badge);
+        }
+      }
+
+      $('qaInput').classList.remove('disabled');
+      $('qaField').focus();
+      reportHeight();
+    } catch(err) {
+      typing.remove();
+      addQaMessage("Sorry, something went wrong. Please try asking again.", 'ai');
+      $('qaInput').classList.remove('disabled');
+      reportHeight();
+    }
+  }
+
+  $('qaSend').addEventListener('click', sendQaMessage);
+  $('qaField').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQaMessage(); }
+  });
+
+  function addQaMessage(text, type) {
+    const div = document.createElement('div');
+    div.className = 'msg msg-' + (type === 'user' ? 'user' : 'ai');
+    div.textContent = text;
+    $('qaMessages').appendChild(div);
+    $('qaMessages').scrollTop = $('qaMessages').scrollHeight;
+    reportHeight();
+  }
+
+  function showQaTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    $('qaMessages').appendChild(div);
+    $('qaMessages').scrollTop = $('qaMessages').scrollHeight;
+    return div;
+  }
+
+  // Send transcript on page unload
+  window.addEventListener('beforeunload', function() {
+    if (qaConversation.length > 0 && qaLeadId) {
+      navigator.sendBeacon(`${BASE}/api/qa/end`, JSON.stringify({
+        client_id: clientId, lead_id: qaLeadId, name: qaName, email: qaEmail,
+        conversation: qaConversation, topics: qaTopics
+      }));
+    }
+  });
 })();
 </script>
 </body>

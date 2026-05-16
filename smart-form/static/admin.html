@@ -147,6 +147,7 @@ html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .cat-NEEDS_CLARIFICATION{background:#fef3c7;color:#92400e}
 .cat-SOLICITOR{background:#f1f5f9;color:#475569}
 .cat-JOB_APPLICANT{background:#ede9fe;color:#5b21b6}
+.cat-AI_CHAT{background:#eff6ff;color:#1e40af}
 .cat-SCOPE_MISMATCH{background:#fef2f2;color:#991b1b}
 .no-leads{text-align:center;padding:40px;color:var(--text-3)}
 
@@ -241,6 +242,14 @@ html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe U
           <button class="btn btn-outline btn-sm" onclick="addWontDo()">+ Add</button>
         </div>
         <div id="wontDoList"></div>
+      </div>
+    </div>
+
+      <!-- Knowledge Base -->
+      <div class="form-group" style="margin-top:8px">
+        <label>Knowledge Base <span style="font-weight:400;color:#64748b;font-size:11px">(enables AI Q&amp;A assistant on the form)</span></label>
+        <textarea id="fKnowledge" rows="8" placeholder="Add information about your business that the AI assistant can use to answer visitor questions. For example:&#10;&#10;• What services do you offer?&#10;• What areas do you serve?&#10;• What's your typical process?&#10;• Do you offer free estimates?&#10;• How long does a typical project take?&#10;• Are you licensed/insured?&#10;&#10;The AI will never quote prices — it directs pricing questions back to the contact form." style="font-size:13px;line-height:1.5"></textarea>
+        <div class="hint">When filled in, a "Need an answer right now?" link appears below the contact form. The AI answers general questions but never quotes prices or makes commitments — it directs those to the form. Every chat interaction captures the visitor's name and email.</div>
       </div>
     </div>
 
@@ -365,6 +374,7 @@ function renderClients() {
       </div>
       <span class="id-badge">${c.id}</span>
       ${c.demo_mode ? '<span class="demo-indicator">⚡ DEMO</span>' : ''}
+      ${c.knowledge_base ? '<span class="demo-indicator" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe">💬 AI Q&A</span>' : ''}
       <div class="status ${c.active ? 'active' : 'inactive'}"></div>
     </div>
   `).join('');
@@ -390,6 +400,7 @@ function openEditor(id) {
     document.getElementById('fGadsId').value = c.google_ads_id || '';
     document.getElementById('fGadsLabel').value = c.google_ads_label || '';
     document.getElementById('fThankYou').value = c.thank_you_url || '';
+    document.getElementById('fKnowledge').value = c.knowledge_base || '';
     document.getElementById('fDemo').checked = !!c.demo_mode;
     document.getElementById('demoIndicator').style.display = c.demo_mode ? 'inline-flex' : 'none';
 
@@ -407,6 +418,7 @@ function openEditor(id) {
     document.getElementById('fGadsId').value = '';
     document.getElementById('fGadsLabel').value = '';
     document.getElementById('fThankYou').value = '';
+    document.getElementById('fKnowledge').value = '';
     document.getElementById('fDemo').checked = false;
     document.getElementById('demoIndicator').style.display = 'none';
     renderServices([]);
@@ -541,6 +553,7 @@ async function saveClient() {
     google_ads_id: document.getElementById('fGadsId').value.trim(),
     google_ads_label: document.getElementById('fGadsLabel').value.trim(),
     thank_you_url: document.getElementById('fThankYou').value.trim(),
+    knowledge_base: document.getElementById('fKnowledge').value.trim(),
     demo_mode: document.getElementById('fDemo').checked,
     active: true,
   };
