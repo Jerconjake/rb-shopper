@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartForm — Admin</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8fafc;--card:#ffffff;--text:#0f172a;--text-2:#64748b;--text-3:#94a3b8;
+  --border:#e2e8f0;--accent:#2563eb;--accent-hover:#1d4ed8;--accent-10:rgba(37,99,235,.08);
+  --danger:#ef4444;--danger-hover:#dc2626;--success:#10b981;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+}
+html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+
+/* --- Layout --- */
+.shell{max-width:960px;margin:0 auto;padding:32px 24px 80px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.header h1{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.header h1 span{color:var(--accent)}
+
+/* --- PIN Gate --- */
+.pin-gate{display:flex;align-items:center;justify-content:center;min-height:80vh;flex-direction:column;gap:16px}
+.pin-gate h2{font-size:20px;font-weight:600}
+.pin-gate input{width:200px;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius);
+  font-size:16px;text-align:center;letter-spacing:4px;outline:none;transition:border-color .2s}
+.pin-gate input:focus{border-color:var(--accent)}
+.pin-gate .err{color:var(--danger);font-size:13px;min-height:20px}
+
+/* --- Buttons --- */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-2)}
+.btn-outline:hover{border-color:var(--text-3);color:var(--text)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:var(--danger-hover)}
+.btn-sm{padding:7px 12px;font-size:12px}
+.btn svg{width:16px;height:16px}
+
+/* --- Client List --- */
+.client-grid{display:grid;gap:16px}
+.client-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;
+  transition:border-color .2s,box-shadow .2s}
+.client-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-10)}
+.client-card .color-dot{width:36px;height:36px;border-radius:8px;flex-shrink:0}
+.client-card .info{flex:1;min-width:0}
+.client-card .info h3{font-size:15px;font-weight:600;margin-bottom:2px}
+.client-card .info p{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card .id-badge{font-size:11px;font-weight:600;color:var(--text-3);background:var(--bg);
+  padding:4px 10px;border-radius:6px;font-family:'SF Mono',Menlo,monospace;letter-spacing:.3px}
+.client-card .status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.client-card .status.active{background:var(--success)}
+.client-card .status.inactive{background:var(--text-3)}
+
+.empty{text-align:center;padding:60px 20px;color:var(--text-2)}
+.empty p{margin-bottom:16px}
+
+/* --- Editor Panel --- */
+.editor-overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:1000;display:none;
+  align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;backdrop-filter:blur(4px)}
+.editor-overlay.open{display:flex}
+.editor{background:var(--card);border-radius:16px;width:100%;max-width:640px;box-shadow:0 20px 60px rgba(0,0,0,.2);
+  animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.editor-header{padding:24px 28px 0;display:flex;align-items:center;justify-content:space-between}
+.editor-header h2{font-size:18px;font-weight:700}
+.editor-close{width:32px;height:32px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .2s}
+.editor-close:hover{background:var(--border);color:var(--text)}
+
+.editor-body{padding:24px 28px}
+.editor-footer{padding:16px 28px 24px;display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border)}
+
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-2);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-group input,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);
+  border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);outline:none;
+  transition:border-color .2s;background:var(--bg);resize:none}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-group textarea{min-height:70px;line-height:1.5}
+.form-group .hint{font-size:11px;color:var(--text-3);margin-top:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:520px){.form-row{grid-template-columns:1fr}}
+
+/* --- Dynamic lists --- */
+.list-section{margin-bottom:20px}
+.list-section .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.list-section .list-header label{margin-bottom:0}
+.list-item{display:flex;gap:8px;margin-bottom:8px;align-items:start}
+.list-item input{flex:1}
+.list-item .extra-fields{display:flex;gap:8px}
+.list-item .extra-fields input{width:120px}
+.list-item .extra-fields select{padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;outline:none}
+.remove-item{width:32px;height:36px;border:none;background:none;color:var(--text-3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0;transition:all .2s}
+.remove-item:hover{background:#fef2f2;color:var(--danger)}
+
+/* --- Embed Code --- */
+.embed-box{background:#1e293b;border-radius:10px;padding:16px 20px;margin-top:20px}
+.embed-box label{color:#94a3b8!important;margin-bottom:8px}
+.embed-box code{display:block;color:#e2e8f0;font-size:12px;font-family:'SF Mono',Menlo,monospace;
+  word-break:break-all;line-height:1.6;white-space:pre-wrap}
+.embed-box .copy-btn{margin-top:10px;background:rgba(255,255,255,.1);color:#e2e8f0;border:none;
+  padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;
+  transition:background .2s}
+.embed-box .copy-btn:hover{background:rgba(255,255,255,.18)}
+
+/* --- Tabs --- */
+.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1.5px solid var(--border);padding-bottom:0}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .2s;font-family:inherit}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* --- Leads Table --- */
+.leads-table{width:100%;border-collapse:collapse;font-size:13px}
+.leads-table th{text-align:left;padding:10px 12px;color:var(--text-2);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)}
+.leads-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.leads-table tr:hover td{background:var(--accent-10)}
+.category-badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.cat-QUALIFIED_LEAD{background:#ecfdf5;color:#065f46}
+.cat-NEEDS_CLARIFICATION{background:#fef3c7;color:#92400e}
+.cat-SOLICITOR{background:#f1f5f9;color:#475569}
+.cat-JOB_APPLICANT{background:#ede9fe;color:#5b21b6}
+.cat-SCOPE_MISMATCH{background:#fef2f2;color:#991b1b}
+.no-leads{text-align:center;padding:40px;color:var(--text-3)}
+
+/* --- Toast --- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--text);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:2000;transition:transform .3s ease;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div class="pin-gate" id="pinGate">
+  <h2>SmartForm Admin</h2>
+  <input type="password" id="pinInput" placeholder="PIN" maxlength="20" autocomplete="off">
+  <div class="err" id="pinErr"></div>
+</div>
+
+<!-- MAIN APP (hidden until auth) -->
+<div class="shell" id="app" style="display:none">
+  <div class="header">
+    <h1>Smart<span>Form</span></h1>
+    <button class="btn btn-primary" onclick="openEditor()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New Client
+    </button>
+  </div>
+  <div class="client-grid" id="clientGrid"></div>
+</div>
+
+<!-- EDITOR OVERLAY -->
+<div class="editor-overlay" id="overlay" onclick="if(event.target===this)closeEditor()">
+  <div class="editor">
+    <div class="editor-header">
+      <h2 id="editorTitle">New Client</h2>
+      <button class="editor-close" onclick="closeEditor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="tabs" id="editorTabs">
+      <button class="tab active" data-tab="config" onclick="switchTab('config')">Configuration</button>
+      <button class="tab" data-tab="tracking" onclick="switchTab('tracking')">Tracking & Ads</button>
+      <button class="tab" data-tab="embed" onclick="switchTab('embed')">Embed Code</button>
+      <button class="tab" data-tab="leads" onclick="switchTab('leads')">Leads</button>
+    </div>
+
+    <!-- CONFIG TAB -->
+    <div class="editor-body tab-content" id="tab-config">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Client ID</label>
+          <input type="text" id="fId" placeholder="e.g. tsn-cabinets" pattern="[a-z0-9_-]+">
+          <div class="hint">Lowercase, hyphens/underscores only. Used in embed URL.</div>
+        </div>
+        <div class="form-group">
+          <label>Brand Color</label>
+          <input type="color" id="fColor" value="#2563eb" style="height:42px;padding:4px;cursor:pointer">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Business Name</label>
+        <input type="text" id="fName" placeholder="TSN Custom Cabinets">
+      </div>
+
+      <div class="form-group">
+        <label>Business Description</label>
+        <textarea id="fDesc" placeholder="What does this business do? The AI uses this to understand context..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Owner Notification Email</label>
+        <input type="email" id="fEmail" placeholder="owner@business.com">
+        <div class="hint">Qualified leads are emailed here immediately.</div>
+      </div>
+
+      <!-- Services -->
+      <div class="list-section">
+        <div class="list-header">
+          <label>Services Offered</label>
+          <button class="btn btn-outline btn-sm" onclick="addService()">+ Add</button>
+        </div>
+        <div id="servicesList"></div>
+      </div>
+
+      <!-- Won't Do -->
+      <div class="list-section">
+        <div class="list-header">
+          <label>Things We Don't Do</label>
+          <button class="btn btn-outline btn-sm" onclick="addWontDo()">+ Add</button>
+        </div>
+        <div id="wontDoList"></div>
+      </div>
+    </div>
+
+    <!-- TRACKING TAB -->
+    <div class="editor-body tab-content" id="tab-tracking" style="display:none">
+      <div class="form-group">
+        <label>Facebook Pixel ID</label>
+        <input type="text" id="fPixel" placeholder="123456789012345">
+        <div class="hint">Fires a Lead event when a qualified submission completes.</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Google Ads Conversion ID</label>
+          <input type="text" id="fGadsId" placeholder="AW-123456789">
+        </div>
+        <div class="form-group">
+          <label>Google Ads Conversion Label</label>
+          <input type="text" id="fGadsLabel" placeholder="AbCdEfGhIjK">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Thank You Page URL</label>
+        <input type="url" id="fThankYou" placeholder="https://example.com/thank-you/">
+        <div class="hint">Visitor is redirected here after a qualified submission. Leave blank to stay on form.</div>
+      </div>
+    </div>
+
+    <!-- EMBED TAB -->
+    <div class="editor-body tab-content" id="tab-embed" style="display:none">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Copy one of these snippets into your client's website.</p>
+
+      <div class="embed-box">
+        <label>Widget (floating bubble — every page)</label>
+        <code id="embedWidget"></code>
+        <button class="copy-btn" onclick="copyEmbed('embedWidget')">Copy</button>
+      </div>
+
+      <div class="embed-box">
+        <label>Inline (replaces existing contact form)</label>
+        <code id="embedInline"></code>
+        <button class="copy-btn" onclick="copyEmbed('embedInline')">Copy</button>
+      </div>
+
+      <div class="embed-box">
+        <label>Ad Landing Page (full-page, standalone)</label>
+        <code id="embedLanding"></code>
+        <button class="copy-btn" onclick="copyEmbed('embedLanding')">Copy</button>
+      </div>
+    </div>
+
+    <!-- LEADS TAB -->
+    <div class="editor-body tab-content" id="tab-leads" style="display:none;max-height:400px;overflow-y:auto">
+      <div id="leadsContainer"></div>
+    </div>
+
+    <div class="editor-footer">
+      <div>
+        <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deleteClient()" style="display:none">Delete</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = window.location.origin;
+let PIN = '';
+let clients = [];
+let editingId = null; // null = new
+
+// --- PIN Auth ---
+const pinInput = document.getElementById('pinInput');
+pinInput.addEventListener('keydown', async function(e) {
+  if (e.key !== 'Enter') return;
+  PIN = pinInput.value.trim();
+  try {
+    const r = await fetch(`${BASE}/admin/api/clients?pin=${encodeURIComponent(PIN)}`);
+    if (r.status === 401) {
+      document.getElementById('pinErr').textContent = 'Incorrect PIN';
+      return;
+    }
+    clients = await r.json();
+    document.getElementById('pinGate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderClients();
+  } catch(e) {
+    document.getElementById('pinErr').textContent = 'Connection error';
+  }
+});
+pinInput.focus();
+
+// --- Render client cards ---
+function renderClients() {
+  const grid = document.getElementById('clientGrid');
+  if (!clients.length) {
+    grid.innerHTML = '<div class="empty"><p>No clients yet.</p><button class="btn btn-primary" onclick="openEditor()">Add Your First Client</button></div>';
+    return;
+  }
+  grid.innerHTML = clients.map(c => `
+    <div class="client-card" onclick="openEditor('${c.id}')">
+      <div class="color-dot" style="background:${c.brand_color || '#2563eb'}"></div>
+      <div class="info">
+        <h3>${esc(c.business_name)}</h3>
+        <p>${esc(c.business_description || 'No description')}</p>
+      </div>
+      <span class="id-badge">${c.id}</span>
+      <div class="status ${c.active ? 'active' : 'inactive'}"></div>
+    </div>
+  `).join('');
+}
+
+// --- Open editor ---
+function openEditor(id) {
+  editingId = id || null;
+  document.getElementById('editorTitle').textContent = id ? 'Edit Client' : 'New Client';
+  document.getElementById('deleteBtn').style.display = id ? 'inline-flex' : 'none';
+  switchTab('config');
+
+  if (id) {
+    const c = clients.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('fId').value = c.id;
+    document.getElementById('fId').disabled = true;
+    document.getElementById('fName').value = c.business_name || '';
+    document.getElementById('fDesc').value = c.business_description || '';
+    document.getElementById('fEmail').value = c.notification_email || '';
+    document.getElementById('fColor').value = c.brand_color || '#2563eb';
+    document.getElementById('fPixel').value = c.facebook_pixel_id || '';
+    document.getElementById('fGadsId').value = c.google_ads_id || '';
+    document.getElementById('fGadsLabel').value = c.google_ads_label || '';
+    document.getElementById('fThankYou').value = c.thank_you_url || '';
+
+    renderServices(c.services || []);
+    renderWontDo(c.wont_do || []);
+    updateEmbedCodes(c.id);
+  } else {
+    document.getElementById('fId').value = '';
+    document.getElementById('fId').disabled = false;
+    document.getElementById('fName').value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fColor').value = '#2563eb';
+    document.getElementById('fPixel').value = '';
+    document.getElementById('fGadsId').value = '';
+    document.getElementById('fGadsLabel').value = '';
+    document.getElementById('fThankYou').value = '';
+    renderServices([]);
+    renderWontDo([]);
+    updateEmbedCodes('your-client-id');
+  }
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeEditor() {
+  document.getElementById('overlay').classList.remove('open');
+  editingId = null;
+}
+
+// --- Tabs ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).style.display = 'block';
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+  if (tab === 'leads' && editingId) loadLeads(editingId);
+}
+
+// --- Services list ---
+function renderServices(items) {
+  const container = document.getElementById('servicesList');
+  container.innerHTML = '';
+  items.forEach((s, i) => addServiceRow(s.name, s.value, s.priority));
+  if (!items.length) addServiceRow('', '', 'medium');
+}
+
+function addService() { addServiceRow('', '', 'medium'); }
+
+function addServiceRow(name, value, priority) {
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.innerHTML = `
+    <input type="text" placeholder="Service name" value="${esc(name)}" class="svc-name" style="flex:2">
+    <input type="text" placeholder="$X – $XX,XXX" value="${esc(value)}" class="svc-value" style="flex:1">
+    <select class="svc-priority">
+      <option value="high" ${priority==='high'?'selected':''}>High</option>
+      <option value="medium" ${priority==='medium'?'selected':''}>Medium</option>
+      <option value="low" ${priority==='low'?'selected':''}>Low</option>
+    </select>
+    <button class="remove-item" onclick="this.parentElement.remove()" title="Remove">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>`;
+  document.getElementById('servicesList').appendChild(div);
+}
+
+function getServices() {
+  const items = [];
+  document.querySelectorAll('#servicesList .list-item').forEach(row => {
+    const name = row.querySelector('.svc-name').value.trim();
+    if (name) {
+      items.push({
+        name,
+        value: row.querySelector('.svc-value').value.trim() || 'TBD',
+        priority: row.querySelector('.svc-priority').value,
+      });
+    }
+  });
+  return items;
+}
+
+// --- Won't Do list ---
+function renderWontDo(items) {
+  const container = document.getElementById('wontDoList');
+  container.innerHTML = '';
+  items.forEach(w => addWontDoRow(w));
+  if (!items.length) addWontDoRow('');
+}
+
+function addWontDo() { addWontDoRow(''); }
+
+function addWontDoRow(text) {
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.innerHTML = `
+    <input type="text" placeholder="e.g. Minor touch-ups" value="${esc(text)}" class="wont-text">
+    <button class="remove-item" onclick="this.parentElement.remove()" title="Remove">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>`;
+  document.getElementById('wontDoList').appendChild(div);
+}
+
+function getWontDo() {
+  const items = [];
+  document.querySelectorAll('#wontDoList .list-item').forEach(row => {
+    const text = row.querySelector('.wont-text').value.trim();
+    if (text) items.push(text);
+  });
+  return items;
+}
+
+// --- Embed codes ---
+function updateEmbedCodes(id) {
+  const host = BASE;
+  document.getElementById('embedWidget').textContent =
+    `<script src="${host}/embed.js?id=${id}"><\/script>`;
+  document.getElementById('embedInline').textContent =
+    `<div data-smartform="inline"></div>\n<script src="${host}/embed.js?id=${id}"><\/script>`;
+  document.getElementById('embedLanding').textContent =
+    `${host}/landing/${id}`;
+}
+
+function copyEmbed(elId) {
+  const text = document.getElementById(elId).textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Copied!'));
+}
+
+// --- Save ---
+async function saveClient() {
+  const id = document.getElementById('fId').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const business_name = document.getElementById('fName').value.trim();
+
+  if (!id || id.length < 2) { toast('Client ID must be at least 2 characters'); return; }
+  if (!business_name) { toast('Business name is required'); return; }
+
+  const payload = {
+    pin: PIN,
+    id,
+    business_name,
+    business_description: document.getElementById('fDesc').value.trim(),
+    notification_email: document.getElementById('fEmail').value.trim(),
+    brand_color: document.getElementById('fColor').value,
+    services: getServices(),
+    wont_do: getWontDo(),
+    facebook_pixel_id: document.getElementById('fPixel').value.trim(),
+    google_ads_id: document.getElementById('fGadsId').value.trim(),
+    google_ads_label: document.getElementById('fGadsLabel').value.trim(),
+    thank_you_url: document.getElementById('fThankYou').value.trim(),
+    active: true,
+  };
+
+  try {
+    const r = await fetch(`${BASE}/admin/api/clients`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Admin-Pin': PIN},
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (data.error) { toast(data.error); return; }
+    toast(editingId ? 'Client updated!' : 'Client created!');
+    closeEditor();
+    await refreshClients();
+  } catch(e) {
+    toast('Save failed — check your connection');
+  }
+}
+
+// --- Delete ---
+async function deleteClient() {
+  if (!editingId) return;
+  if (!confirm(`Delete "${editingId}" and all its data?`)) return;
+  try {
+    await fetch(`${BASE}/admin/api/clients/${editingId}?pin=${encodeURIComponent(PIN)}`, {method:'DELETE'});
+    toast('Client deleted');
+    closeEditor();
+    await refreshClients();
+  } catch(e) {
+    toast('Delete failed');
+  }
+}
+
+// --- Load leads ---
+async function loadLeads(clientId) {
+  const container = document.getElementById('leadsContainer');
+  container.innerHTML = '<p style="text-align:center;color:var(--text-3);padding:20px">Loading...</p>';
+  try {
+    const r = await fetch(`${BASE}/admin/api/leads/${clientId}?pin=${encodeURIComponent(PIN)}`);
+    const leads = await r.json();
+    if (!leads.length) {
+      container.innerHTML = '<div class="no-leads">No leads yet. They\'ll appear here once people start using the form.</div>';
+      return;
+    }
+    container.innerHTML = `<table class="leads-table">
+      <thead><tr><th>Time</th><th>Category</th><th>Name</th><th>Message</th><th>Value</th></tr></thead>
+      <tbody>${leads.map(l => `<tr>
+        <td style="white-space:nowrap;font-size:12px">${formatTime(l.created_at)}</td>
+        <td><span class="category-badge cat-${l.category}">${l.category.replace('_',' ')}</span></td>
+        <td>${esc(l.name||'—')}<br><span style="font-size:11px;color:var(--text-3)">${esc(l.email||'')}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.message||'')}">${esc(l.message||'—')}</td>
+        <td style="font-size:12px">${esc(l.estimated_value||'—')}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) {
+    container.innerHTML = '<div class="no-leads">Error loading leads.</div>';
+  }
+}
+
+// --- Refresh ---
+async function refreshClients() {
+  try {
+    const r = await fetch(`${BASE}/admin/api/clients?pin=${encodeURIComponent(PIN)}`);
+    clients = await r.json();
+    renderClients();
+  } catch(e) {}
+}
+
+// --- Utils ---
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+function formatTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts + (ts.includes('Z') ? '' : 'Z'));
+  return d.toLocaleDateString('en-US', {month:'short',day:'numeric'}) + ' ' +
+         d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'});
+}
+</script>
+</body>
+</html>

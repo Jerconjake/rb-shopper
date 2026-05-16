@@ -1,6 +1,6 @@
-import os, json, sqlite3, time, re
+import os, json, sqlite3, time, re, secrets
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory, Response
+from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from openai import OpenAI
 
 app = Flask(__name__, static_folder='static')
@@ -12,47 +12,38 @@ def get_ai():
         _ai = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
     return _ai
 
-# ---------------------------------------------------------------------------
-# Client configs — add new clients here
-# ---------------------------------------------------------------------------
-CLIENTS = {
-    "tsn": {
-        "business_name": "TSN Custom Cabinets",
-        "business_description": "Custom kitchen and bathroom cabinetry, full remodels, cabinet refacing, countertops, and custom built-ins.",
-        "services": [
-            {"name": "Kitchen Remodels", "value": "$15,000 – $50,000+", "priority": "high"},
-            {"name": "Bathroom Remodels", "value": "$8,000 – $25,000", "priority": "high"},
-            {"name": "Cabinet Refacing", "value": "$3,000 – $8,000", "priority": "medium"},
-            {"name": "Countertops", "value": "$1,500 – $5,000", "priority": "medium"},
-            {"name": "Custom Built-ins", "value": "$2,000 – $10,000", "priority": "medium"},
-        ],
-        "wont_do": [
-            "Painting individual cabinet doors",
-            "Minor touch-ups or single-door repairs",
-            "General contracting outside of cabinetry/counters",
-        ],
-        "notification_email": "",          # owner's email — set in env or here
-        "brand_color": "#2563eb",
-        "facebook_pixel_id": "",           # client's Meta pixel
-        "google_ads_id": "",               # client's Google Ads conversion ID
-        "google_ads_label": "",            # conversion label
-        "thank_you_url": "",               # redirect after qualified submit
-    },
-}
+ADMIN_PIN = os.environ.get('ADMIN_PIN', 'smart2025')
 
 # ---------------------------------------------------------------------------
-# SQLite — leads log (ephemeral on Render, leads emailed immediately)
+# SQLite — persistent config + ephemeral leads
 # ---------------------------------------------------------------------------
-DB = '/tmp/smartform.db'
+DB = os.environ.get('DB_PATH', '/tmp/smartform.db')
 
 def get_db():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 def init_db():
     db = get_db()
     db.executescript('''
+        CREATE TABLE IF NOT EXISTS clients (
+            id TEXT PRIMARY KEY,
+            business_name TEXT NOT NULL,
+            business_description TEXT NOT NULL DEFAULT '',
+            services TEXT NOT NULL DEFAULT '[]',
+            wont_do TEXT NOT NULL DEFAULT '[]',
+            notification_email TEXT NOT NULL DEFAULT '',
+            brand_color TEXT NOT NULL DEFAULT '#2563eb',
+            facebook_pixel_id TEXT NOT NULL DEFAULT '',
+            google_ads_id TEXT NOT NULL DEFAULT '',
+            google_ads_label TEXT NOT NULL DEFAULT '',
+            thank_you_url TEXT NOT NULL DEFAULT '',
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS leads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             client_id TEXT NOT NULL,
@@ -66,8 +57,71 @@ def init_db():
     ''')
     db.commit()
     db.close()
+    _seed_defaults()
+
+# ---------------------------------------------------------------------------
+# Seed default clients (survives Render restarts)
+# ---------------------------------------------------------------------------
+SEED_CLIENTS = {
+    "tsn": {
+        "business_name": "TSN Custom Cabinets",
+        "business_description": "Custom kitchen and bathroom cabinetry, full remodels, cabinet refacing, countertops, and custom built-ins in the Greater Toronto Area.",
+        "services": [
+            {"name": "Kitchen Remodels", "value": "$15,000 – $50,000+", "priority": "high"},
+            {"name": "Bathroom Remodels", "value": "$8,000 – $25,000", "priority": "high"},
+            {"name": "Cabinet Refacing", "value": "$3,000 – $8,000", "priority": "medium"},
+            {"name": "Countertops", "value": "$1,500 – $5,000", "priority": "medium"},
+            {"name": "Custom Built-ins", "value": "$2,000 – $10,000", "priority": "medium"},
+        ],
+        "wont_do": [
+            "Painting individual cabinet doors",
+            "Minor touch-ups or single-door repairs",
+            "General contracting outside of cabinetry/counters",
+            "Rentals or property management",
+        ],
+        "notification_email": "",
+        "brand_color": "#2563eb",
+    },
+}
+
+def _seed_defaults():
+    db = get_db()
+    for cid, cfg in SEED_CLIENTS.items():
+        exists = db.execute('SELECT 1 FROM clients WHERE id=?', (cid,)).fetchone()
+        if not exists:
+            db.execute(
+                '''INSERT INTO clients (id, business_name, business_description, services, wont_do,
+                   notification_email, brand_color) VALUES (?,?,?,?,?,?,?)''',
+                (cid, cfg['business_name'], cfg['business_description'],
+                 json.dumps(cfg['services']), json.dumps(cfg['wont_do']),
+                 cfg.get('notification_email',''), cfg.get('brand_color','#2563eb'))
+            )
+    db.commit()
+    db.close()
 
 init_db()
+
+# ---------------------------------------------------------------------------
+# Helpers — load client config from DB
+# ---------------------------------------------------------------------------
+def get_client(client_id):
+    db = get_db()
+    row = db.execute('SELECT * FROM clients WHERE id=? AND active=1', (client_id,)).fetchone()
+    db.close()
+    if not row:
+        return None
+    cfg = dict(row)
+    cfg['services'] = json.loads(cfg['services'])
+    cfg['wont_do'] = json.loads(cfg['wont_do'])
+    return cfg
+
+def require_admin():
+    pin = request.args.get('pin') or request.headers.get('X-Admin-Pin') or ''
+    if not pin:
+        body = request.get_json(silent=True) or {}
+        pin = body.get('pin', '')
+    if pin != ADMIN_PIN:
+        abort(401)
 
 # ---------------------------------------------------------------------------
 # AI system prompt builder
@@ -115,15 +169,15 @@ Return ONLY this JSON — no markdown, no extra text:
 }}
 
 Set "end_conversation": true when no further input is needed from the visitor
-(QUALIFIED_LEAD with null response, SOLICITOR, JOB_APPLICANT after keepting on file).
+(QUALIFIED_LEAD with null response, SOLICITOR, JOB_APPLICANT after keeping on file).
 Set it false when you need their reply (NEEDS_CLARIFICATION, SCOPE_MISMATCH with offer to redirect)."""
 
 # ---------------------------------------------------------------------------
-# Routes — config
+# Routes — public config (subset, no secrets)
 # ---------------------------------------------------------------------------
 @app.route('/config/<client_id>')
 def client_config(client_id):
-    cfg = CLIENTS.get(client_id)
+    cfg = get_client(client_id)
     if not cfg:
         return jsonify({'error': 'Not found'}), 404
     return jsonify({
@@ -142,7 +196,7 @@ def client_config(client_id):
 def classify():
     data = request.json or {}
     client_id = data.get('client_id', '')
-    cfg = CLIENTS.get(client_id)
+    cfg = get_client(client_id)
     if not cfg:
         return jsonify({'error': 'Unknown client'}), 404
 
@@ -201,7 +255,7 @@ def classify():
 def chat():
     data = request.json or {}
     client_id = data.get('client_id', '')
-    cfg = CLIENTS.get(client_id)
+    cfg = get_client(client_id)
     if not cfg:
         return jsonify({'error': 'Unknown client'}), 404
 
@@ -303,14 +357,105 @@ def _email_owner(cfg, result, name, email, phone, message):
     except Exception as e:
         print(f"Email send error: {e}")
 
-# ---------------------------------------------------------------------------
-# Admin — quick lead viewer
-# ---------------------------------------------------------------------------
-@app.route('/admin/leads/<client_id>')
+# ===========================================================================
+# ADMIN API — PIN-protected
+# ===========================================================================
+
+# --- List all clients ---
+@app.route('/admin/api/clients')
+def admin_list_clients():
+    require_admin()
+    db = get_db()
+    rows = db.execute('SELECT * FROM clients ORDER BY created_at DESC').fetchall()
+    db.close()
+    clients = []
+    for r in rows:
+        c = dict(r)
+        c['services'] = json.loads(c['services'])
+        c['wont_do'] = json.loads(c['wont_do'])
+        clients.append(c)
+    return jsonify(clients)
+
+# --- Get single client ---
+@app.route('/admin/api/clients/<client_id>')
+def admin_get_client(client_id):
+    require_admin()
+    db = get_db()
+    row = db.execute('SELECT * FROM clients WHERE id=?', (client_id,)).fetchone()
+    db.close()
+    if not row:
+        return jsonify({'error': 'Not found'}), 404
+    c = dict(row)
+    c['services'] = json.loads(c['services'])
+    c['wont_do'] = json.loads(c['wont_do'])
+    return jsonify(c)
+
+# --- Create / update client ---
+@app.route('/admin/api/clients', methods=['POST'])
+def admin_save_client():
+    require_admin()
+    data = request.json or {}
+
+    client_id = data.get('id', '').strip().lower()
+    client_id = re.sub(r'[^a-z0-9_-]', '', client_id)
+    if not client_id or len(client_id) < 2:
+        return jsonify({'error': 'Client ID must be at least 2 characters (letters, numbers, hyphens)'}), 400
+
+    biz_name = data.get('business_name', '').strip()
+    if not biz_name:
+        return jsonify({'error': 'Business name is required'}), 400
+
+    services = data.get('services', [])
+    wont_do = data.get('wont_do', [])
+
+    db = get_db()
+    existing = db.execute('SELECT 1 FROM clients WHERE id=?', (client_id,)).fetchone()
+
+    if existing:
+        db.execute('''UPDATE clients SET
+            business_name=?, business_description=?, services=?, wont_do=?,
+            notification_email=?, brand_color=?, facebook_pixel_id=?,
+            google_ads_id=?, google_ads_label=?, thank_you_url=?, active=?,
+            updated_at=CURRENT_TIMESTAMP
+            WHERE id=?''',
+            (biz_name, data.get('business_description',''), json.dumps(services), json.dumps(wont_do),
+             data.get('notification_email',''), data.get('brand_color','#2563eb'),
+             data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
+             data.get('google_ads_label',''), data.get('thank_you_url',''),
+             1 if data.get('active', True) else 0, client_id)
+        )
+    else:
+        db.execute('''INSERT INTO clients
+            (id, business_name, business_description, services, wont_do,
+             notification_email, brand_color, facebook_pixel_id,
+             google_ads_id, google_ads_label, thank_you_url, active)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+            (client_id, biz_name, data.get('business_description',''),
+             json.dumps(services), json.dumps(wont_do),
+             data.get('notification_email',''), data.get('brand_color','#2563eb'),
+             data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
+             data.get('google_ads_label',''), data.get('thank_you_url',''),
+             1 if data.get('active', True) else 0)
+        )
+
+    db.commit()
+    db.close()
+    return jsonify({'ok': True, 'id': client_id})
+
+# --- Delete client ---
+@app.route('/admin/api/clients/<client_id>', methods=['DELETE'])
+def admin_delete_client(client_id):
+    require_admin()
+    db = get_db()
+    db.execute('DELETE FROM clients WHERE id=?', (client_id,))
+    db.commit()
+    db.close()
+    return jsonify({'ok': True})
+
+# --- Get leads for a client ---
+@app.route('/admin/api/leads/<client_id>')
 def admin_leads(client_id):
-    pin = request.args.get('pin', '')
-    if pin != os.environ.get('ADMIN_PIN', 'admin2025'):
-        return jsonify({'error': 'Unauthorized'}), 401
+    require_admin()
     db = get_db()
     rows = db.execute(
         'SELECT * FROM leads WHERE client_id=? ORDER BY created_at DESC LIMIT 200',
@@ -318,6 +463,22 @@ def admin_leads(client_id):
     ).fetchall()
     db.close()
     return jsonify([dict(r) for r in rows])
+
+# --- Lead stats ---
+@app.route('/admin/api/stats/<client_id>')
+def admin_stats(client_id):
+    require_admin()
+    db = get_db()
+    total = db.execute('SELECT COUNT(*) FROM leads WHERE client_id=?', (client_id,)).fetchone()[0]
+    cats = db.execute(
+        'SELECT category, COUNT(*) as cnt FROM leads WHERE client_id=? GROUP BY category',
+        (client_id,)
+    ).fetchall()
+    db.close()
+    return jsonify({
+        'total': total,
+        'by_category': {r['category']: r['cnt'] for r in cats}
+    })
 
 # ---------------------------------------------------------------------------
 # Static / pages
@@ -328,19 +489,25 @@ def serve_embed():
 
 @app.route('/form/<client_id>')
 def form_page(client_id):
-    if client_id not in CLIENTS:
+    cfg = get_client(client_id)
+    if not cfg:
         return "Not found", 404
     return send_from_directory('static', 'form.html')
 
 @app.route('/landing/<client_id>')
 def landing_page(client_id):
-    if client_id not in CLIENTS:
+    cfg = get_client(client_id)
+    if not cfg:
         return "Not found", 404
     return send_from_directory('static', 'form.html')
 
+@app.route('/admin')
+def admin_page():
+    return send_from_directory('static', 'admin.html')
+
 @app.route('/')
 def index():
-    return '<p>SmartForm API</p>', 200
+    return '<p>SmartForm API — <a href="/admin">Admin Panel</a></p>', 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
