@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smart-form
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: NOTIFICATION_EMAIL
+        sync: false
+      - key: ADMIN_PIN
+        sync: false
