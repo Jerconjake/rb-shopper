@@ -67,6 +67,24 @@ def init_db():
 # Seed default clients (survives Render restarts)
 # ---------------------------------------------------------------------------
 SEED_CLIENTS = {
+    "premierdatingphotography": {
+        "business_name": "Premier Dating Photography",
+        "business_description": "Professional dating profile photography and coaching in Austin, TX. We help singles present their best selves on dating apps with professional photos, profile optimization, and dating coaching.",
+        "services": [
+            {"name": "Dating Profile Photo Shoot", "value": "$300 – $800", "priority": "high"},
+            {"name": "Profile Optimization & Coaching", "value": "$150 – $400", "priority": "high"},
+            {"name": "Full Dating Makeover Package", "value": "$500 – $1,200", "priority": "high"},
+        ],
+        "wont_do": [
+            "Matchmaking or date arrangement",
+            "Explicit or adult content",
+            "Wedding or event photography",
+            "General portrait photography unrelated to dating",
+        ],
+        "notification_email": "",
+        "brand_color": "#000000",
+        "thank_you_url": "https://premierdatingphotography.com/thank-you-for-contacting-pdp/",
+    },
     "tsn": {
         "business_name": "TSN Custom Cabinets",
         "business_description": "Custom kitchen and bathroom cabinetry, full remodels, cabinet refacing, countertops, and custom built-ins in the Greater Toronto Area.",
@@ -95,10 +113,11 @@ def _seed_defaults():
         if not exists:
             db.execute(
                 '''INSERT INTO clients (id, business_name, business_description, services, wont_do,
-                   notification_email, brand_color) VALUES (?,?,?,?,?,?,?)''',
+                   notification_email, brand_color, thank_you_url) VALUES (?,?,?,?,?,?,?,?)''',
                 (cid, cfg['business_name'], cfg['business_description'],
                  json.dumps(cfg['services']), json.dumps(cfg['wont_do']),
-                 cfg.get('notification_email',''), cfg.get('brand_color','#2563eb'))
+                 cfg.get('notification_email',''), cfg.get('brand_color','#2563eb'),
+                 cfg.get('thank_you_url',''))
             )
     db.commit()
     db.close()
