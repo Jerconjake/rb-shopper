@@ -206,7 +206,10 @@ html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         </div>
         <div class="form-group">
           <label>Brand Color</label>
-          <input type="color" id="fColor" value="#2563eb" style="height:42px;padding:4px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="fColorPreview" style="width:42px;height:42px;border-radius:8px;background:#2563eb;border:1.5px solid var(--border);flex-shrink:0"></div>
+            <input type="text" id="fColor" value="#2563eb" maxlength="7" placeholder="#2563eb" style="font-family:'SF Mono',Menlo,monospace;letter-spacing:1px" oninput="let v=this.value;if(v[0]!=='#')v='#'+v;this.value=v;if(/^#[0-9A-Fa-f]{6}$/.test(v))document.getElementById('fColorPreview').style.background=v">
+          </div>
         </div>
       </div>
 
@@ -396,6 +399,7 @@ function openEditor(id) {
     document.getElementById('fDesc').value = c.business_description || '';
     document.getElementById('fEmail').value = c.notification_email || '';
     document.getElementById('fColor').value = c.brand_color || '#2563eb';
+    document.getElementById('fColorPreview').style.background = c.brand_color || '#2563eb';
     document.getElementById('fPixel').value = c.facebook_pixel_id || '';
     document.getElementById('fGadsId').value = c.google_ads_id || '';
     document.getElementById('fGadsLabel').value = c.google_ads_label || '';
