@@ -40,6 +40,9 @@ def init_db():
             google_ads_id TEXT NOT NULL DEFAULT '',
             google_ads_label TEXT NOT NULL DEFAULT '',
             thank_you_url TEXT NOT NULL DEFAULT '',
+            solicitor_sheet_url TEXT NOT NULL DEFAULT '',
+            job_sheet_url TEXT NOT NULL DEFAULT '',
+            demo_mode INTEGER NOT NULL DEFAULT 0,
             active INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -187,6 +190,7 @@ def client_config(client_id):
         'google_ads_id': cfg.get('google_ads_id', ''),
         'google_ads_label': cfg.get('google_ads_label', ''),
         'thank_you_url': cfg.get('thank_you_url', ''),
+        'demo_mode': bool(cfg.get('demo_mode', 0)),
     })
 
 # ---------------------------------------------------------------------------
@@ -237,16 +241,31 @@ def classify():
     db.commit()
     db.close()
 
-    # Email owner for qualified leads
-    if result['category'] == 'QUALIFIED_LEAD' and not result.get('response'):
+    is_demo = bool(cfg.get('demo_mode', 0))
+
+    # Email owner for qualified leads (skip in demo mode)
+    if result['category'] == 'QUALIFIED_LEAD' and not result.get('response') and not is_demo:
         _email_owner(cfg, result, name, email, phone, message)
 
-    return jsonify({
+    resp_data = {
         'category': result['category'],
         'response': result.get('response'),
         'end_conversation': result.get('end_conversation', False),
         'lead_id': lead_id,
-    })
+    }
+
+    # In demo mode, expose the full AI analysis
+    if is_demo:
+        resp_data['demo'] = {
+            'category': result['category'],
+            'confidence': result.get('confidence', 0),
+            'summary': result.get('summary', ''),
+            'estimated_value': result.get('estimated_value'),
+            'would_email': bool(cfg.get('notification_email')),
+            'email_recipient': cfg.get('notification_email', '(not configured)'),
+        }
+
+    return jsonify(resp_data)
 
 # ---------------------------------------------------------------------------
 # Routes — follow-up chat
@@ -303,17 +322,31 @@ Maximum 2 total follow-ups. If this is the second follow-up, resolve — lean to
     db.commit()
     db.close()
 
-    # Email owner if now qualified
-    if result['category'] == 'QUALIFIED_LEAD' and not result.get('response'):
+    is_demo = bool(cfg.get('demo_mode', 0))
+
+    # Email owner if now qualified (skip in demo mode)
+    if result['category'] == 'QUALIFIED_LEAD' and not result.get('response') and not is_demo:
         full_msg = "\n".join(m['content'] for m in conversation if m['role'] == 'user')
         _email_owner(cfg, result, name, email, phone, full_msg)
 
-    return jsonify({
+    resp_data = {
         'category': result['category'],
         'response': result.get('response'),
         'end_conversation': result.get('end_conversation', False),
         'lead_id': lead_id,
-    })
+    }
+
+    if is_demo:
+        resp_data['demo'] = {
+            'category': result['category'],
+            'confidence': result.get('confidence', 0),
+            'summary': result.get('summary', ''),
+            'estimated_value': result.get('estimated_value'),
+            'would_email': bool(cfg.get('notification_email')),
+            'email_recipient': cfg.get('notification_email', '(not configured)'),
+        }
+
+    return jsonify(resp_data)
 
 # ---------------------------------------------------------------------------
 # Email notification to business owner
@@ -415,26 +448,32 @@ def admin_save_client():
         db.execute('''UPDATE clients SET
             business_name=?, business_description=?, services=?, wont_do=?,
             notification_email=?, brand_color=?, facebook_pixel_id=?,
-            google_ads_id=?, google_ads_label=?, thank_you_url=?, active=?,
+            google_ads_id=?, google_ads_label=?, thank_you_url=?,
+            solicitor_sheet_url=?, job_sheet_url=?, demo_mode=?, active=?,
             updated_at=CURRENT_TIMESTAMP
             WHERE id=?''',
             (biz_name, data.get('business_description',''), json.dumps(services), json.dumps(wont_do),
              data.get('notification_email',''), data.get('brand_color','#2563eb'),
              data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
              data.get('google_ads_label',''), data.get('thank_you_url',''),
+             data.get('solicitor_sheet_url',''), data.get('job_sheet_url',''),
+             1 if data.get('demo_mode', False) else 0,
              1 if data.get('active', True) else 0, client_id)
         )
     else:
         db.execute('''INSERT INTO clients
             (id, business_name, business_description, services, wont_do,
              notification_email, brand_color, facebook_pixel_id,
-             google_ads_id, google_ads_label, thank_you_url, active)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+             google_ads_id, google_ads_label, thank_you_url,
+             solicitor_sheet_url, job_sheet_url, demo_mode, active)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             (client_id, biz_name, data.get('business_description',''),
              json.dumps(services), json.dumps(wont_do),
              data.get('notification_email',''), data.get('brand_color','#2563eb'),
              data.get('facebook_pixel_id',''), data.get('google_ads_id',''),
              data.get('google_ads_label',''), data.get('thank_you_url',''),
+             data.get('solicitor_sheet_url',''), data.get('job_sheet_url',''),
+             1 if data.get('demo_mode', False) else 0,
              1 if data.get('active', True) else 0)
         )
 

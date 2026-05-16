@@ -120,6 +120,66 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes scaleIn{from{transform:scale(0)}to{transform:scale(1)}}
 
+/* ---- DEMO MODE ---- */
+.demo-banner{display:none;padding:8px 28px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:600;
+  text-align:center;letter-spacing:.3px;text-transform:uppercase;border-bottom:1px solid #fde68a}
+body.demo-mode .demo-banner{display:block}
+
+.demo-reveal{display:none;margin:12px 28px 16px;border-radius:12px;overflow:hidden;
+  animation:demoSlideIn .5s cubic-bezier(.4,0,.2,1);border:1px solid #e2e8f0;background:#ffffff}
+.demo-reveal.active{display:block}
+
+@keyframes demoSlideIn{from{opacity:0;transform:translateY(12px);max-height:0}
+  to{opacity:1;transform:translateY(0);max-height:500px}}
+
+.demo-reveal-header{padding:14px 18px;background:linear-gradient(135deg,#1e293b,#334155);
+  display:flex;align-items:center;gap:10px}
+.demo-reveal-header .demo-eye{width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center}
+.demo-reveal-header .demo-eye svg{width:16px;height:16px}
+.demo-reveal-header .demo-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px}
+.demo-reveal-header .demo-subtitle{font-size:11px;color:#94a3b8;margin-top:1px}
+
+.demo-reveal-body{padding:16px 18px}
+
+.demo-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.demo-row:last-child{border-bottom:none}
+.demo-row-label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;
+  letter-spacing:.4px;min-width:90px;padding-top:2px}
+.demo-row-value{font-size:14px;color:#0f172a;line-height:1.4;flex:1}
+
+.demo-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;
+  font-size:12px;font-weight:600;letter-spacing:.2px}
+.demo-badge.qualified{background:#ecfdf5;color:#065f46}
+.demo-badge.clarification{background:#eff6ff;color:#1e40af}
+.demo-badge.solicitor{background:#fef3c7;color:#92400e}
+.demo-badge.job{background:#f3e8ff;color:#6b21a8}
+.demo-badge.mismatch{background:#fef2f2;color:#991b1b}
+.demo-badge .badge-dot{width:7px;height:7px;border-radius:50%}
+.demo-badge.qualified .badge-dot{background:#10b981}
+.demo-badge.clarification .badge-dot{background:#3b82f6}
+.demo-badge.solicitor .badge-dot{background:#f59e0b}
+.demo-badge.job .badge-dot{background:#a855f7}
+.demo-badge.mismatch .badge-dot{background:#ef4444}
+
+.demo-confidence{display:flex;align-items:center;gap:10px}
+.demo-conf-bar{flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;max-width:120px}
+.demo-conf-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.demo-conf-num{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+
+.demo-action{padding:12px 18px;background:#f8fafc;border-top:1px solid #e2e8f0;
+  display:flex;align-items:center;gap:8px;font-size:12px;color:#64748b}
+.demo-action .action-icon{width:20px;height:20px;border-radius:5px;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0}
+.demo-action .action-icon.email{background:#ecfdf5;color:#10b981}
+.demo-action .action-icon.no-email{background:#fef2f2;color:#ef4444}
+.demo-action .action-icon svg{width:12px;height:12px}
+
+.demo-reset{margin:0 28px 16px;padding:10px;border:1.5px dashed #cbd5e1;border-radius:10px;
+  background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;
+  width:calc(100% - 56px);text-align:center;transition:all var(--transition)}
+.demo-reset:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-10)}
+
 /* ---- ERROR ---- */
 .error-bar{display:none;padding:12px 28px;background:#fef2f2;color:#b91c1c;font-size:13px;
   border-bottom:1px solid #fecaca;text-align:center}
@@ -137,6 +197,9 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
 </head>
 <body>
 <div class="card" id="card">
+  <!-- Demo banner -->
+  <div class="demo-banner" id="demoBanner">⚡ Demo Mode — No emails sent. AI analysis shown below.</div>
+
   <!-- Error bar -->
   <div class="error-bar" id="errorBar"></div>
 
@@ -202,6 +265,42 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
     <h2 id="endTitle">Thanks for reaching out!</h2>
     <p id="endMsg"></p>
   </div>
+
+  <!-- DEMO REVEAL PANEL -->
+  <div class="demo-reveal" id="demoReveal">
+    <div class="demo-reveal-header">
+      <div class="demo-eye"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div>
+        <div class="demo-title">Behind the Scenes</div>
+        <div class="demo-subtitle">What the AI decided and why</div>
+      </div>
+    </div>
+    <div class="demo-reveal-body">
+      <div class="demo-row">
+        <div class="demo-row-label">Category</div>
+        <div class="demo-row-value" id="demoCat"></div>
+      </div>
+      <div class="demo-row">
+        <div class="demo-row-label">Confidence</div>
+        <div class="demo-row-value"><div class="demo-confidence">
+          <div class="demo-conf-bar"><div class="demo-conf-fill" id="demoConfFill"></div></div>
+          <span class="demo-conf-num" id="demoConfNum"></span>
+        </div></div>
+      </div>
+      <div class="demo-row">
+        <div class="demo-row-label">Summary</div>
+        <div class="demo-row-value" id="demoSummary"></div>
+      </div>
+      <div class="demo-row" id="demoValueRow">
+        <div class="demo-row-label">Est. Value</div>
+        <div class="demo-row-value" id="demoValue"></div>
+      </div>
+    </div>
+    <div class="demo-action" id="demoAction"></div>
+  </div>
+
+  <!-- Demo reset button -->
+  <button class="demo-reset" id="demoReset" style="display:none">↻ Try another submission</button>
 </div>
 
 <script>
@@ -220,6 +319,7 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
   let conversation = [];
   let followUpCount = 0;
   const MAX_FOLLOWUPS = 3;
+  let isDemo = false;
 
   const $ = id => document.getElementById(id);
   const BASE = window.location.origin;
@@ -237,13 +337,101 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
         document.documentElement.style.setProperty('--brand-hover', darken(config.brand_color, 15));
         document.documentElement.style.setProperty('--brand-10', config.brand_color + '1a');
       }
-      // Inject Facebook Pixel
-      if (config.facebook_pixel_id) injectPixel(config.facebook_pixel_id);
+      // Demo mode
+      if (config.demo_mode) {
+        isDemo = true;
+        document.body.classList.add('demo-mode');
+      }
+      // Inject Facebook Pixel (skip in demo)
+      if (config.facebook_pixel_id && !isDemo) injectPixel(config.facebook_pixel_id);
     } catch(e) {
       console.warn('Config load error', e);
     }
   }
   init();
+
+  // --- Demo mode helpers ---
+  const CATEGORY_META = {
+    QUALIFIED_LEAD:     { label: 'Qualified Lead', cls: 'qualified', icon: '✅' },
+    NEEDS_CLARIFICATION:{ label: 'Needs Clarification', cls: 'clarification', icon: '🔄' },
+    SOLICITOR:          { label: 'Solicitor / Vendor', cls: 'solicitor', icon: '📋' },
+    JOB_APPLICANT:      { label: 'Job Applicant', cls: 'job', icon: '📋' },
+    SCOPE_MISMATCH:     { label: 'Scope Mismatch', cls: 'mismatch', icon: '🚫' },
+  };
+
+  function showDemoReveal(demo) {
+    if (!isDemo || !demo) return;
+    const meta = CATEGORY_META[demo.category] || { label: demo.category, cls: 'clarification', icon: '❓' };
+
+    // Category badge
+    $('demoCat').innerHTML = `<span class="demo-badge ${meta.cls}"><span class="badge-dot"></span>${meta.icon} ${meta.label}</span>`;
+
+    // Confidence bar
+    const pct = Math.round((demo.confidence || 0) * 100);
+    const fill = $('demoConfFill');
+    fill.style.width = '0%';
+    fill.style.background = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+    $('demoConfNum').textContent = pct + '%';
+    setTimeout(() => { fill.style.width = pct + '%'; }, 50);
+
+    // Summary
+    $('demoSummary').textContent = demo.summary || '—';
+
+    // Estimated value
+    if (demo.estimated_value) {
+      $('demoValueRow').style.display = '';
+      $('demoValue').textContent = demo.estimated_value;
+    } else {
+      $('demoValueRow').style.display = 'none';
+    }
+
+    // Action row
+    const actionEl = $('demoAction');
+    if (demo.category === 'QUALIFIED_LEAD') {
+      const emailTo = demo.would_email ? demo.email_recipient : 'not configured';
+      actionEl.innerHTML = `<div class="action-icon email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
+        <span>Email would be sent to <strong>${emailTo}</strong></span>`;
+    } else if (demo.category === 'SOLICITOR' || demo.category === 'JOB_APPLICANT') {
+      actionEl.innerHTML = `<div class="action-icon no-email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 5.64l-12.72 12.72M12 22a10 10 0 110-20 10 10 0 010 20z"/></svg></div>
+        <span>No email sent to owner — info kept on file</span>`;
+    } else if (demo.category === 'NEEDS_CLARIFICATION') {
+      actionEl.innerHTML = `<div class="action-icon email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
+        <span>Follow-up question asked — waiting for visitor reply</span>`;
+    } else {
+      actionEl.innerHTML = `<div class="action-icon no-email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 5.64l-12.72 12.72M12 22a10 10 0 110-20 10 10 0 010 20z"/></svg></div>
+        <span>Visitor redirected — not a matching service</span>`;
+    }
+
+    $('demoReveal').classList.add('active');
+    $('demoReset').style.display = 'block';
+    reportHeight();
+  }
+
+  // --- Demo reset ---
+  $('demoReset').addEventListener('click', function() {
+    // Reset all sections
+    $('formSection').classList.remove('hidden');
+    $('chatSection').classList.remove('active');
+    $('successSection').classList.remove('active');
+    $('endSection').classList.remove('active');
+    $('demoReveal').classList.remove('active');
+    $('demoReset').style.display = 'none';
+    $('messages').innerHTML = '';
+
+    // Reset form
+    $('contactForm').reset();
+    $('submitBtn').classList.remove('loading');
+    $('submitBtn').disabled = false;
+    $('chatInput').classList.remove('disabled');
+
+    // Reset state
+    leadId = null;
+    conversation = [];
+    followUpCount = 0;
+
+    reportHeight();
+    $('fname').focus();
+  });
 
   // --- Darken hex color ---
   function darken(hex, pct) {
@@ -329,16 +517,19 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
 
       if (data.category === 'QUALIFIED_LEAD' && !data.response) {
         // Immediate send — success!
-        fireLeadEvent();
+        if (!isDemo) fireLeadEvent();
         showSuccess();
+        showDemoReveal(data.demo);
       } else if (data.end_conversation) {
         // Solicitor / Job applicant — polite end
         showEnd(data.category, data.response);
+        showDemoReveal(data.demo);
       } else {
         // Needs more info — transition to chat
         conversation.push({ role: 'assistant', content: data.response });
         followUpCount++;
         transitionToChat(name, email, msg, data.response, data.category !== 'SCOPE_MISMATCH');
+        showDemoReveal(data.demo);
       }
     } catch(err) {
       showError('Something went wrong — please try again.');
@@ -404,22 +595,25 @@ body:not(.landing) .card{max-width:100%;border-radius:0}
       followUpCount++;
 
       if (data.category === 'QUALIFIED_LEAD' && !data.response) {
-        fireLeadEvent();
+        if (!isDemo) fireLeadEvent();
         addMessage("Thanks — we've sent your info to the team. They'll be in touch shortly.", 'ai');
         $('chatInput').classList.add('disabled');
-        setTimeout(() => doRedirect(), 3000);
+        showDemoReveal(data.demo);
+        if (!isDemo) setTimeout(() => doRedirect(), 3000);
       } else if (data.end_conversation) {
         addMessage(data.response, 'ai');
         $('chatInput').classList.add('disabled');
+        showDemoReveal(data.demo);
       } else if (followUpCount >= MAX_FOLLOWUPS) {
-        // Safety net: max follow-ups reached, treat as lead
-        fireLeadEvent();
+        if (!isDemo) fireLeadEvent();
         addMessage("Thanks for the details — we'll pass this to the team and be in touch.", 'ai');
         $('chatInput').classList.add('disabled');
-        setTimeout(() => doRedirect(), 3000);
+        showDemoReveal(data.demo);
+        if (!isDemo) setTimeout(() => doRedirect(), 3000);
       } else {
         conversation.push({ role: 'assistant', content: data.response });
         addMessage(data.response, 'ai');
+        showDemoReveal(data.demo);
         $('chatInput').classList.remove('disabled');
         $('chatField').focus();
       }

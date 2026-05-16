@@ -104,6 +104,22 @@ html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .remove-item:hover{background:#fef2f2;color:var(--danger)}
 
 /* --- Embed Code --- */
+/* --- Toggle Switch --- */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);margin-top:8px}
+.toggle-row .toggle-info{flex:1}
+.toggle-row .toggle-label{font-size:14px;font-weight:600;color:var(--text)}
+.toggle-row .toggle-hint{font-size:12px;color:var(--text-2);margin-top:2px}
+.toggle-switch{position:relative;width:48px;height:26px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-switch .slider{position:absolute;inset:0;background:var(--border);border-radius:13px;cursor:pointer;transition:all .3s}
+.toggle-switch .slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle-switch input:checked+.slider{background:var(--accent)}
+.toggle-switch input:checked+.slider::before{transform:translateX(22px)}
+.demo-indicator{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;
+  font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  background:#fef3c7;color:#92400e;margin-left:8px;vertical-align:middle}
+
 .embed-box{background:#1e293b;border-radius:10px;padding:16px 20px;margin-top:20px}
 .embed-box label{color:#94a3b8!important;margin-bottom:8px}
 .embed-box code{display:block;color:#e2e8f0;font-size:12px;font-family:'SF Mono',Menlo,monospace;
@@ -250,6 +266,17 @@ html,body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <input type="url" id="fThankYou" placeholder="https://example.com/thank-you/">
         <div class="hint">Visitor is redirected here after a qualified submission. Leave blank to stay on form.</div>
       </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">Demo Mode <span class="demo-indicator" id="demoIndicator" style="display:none">⚡ ON</span></div>
+          <div class="toggle-hint">Shows AI analysis behind the scenes. No emails sent. No pixels fired. Perfect for client pitches.</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="fDemo" onchange="document.getElementById('demoIndicator').style.display=this.checked?'inline-flex':'none'">
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
 
     <!-- EMBED TAB -->
@@ -337,6 +364,7 @@ function renderClients() {
         <p>${esc(c.business_description || 'No description')}</p>
       </div>
       <span class="id-badge">${c.id}</span>
+      ${c.demo_mode ? '<span class="demo-indicator">⚡ DEMO</span>' : ''}
       <div class="status ${c.active ? 'active' : 'inactive'}"></div>
     </div>
   `).join('');
@@ -362,6 +390,8 @@ function openEditor(id) {
     document.getElementById('fGadsId').value = c.google_ads_id || '';
     document.getElementById('fGadsLabel').value = c.google_ads_label || '';
     document.getElementById('fThankYou').value = c.thank_you_url || '';
+    document.getElementById('fDemo').checked = !!c.demo_mode;
+    document.getElementById('demoIndicator').style.display = c.demo_mode ? 'inline-flex' : 'none';
 
     renderServices(c.services || []);
     renderWontDo(c.wont_do || []);
@@ -377,6 +407,8 @@ function openEditor(id) {
     document.getElementById('fGadsId').value = '';
     document.getElementById('fGadsLabel').value = '';
     document.getElementById('fThankYou').value = '';
+    document.getElementById('fDemo').checked = false;
+    document.getElementById('demoIndicator').style.display = 'none';
     renderServices([]);
     renderWontDo([]);
     updateEmbedCodes('your-client-id');
@@ -509,6 +541,7 @@ async function saveClient() {
     google_ads_id: document.getElementById('fGadsId').value.trim(),
     google_ads_label: document.getElementById('fGadsLabel').value.trim(),
     thank_you_url: document.getElementById('fThankYou').value.trim(),
+    demo_mode: document.getElementById('fDemo').checked,
     active: true,
   };
 
