@@ -6,6 +6,7 @@
 <title>Contact</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100%}
 :root{
   --brand:#2563eb;--brand-hover:#1d4ed8;--brand-10:rgba(37,99,235,.1);--brand-20:rgba(37,99,235,.15);
   --bg:#ffffff;--card:#ffffff;--text:#0f172a;--text-2:#475569;--text-3:#94a3b8;
@@ -29,7 +30,7 @@ body.landing .card{box-shadow:var(--shadow-lg);border-radius:20px;max-width:460p
 body:not(.landing){background:transparent}
 body:not(.landing) .card{max-width:100%;border-radius:0;background:transparent}
 
-.card{background:var(--card);overflow:hidden;position:relative}
+.card{background:var(--card);overflow:hidden;overflow-x:hidden;position:relative;max-width:100%}
 
 /* ---- FORM STATE ---- */
 .form-section{padding:36px 32px 28px;transition:opacity .35s ease,transform .35s ease}
@@ -271,11 +272,12 @@ body.demo-mode .demo-banner{display:block}
 @media(max-width:480px){
   .form-section{padding:24px 20px 20px}
   .form-section h1{font-size:20px}
-  .messages,.qa-messages{padding:16px 20px}
+  .messages,.qa-messages{padding:16px 16px}
   .chat-input,.qa-input{padding:12px 16px}
-  .contact-bar,.qa-contact-bar{padding:12px 20px}
+  .contact-bar,.qa-contact-bar{padding:12px 16px}
   .qa-gate{padding:24px 20px}
   .qa-trigger{padding:0 20px 20px}
+  .msg{max-width:78%}
 }
 </style>
 </head>
