@@ -821,7 +821,7 @@ def dashboard_combined(client_id):
     if not cfg:
         return jsonify({'error': 'Not found'}), 404
     if not require_dashboard(cfg):
-        return jsonify({'error': 'Unauthorized'}), 401
+        return jsonify({'error': 'Unauthorized'}), 403
 
     conn = get_db()
     rows = db_all(conn, 'SELECT * FROM leads WHERE client_id=? ORDER BY created_at DESC LIMIT 500', (client_id,))

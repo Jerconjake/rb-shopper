@@ -273,8 +273,8 @@ body.demo-mode .demo-banner{display:block}
       </div>
       <div class="field" id="phoneField">
         <label for="fphone">Phone</label>
-        <input type="tel" id="fphone" placeholder="(555) 123-4567" autocomplete="tel">
-        <div class="field-error" id="phoneError">Please enter a valid phone number.</div>
+        <input type="tel" id="fphone" placeholder="(555) 123-4567" autocomplete="tel" inputmode="numeric">
+        <div class="field-error" id="phoneError">Please enter a valid phone number (10+ digits).</div>
       </div>
       <div class="field" id="msgField">
         <label for="fmsg">How can we help?</label>
@@ -424,7 +424,7 @@ body.demo-mode .demo-banner{display:block}
   function isValidPhone(phone) {
     if (!phone) return true; // phone is optional
     const digits = phone.replace(/\D/g, '');
-    return digits.length >= 7;
+    return digits.length >= 10 && /^\d+$/.test(digits);
   }
   function clearFieldErrors() {
     document.querySelectorAll('.field').forEach(f => f.classList.remove('invalid'));
@@ -434,6 +434,14 @@ body.demo-mode .demo-banner{display:block}
   }
 
   // --- Init ---
+  // Phone: only allow digits, spaces, dashes, parens, plus
+  var phoneEl = $('fphone');
+  if (phoneEl) {
+    phoneEl.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9()\-+\s]/g, '');
+    });
+  }
+
   async function init() {
     if (!clientId) return;
     try {
