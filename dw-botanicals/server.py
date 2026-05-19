@@ -23,7 +23,7 @@ FORMULA_NAMES = {
 }
 
 _bundle_cache = {"data": None, "ts": 0}
-BUNDLE_CACHE_TTL = 3600  # refresh every hour
+BUNDLE_CACHE_TTL = 900  # refresh every 15 minutes
 
 # ── Analytics counters (in-memory, cumulative since last restart) ──
 _analytics = {
@@ -96,14 +96,26 @@ def fetch_live_bundles():
 def build_bundle_text():
     bundles = fetch_live_bundles()
     if not bundles:
-        return "No bundles are currently available."
-    lines = ["The following bundles are currently live on the site:"]
-    for b in bundles:
-        price_info = f"${b['price']}"
-        if b.get("regular_price") and b["regular_price"] != b["price"]:
-            price_info = f"${b['price']} (regular ${b['regular_price']})"
-        desc = f" — {b['description']}" if b.get("description") else ""
-        lines.append(f"- {b['name']}: {price_info}{desc}\n  Link: {b['url']}")
+        return "No bundles or sale items are currently available."
+    sale_items = [b for b in bundles if "sale" in b["name"].lower()]
+    regular_bundles = [b for b in bundles if "sale" not in b["name"].lower()]
+    lines = []
+    if sale_items:
+        lines.append("🔥 ACTIVE SALES (prioritize mentioning these when relevant):")
+        for b in sale_items:
+            price_info = f"${b['price']}"
+            if b.get("regular_price") and b["regular_price"] != b["price"]:
+                price_info = f"${b['price']} (was ${b['regular_price']})"
+            desc = f" — {b['description']}" if b.get("description") else ""
+            lines.append(f"- {b['name']}: {price_info}{desc}\n  Link: {b['url']}")
+    if regular_bundles:
+        lines.append("\nBundles currently live:")
+        for b in regular_bundles:
+            price_info = f"${b['price']}"
+            if b.get("regular_price") and b["regular_price"] != b["price"]:
+                price_info = f"${b['price']} (regular ${b['regular_price']})"
+            desc = f" — {b['description']}" if b.get("description") else ""
+            lines.append(f"- {b['name']}: {price_info}{desc}\n  Link: {b['url']}")
     return "\n".join(lines)
 
 # Load product catalog
@@ -161,11 +173,13 @@ GENERAL QUESTIONS — answer these directly:
 - Subscriptions: Every 2 months, saves 10%, easy to cancel. Recommend for chronic/ongoing concerns.
 - Can't answer something confidently: direct to https://www.desertwillowbotanicals.com/contact or suggest they call — Willow is known for getting back to people quickly.
 
-BUNDLES — Desert Willow offers curated seasonal bundles at a discount. Only recommend bundles that are currently live. Here is the real-time list of available bundles:
+BUNDLES & SALES — Desert Willow offers curated bundles and runs occasional sales. Only recommend items that are currently live below.
 {build_bundle_text()}
 
+IMPORTANT: If there are active sales listed above, proactively mention them when relevant. For example, if someone is interested in products included in a sale bundle, let them know about the deal. Don't force it into every conversation, but if the sale aligns with what they need, bring it up naturally — "There's actually a sale on right now that includes exactly what you need..."
+
 Bundle shipping: US $5 flat, Canada $14 (bundles are 2–4 items, all fall in the 1–4 item tier).
-If no bundles are listed above, don't mention bundles at all — they're not currently available.
+If no bundles or sales are listed above, don't mention them at all — they're not currently available.
 
 RECOMMENDATIONS:
 - Recommend 1-2 products maximum at first. Be specific about why THIS product for THIS person.
