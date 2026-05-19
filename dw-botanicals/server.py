@@ -214,6 +214,10 @@ IMPORTANT:
 def serve_index():
     return send_from_directory("static", "index.html")
 
+@app.route("/dashboard")
+def serve_dashboard():
+    return send_from_directory("static", "dashboard.html")
+
 @app.route("/<path:path>")
 def serve_static(path):
     try:
