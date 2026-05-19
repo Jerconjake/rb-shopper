@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leads Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh}
+
+/* PIN GATE */
+.pin-gate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.pin-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:40px;
+  width:100%;max-width:380px;text-align:center}
+.pin-card h1{font-size:22px;font-weight:700;margin-bottom:8px}
+.pin-card p{font-size:14px;color:#64748b;margin-bottom:24px}
+.pin-input{width:100%;padding:14px;border:2px solid #e2e8f0;border-radius:10px;font-size:18px;
+  font-family:inherit;text-align:center;letter-spacing:8px;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:#2563eb}
+.pin-input.error{border-color:#ef4444;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pin-btn{width:100%;padding:13px;background:#2563eb;color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;transition:background .2s}
+.pin-btn:hover{background:#1d4ed8}
+
+/* DASHBOARD */
+.dashboard{display:none;max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+.dashboard.active{display:block}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.dash-header h1{font-size:24px;font-weight:800}
+.dash-header .dash-date{font-size:14px;color:#64748b;font-weight:500}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stat-card .stat-label{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.stat-card .stat-value{font-size:28px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.stat-card .stat-sub{font-size:12px;color:#64748b;margin-top:2px}
+
+/* Filters */
+.filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-select{padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;
+  font-family:inherit;background:#fff;cursor:pointer;outline:none;color:#0f172a}
+.filter-select:focus{border-color:#2563eb}
+.filter-search{padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;
+  font-family:inherit;outline:none;background:#fff;width:220px;color:#0f172a}
+.filter-search:focus{border-color:#2563eb}
+.export-btn{margin-left:auto;padding:8px 16px;background:#0f172a;color:#fff;border:none;
+  border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
+.export-btn:hover{background:#1e293b}
+
+/* Table */
+.leads-table{width:100%;background:#fff;border-radius:12px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.leads-table table{width:100%;border-collapse:collapse}
+.leads-table th{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
+  letter-spacing:.5px;padding:14px 16px;text-align:left;border-bottom:2px solid #f1f5f9;
+  cursor:pointer;user-select:none;white-space:nowrap}
+.leads-table th:hover{color:#2563eb}
+.leads-table th .sort-arrow{display:inline;margin-left:4px;font-size:10px;opacity:.4}
+.leads-table th.sorted .sort-arrow{opacity:1;color:#2563eb}
+.leads-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f8fafc;vertical-align:top}
+.leads-table tr:hover td{background:#f8fafc}
+.leads-table tr.clickable{cursor:pointer}
+
+.cat-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;
+  font-size:11px;font-weight:600;white-space:nowrap}
+.cat-badge.qualified{background:#ecfdf5;color:#065f46}
+.cat-badge.clarification{background:#eff6ff;color:#1e40af}
+.cat-badge.solicitor{background:#fef3c7;color:#92400e}
+.cat-badge.job{background:#f3e8ff;color:#6b21a8}
+.cat-badge.mismatch{background:#fef2f2;color:#991b1b}
+.cat-badge.chat{background:#f0fdf4;color:#166534}
+
+.truncate{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.empty-state{text-align:center;padding:60px 20px;color:#94a3b8}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
+.empty-state p{font-size:14px}
+
+/* Detail modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:85vh;
+  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:24px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;
+  align-items:flex-start;justify-content:space-between}
+.modal-header h2{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;border:none;background:#f1f5f9;border-radius:8px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-close:hover{background:#e2e8f0}
+.modal-body{padding:20px 24px 24px}
+.detail-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f8fafc}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
+  letter-spacing:.4px;min-width:100px;padding-top:2px}
+.detail-value{font-size:14px;color:#0f172a;line-height:1.5;flex:1;word-break:break-word}
+.transcript{margin-top:16px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+.transcript-title{padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;
+  color:#64748b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0}
+.transcript-body{padding:16px;max-height:300px;overflow-y:auto}
+.t-msg{margin-bottom:10px;font-size:13px;line-height:1.5}
+.t-msg .t-role{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.t-msg.t-user .t-role{color:#2563eb}
+.t-msg.t-ai .t-role{color:#64748b}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}
+.page-btn{padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.page-btn:hover{border-color:#2563eb;color:#2563eb}
+.page-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+@media(max-width:768px){
+  .dash-header{flex-direction:column;align-items:flex-start}
+  .filters{flex-direction:column}
+  .filter-search{width:100%}
+  .export-btn{margin-left:0;width:100%;text-align:center}
+  .leads-table{overflow-x:auto}
+  .leads-table table{min-width:700px}
+  .modal{max-width:100%;border-radius:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div class="pin-gate" id="pinGate">
+  <div class="pin-card">
+    <h1>Leads Dashboard</h1>
+    <p>Enter your PIN to view leads.</p>
+    <input type="password" class="pin-input" id="pinInput" placeholder="••••" maxlength="10" autofocus>
+    <button class="pin-btn" id="pinBtn">Access Dashboard</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div>
+      <h1 id="dashTitle">Leads Dashboard</h1>
+    </div>
+    <div class="dash-date" id="dashDate"></div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="filters">
+    <select class="filter-select" id="filterCategory">
+      <option value="">All Categories</option>
+      <option value="QUALIFIED_LEAD">Qualified Leads</option>
+      <option value="NEEDS_CLARIFICATION">Needs Clarification</option>
+      <option value="SOLICITOR">Solicitors</option>
+      <option value="JOB_APPLICANT">Job Applicants</option>
+      <option value="SCOPE_MISMATCH">Scope Mismatch</option>
+      <option value="AI_CHAT">AI Chat</option>
+    </select>
+    <select class="filter-select" id="filterMonth">
+      <option value="">All Time</option>
+    </select>
+    <input type="text" class="filter-search" id="filterSearch" placeholder="Search by name, email, or message...">
+    <button class="export-btn" id="exportBtn">📥 Export CSV</button>
+  </div>
+
+  <div class="leads-table" id="leadsTable">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="created_at">Date <span class="sort-arrow">▼</span></th>
+          <th data-sort="name">Name <span class="sort-arrow">▼</span></th>
+          <th data-sort="email">Email <span class="sort-arrow">▼</span></th>
+          <th data-sort="category">Category <span class="sort-arrow">▼</span></th>
+          <th data-sort="summary">Summary <span class="sort-arrow">▼</span></th>
+          <th data-sort="estimated_value">Value <span class="sort-arrow">▼</span></th>
+        </tr>
+      </thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <p>No leads match your filters.</p>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Lead Details</h2>
+      <button class="modal-close" id="modalClose"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var path = window.location.pathname;
+  var match = path.match(/\/dashboard\/([^/?#]+)/);
+  var clientId = match ? match[1] : '';
+  if (!clientId) { document.body.innerHTML = '<p style="padding:40px;text-align:center">Missing client ID.</p>'; return; }
+
+  var BASE = window.location.origin;
+  var leads = [];
+  var filteredLeads = [];
+  var sortCol = 'created_at';
+  var sortDir = -1;
+  var currentPage = 1;
+  var perPage = 25;
+  var config = {};
+
+  var CATEGORY_META = {
+    QUALIFIED_LEAD:     { label: 'Qualified', cls: 'qualified' },
+    NEEDS_CLARIFICATION:{ label: 'Clarification', cls: 'clarification' },
+    SOLICITOR:          { label: 'Solicitor', cls: 'solicitor' },
+    JOB_APPLICANT:      { label: 'Job Applicant', cls: 'job' },
+    SCOPE_MISMATCH:     { label: 'Mismatch', cls: 'mismatch' },
+    AI_CHAT:            { label: 'AI Chat', cls: 'chat' },
+  };
+
+  var $ = function(id) { return document.getElementById(id); };
+
+  // PIN check
+  async function checkPin(pin) {
+    try {
+      var r = await fetch(BASE + '/dashboard-auth/' + clientId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin })
+      });
+      var d = await r.json();
+      return d.ok;
+    } catch(e) { return false; }
+  }
+
+  $('pinBtn').addEventListener('click', async function() {
+    var pin = $('pinInput').value.trim();
+    if (!pin) return;
+    this.disabled = true; this.textContent = 'Checking...';
+    var ok = await checkPin(pin);
+    if (ok) {
+      sessionStorage.setItem('sf_dash_' + clientId, pin);
+      $('pinGate').style.display = 'none';
+      $('dashboard').classList.add('active');
+      loadDashboard(pin);
+    } else {
+      $('pinInput').classList.add('error');
+      setTimeout(function(){ $('pinInput').classList.remove('error'); }, 500);
+      this.disabled = false; this.textContent = 'Access Dashboard';
+      $('pinInput').value = '';
+      $('pinInput').focus();
+    }
+  });
+  $('pinInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') $('pinBtn').click();
+  });
+
+  // Auto-login if session
+  var savedPin = sessionStorage.getItem('sf_dash_' + clientId);
+  if (savedPin) {
+    $('pinGate').style.display = 'none';
+    $('dashboard').classList.add('active');
+    loadDashboard(savedPin);
+  }
+
+  async function loadDashboard(pin) {
+    try {
+      var r = await fetch(BASE + '/api/dashboard/' + clientId + '?pin=' + encodeURIComponent(pin));
+      var d = await r.json();
+      if (d.error) { alert(d.error); return; }
+      leads = d.leads || [];
+      config = d.config || {};
+      $('dashTitle').textContent = (config.business_name || clientId) + ' — Leads';
+      $('dashDate').textContent = 'Updated: ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      renderStats();
+      buildMonthFilter();
+      applyFilters();
+    } catch(e) {
+      console.warn('Dashboard load error', e);
+    }
+  }
+
+  function renderStats() {
+    var total = leads.length;
+    var qualified = leads.filter(function(l){ return l.category === 'QUALIFIED_LEAD'; }).length;
+    var clarification = leads.filter(function(l){ return l.category === 'NEEDS_CLARIFICATION'; }).length;
+    var totalValue = leads.reduce(function(s, l){ return s + (parseFloat(l.estimated_value) || 0); }, 0);
+    var thisMonth = leads.filter(function(l){
+      var d = new Date(l.created_at);
+      var now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+
+    $('statsRow').innerHTML = '\
+      <div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-value">' + total + '</div></div>\
+      <div class="stat-card"><div class="stat-label">Qualified</div><div class="stat-value" style="color:#10b981">' + qualified + '</div>\
+        <div class="stat-sub">' + (total ? Math.round(qualified/total*100) : 0) + '% qualification rate</div></div>\
+      <div class="stat-card"><div class="stat-label">Need Follow-up</div><div class="stat-value" style="color:#3b82f6">' + clarification + '</div></div>\
+      <div class="stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value">$' + totalValue.toLocaleString() + '</div></div>\
+      <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">' + thisMonth + '</div></div>';
+  }
+
+  function buildMonthFilter() {
+    var months = {};
+    leads.forEach(function(l) {
+      var d = new Date(l.created_at);
+      var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2, '0');
+      var label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      months[key] = label;
+    });
+    var sel = $('filterMonth');
+    sel.innerHTML = '<option value="">All Time</option>';
+    Object.keys(months).sort().reverse().forEach(function(k) {
+      sel.innerHTML += '<option value="' + k + '">' + months[k] + '</option>';
+    });
+  }
+
+  function applyFilters() {
+    var cat = $('filterCategory').value;
+    var month = $('filterMonth').value;
+    var search = $('filterSearch').value.trim().toLowerCase();
+
+    filteredLeads = leads.filter(function(l) {
+      if (cat && l.category !== cat) return false;
+      if (month) {
+        var d = new Date(l.created_at);
+        var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2, '0');
+        if (key !== month) return false;
+      }
+      if (search) {
+        var haystack = ((l.name||'') + ' ' + (l.email||'') + ' ' + (l.message||'') + ' ' + (l.summary||'')).toLowerCase();
+        if (haystack.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+
+    sortLeads();
+    currentPage = 1;
+    renderTable();
+  }
+
+  $('filterCategory').addEventListener('change', applyFilters);
+  $('filterMonth').addEventListener('change', applyFilters);
+  var searchTimeout;
+  $('filterSearch').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 300);
+  });
+
+  // Sorting
+  function sortLeads() {
+    filteredLeads.sort(function(a, b) {
+      var va = a[sortCol] || '';
+      var vb = b[sortCol] || '';
+      if (sortCol === 'created_at') { va = new Date(va).getTime(); vb = new Date(vb).getTime(); }
+      else if (sortCol === 'estimated_value') { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+      else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+      if (va < vb) return -1 * sortDir;
+      if (va > vb) return 1 * sortDir;
+      return 0;
+    });
+  }
+
+  document.querySelectorAll('.leads-table th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var col = this.getAttribute('data-sort');
+      if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
+      document.querySelectorAll('.leads-table th').forEach(function(t) { t.classList.remove('sorted'); });
+      this.classList.add('sorted');
+      this.querySelector('.sort-arrow').textContent = sortDir === -1 ? '▼' : '▲';
+      sortLeads();
+      renderTable();
+    });
+  });
+
+  function renderTable() {
+    var body = $('leadsBody');
+    var start = (currentPage - 1) * perPage;
+    var page = filteredLeads.slice(start, start + perPage);
+
+    if (page.length === 0) {
+      body.innerHTML = '';
+      $('emptyState').style.display = 'block';
+      $('pagination').innerHTML = '';
+      return;
+    }
+    $('emptyState').style.display = 'none';
+
+    body.innerHTML = page.map(function(l, i) {
+      var d = new Date(l.created_at);
+      var dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      var meta = CATEGORY_META[l.category] || { label: l.category, cls: 'clarification' };
+      var summary = l.summary || l.message || '—';
+      if (summary.length > 80) summary = summary.substring(0, 80) + '…';
+      var value = l.estimated_value ? '$' + parseFloat(l.estimated_value).toLocaleString() : '—';
+
+      return '<tr class="clickable" data-idx="' + (start + i) + '">' +
+        '<td style="white-space:nowrap">' + dateStr + '</td>' +
+        '<td>' + esc(l.name || '—') + '</td>' +
+        '<td style="color:#64748b">' + esc(l.email || '—') + '</td>' +
+        '<td><span class="cat-badge ' + meta.cls + '">' + meta.label + '</span></td>' +
+        '<td class="truncate">' + esc(summary) + '</td>' +
+        '<td style="font-weight:600">' + value + '</td>' +
+        '</tr>';
+    }).join('');
+
+    // Clickable rows
+    body.querySelectorAll('tr.clickable').forEach(function(tr) {
+      tr.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-idx'));
+        showDetail(filteredLeads[idx]);
+      });
+    });
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    var totalPages = Math.ceil(filteredLeads.length / perPage);
+    if (totalPages <= 1) { $('pagination').innerHTML = ''; return; }
+    var html = '<button class="page-btn" onclick="window._sfPrev()" ' + (currentPage <= 1 ? 'disabled' : '') + '>← Prev</button>';
+    for (var p = 1; p <= totalPages; p++) {
+      if (totalPages > 7 && p > 3 && p < totalPages - 1 && Math.abs(p - currentPage) > 1) {
+        if (p === 4 || p === totalPages - 2) html += '<span style="padding:0 4px;color:#94a3b8">…</span>';
+        continue;
+      }
+      html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="window._sfPage(' + p + ')">' + p + '</button>';
+    }
+    html += '<button class="page-btn" onclick="window._sfNext()" ' + (currentPage >= totalPages ? 'disabled' : '') + '>Next →</button>';
+    $('pagination').innerHTML = html;
+  }
+  window._sfPage = function(p) { currentPage = p; renderTable(); };
+  window._sfPrev = function() { if (currentPage > 1) { currentPage--; renderTable(); } };
+  window._sfNext = function() { var tp = Math.ceil(filteredLeads.length / perPage); if (currentPage < tp) { currentPage++; renderTable(); } };
+
+  // Detail modal
+  function showDetail(lead) {
+    $('modalTitle').textContent = lead.name || 'Lead Details';
+    var d = new Date(lead.created_at);
+    var dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' at ' +
+      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    var meta = CATEGORY_META[lead.category] || { label: lead.category, cls: 'clarification' };
+
+    var html = '<div class="detail-row"><div class="detail-label">Date</div><div class="detail-value">' + dateStr + '</div></div>';
+    html += '<div class="detail-row"><div class="detail-label">Email</div><div class="detail-value">' + esc(lead.email || '—') + '</div></div>';
+    html += '<div class="detail-row"><div class="detail-label">Phone</div><div class="detail-value">' + esc(lead.phone || '—') + '</div></div>';
+    html += '<div class="detail-row"><div class="detail-label">Category</div><div class="detail-value"><span class="cat-badge ' + meta.cls + '">' + meta.label + '</span></div></div>';
+    if (lead.confidence) {
+      html += '<div class="detail-row"><div class="detail-label">Confidence</div><div class="detail-value">' + Math.round(lead.confidence * 100) + '%</div></div>';
+    }
+    html += '<div class="detail-row"><div class="detail-label">Summary</div><div class="detail-value">' + esc(lead.summary || lead.message || '—') + '</div></div>';
+    if (lead.estimated_value) {
+      html += '<div class="detail-row"><div class="detail-label">Est. Value</div><div class="detail-value" style="font-weight:700">$' + parseFloat(lead.estimated_value).toLocaleString() + '</div></div>';
+    }
+    html += '<div class="detail-row"><div class="detail-label">Original</div><div class="detail-value">' + esc(lead.message || '—') + '</div></div>';
+
+    // Transcript
+    if (lead.transcript) {
+      var transcript;
+      try { transcript = JSON.parse(lead.transcript); } catch(e) { transcript = null; }
+      if (transcript && transcript.length > 0) {
+        html += '<div class="transcript"><div class="transcript-title">Full Conversation</div><div class="transcript-body">';
+        transcript.forEach(function(msg) {
+          var cls = msg.role === 'user' ? 't-user' : 't-ai';
+          var role = msg.role === 'user' ? (lead.name || 'Visitor') : 'AI';
+          html += '<div class="t-msg ' + cls + '"><div class="t-role">' + esc(role) + '</div>' + esc(msg.content) + '</div>';
+        });
+        html += '</div></div>';
+      }
+    }
+
+    $('modalBody').innerHTML = html;
+    $('modalOverlay').classList.add('active');
+  }
+
+  $('modalClose').addEventListener('click', function() { $('modalOverlay').classList.remove('active'); });
+  $('modalOverlay').addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') $('modalOverlay').classList.remove('active'); });
+
+  // CSV export
+  $('exportBtn').addEventListener('click', function() {
+    if (filteredLeads.length === 0) return;
+    var headers = ['Date','Name','Email','Phone','Category','Summary','Estimated Value','Message'];
+    var rows = filteredLeads.map(function(l) {
+      return [
+        new Date(l.created_at).toISOString(),
+        l.name || '', l.email || '', l.phone || '', l.category || '',
+        (l.summary || '').replace(/"/g, '""'),
+        l.estimated_value || '',
+        (l.message || '').replace(/"/g, '""')
+      ].map(function(v){ return '"' + v + '"'; }).join(',');
+    });
+    var csv = headers.join(',') + '\n' + rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (config.business_name || clientId) + '_leads_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  });
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>
