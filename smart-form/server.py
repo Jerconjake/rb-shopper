@@ -1206,10 +1206,6 @@ def dashboard_page(client_id):
         return "Not found", 404
     return send_from_directory('static', 'dashboard.html')
 
-@app.route('/dashboard/<client_id>')
-def dashboard_page(client_id):
-    return send_from_directory('static', 'dashboard.html')
-
 @app.route('/admin')
 def admin_page():
     return send_from_directory('static', 'admin.html')
