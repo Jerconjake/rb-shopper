@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from openai import OpenAI
 import requests as http_requests
 
+VERSION = "5.1"
 app = Flask(__name__, static_folder='static')
 _ai = None
 
@@ -1210,9 +1211,13 @@ def dashboard_page(client_id):
 def admin_page():
     return send_from_directory('static', 'admin.html')
 
+@app.route('/version')
+def version():
+    return {"version": VERSION}, 200
+
 @app.route('/')
 def index():
-    return '<p>SmartForm API — <a href="/admin">Admin Panel</a></p>', 200
+    return f'<p>SmartForm API v{VERSION} — <a href="/admin">Admin Panel</a></p>', 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
