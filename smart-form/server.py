@@ -388,6 +388,18 @@ def push_to_ghl(cfg, lead_data):
     first_name = parts[0]
     last_name = parts[1] if len(parts) > 1 else ''
 
+    ai_summary = lead_data.get('summary', '')
+    convo = lead_data.get('conversation', [])
+    name = lead_data.get('name', 'Visitor')
+    brief_lines = [ai_summary, ""]
+    if convo:
+        for m in convo:
+            if m['role'] == 'user':
+                brief_lines.append(f"→ {name}: {m['content']}")
+            else:
+                brief_lines.append(f"← AI: {m['content']}")
+    ai_brief_text = "\n".join(brief_lines).strip()
+
     contact_payload = {
         "locationId": location,
         "firstName": first_name,
@@ -396,6 +408,9 @@ def push_to_ghl(cfg, lead_data):
         "phone": lead_data.get('phone', ''),
         "tags": [tag],
         "source": "SmartForm",
+        "customFields": [
+            {"key": "ai_brief", "field_value": ai_brief_text}
+        ],
     }
 
     try:
