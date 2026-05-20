@@ -425,6 +425,15 @@ def push_to_ghl(cfg, lead_data):
                                headers=headers,
                                json={"body": note_body},
                                timeout=10)
+            # Remove tag then re-add so automation re-triggers on repeat submissions
+            http_requests.delete(f"{GHL_API}/contacts/{contact_id}/tags",
+                                 headers=headers,
+                                 json={"tags": [tag]},
+                                 timeout=10)
+            http_requests.post(f"{GHL_API}/contacts/{contact_id}/tags",
+                               headers=headers,
+                               json={"tags": [tag]},
+                               timeout=10)
         print(f"[GHL] Pushed {lead_data.get('name')} → contact {contact_id}")
         return contact_id
     except Exception as e:
