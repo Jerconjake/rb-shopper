@@ -54,11 +54,11 @@ def _get_client_ip():
 def _is_excluded():
     return _get_client_ip() in _excluded_ips
 
-def fetch_live_bundles():
-    """Fetch published bundle products from WooCommerce. Cache for 1 hour."""
+def fetch_live_bundles(force=False):
+    """Fetch published bundle products from WooCommerce. Cache for 15 min."""
     global _bundle_cache
     now = time.time()
-    if _bundle_cache["data"] is not None and (now - _bundle_cache["ts"]) < BUNDLE_CACHE_TTL:
+    if not force and _bundle_cache["data"] is not None and (now - _bundle_cache["ts"]) < BUNDLE_CACHE_TTL:
         return _bundle_cache["data"]
 
     try:
@@ -78,11 +78,12 @@ def fetch_live_bundles():
             # Skip individual formulas
             if any(f in name_lower for f in FORMULA_NAMES):
                 continue
-            # Include anything with bundle-like keywords or that isn't a formula
+            # Include anything that isn't a core formula
             bundles.append({
                 "name": p.get("name"),
                 "price": p.get("price"),
                 "regular_price": p.get("regular_price"),
+                "on_sale": p.get("on_sale", False),  # WooCommerce on_sale flag
                 "description": re.sub(r"<[^>]+>", "", p.get("short_description") or p.get("description") or "").strip(),
                 "url": p.get("permalink")
             })
@@ -97,8 +98,9 @@ def build_bundle_text():
     bundles = fetch_live_bundles()
     if not bundles:
         return "No bundles or sale items are currently available."
-    sale_items = [b for b in bundles if "sale" in b["name"].lower()]
-    regular_bundles = [b for b in bundles if "sale" not in b["name"].lower()]
+    # Use WooCommerce on_sale flag OR "sale" in name — whichever catches it
+    sale_items = [b for b in bundles if b.get("on_sale") or "sale" in b["name"].lower()]
+    regular_bundles = [b for b in bundles if not b.get("on_sale") and "sale" not in b["name"].lower()]
     lines = []
     if sale_items:
         lines.append("🔥 ACTIVE SALES (prioritize mentioning these when relevant):")
@@ -338,6 +340,13 @@ def dashboard_data():
 @app.route("/widget.js")
 def serve_widget():
     return send_from_directory("static", "widget.js", mimetype="application/javascript")
+
+@app.route("/api/refresh-bundles", methods=["POST", "GET"])
+def refresh_bundles():
+    """Force-clear the bundle cache and re-fetch from WooCommerce."""
+    bundles = fetch_live_bundles(force=True)
+    sale_items = [b for b in bundles if b.get("on_sale") or "sale" in b["name"].lower()]
+    return jsonify({"ok": True, "total": len(bundles), "sales": len(sale_items), "items": [b["name"] for b in bundles]})
 
 @app.route("/api/products", methods=["GET"])
 def get_products():
