@@ -828,13 +828,23 @@
       <div class="section-heading">About You</div>
 
       <div class="field">
-        <label class="field-label">Tell us about yourself &amp; what you're looking for <span class="req">*</span></label>
-        <textarea id="n-message" placeholder="Share your clinical experience, the types of facilities or roles you're interested in, your scheduling preferences, and why you're considering agency work. The more specific you are, the better we can match you to the right opportunities." style="min-height:130px"></textarea>
-        <p class="hint">Required — this helps us qualify and match you appropriately.</p>
+        <label class="field-label">Tell us about yourself <span class="req">*</span></label>
+        <p class="hint" style="margin-bottom:10px">Answer a couple of quick questions so we can match you to the right opportunities.</p>
+
+        <!-- Nurse qualification chat -->
+        <div id="n-chat-box" style="background:#f8f9fb;border:1px solid #e2e6ea;border-radius:8px;padding:14px 14px 10px;margin-bottom:10px;min-height:80px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <textarea id="n-chat-input" rows="2" placeholder="Type your response here…" style="flex:1;resize:none;border:1px solid #d0d5dd;border-radius:6px;padding:10px 12px;font-size:0.9rem;font-family:inherit;outline:none;transition:border 0.2s;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendNurseChat();}"></textarea>
+          <button onclick="sendNurseChat()" id="n-chat-send" style="height:44px;padding:0 16px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.2s;">Send</button>
+        </div>
+
+        <!-- Hidden field stores the final transcript -->
+        <input type="hidden" id="n-message" value="">
       </div>
 
       <div id="n-error" class="error-msg"></div>
-      <button class="btn-submit" id="n-submit" onclick="submitNurse()">
+      <button class="btn-submit" id="n-submit" onclick="submitNurse()" disabled style="opacity:0.45;cursor:not-allowed;">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Submit Application
       </button>
@@ -892,7 +902,7 @@
 
   <div class="footer">
     Nurse Relief Inc. &nbsp;·&nbsp; <a href="tel:+17804401234">Confidential &amp; Secure</a>
-    &nbsp;·&nbsp; <span style="opacity:0.4;font-size:11px;">v1</span>
+    &nbsp;·&nbsp; <span style="opacity:0.4;font-size:11px;">v2</span>
   </div>
 
 </div><!-- /page -->
@@ -943,6 +953,7 @@ function selectPath(path) {
   });
   const el = document.getElementById('section-'+path);
   setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'nearest'}), 80);
+  if (path === 'nurse') setTimeout(initNurseChat, 200);
 }
 
 // ── SUCCESS ──────────────────────────────────────────────
@@ -1017,7 +1028,7 @@ async function submitNurse() {
   if (!nurseType)         { err.innerHTML = '&#9888; Please select your designation.'; return; }
   if (!regnum)            { err.innerHTML = '&#9888; Registration/license number is required.'; return; }
   if (!province)          { err.innerHTML = '&#9888; Please select your province of license.'; return; }
-  if (!message)           { err.innerHTML = '&#9888; Please tell us about yourself and what you\'re looking for.'; return; }
+  if (!message)           { err.innerHTML = '&#9888; Please complete the "About You" questions above before submitting.'; return; }
 
   btn.disabled = true;
   btn.innerHTML = 'Submitting…';
@@ -1041,6 +1052,78 @@ async function submitNurse() {
     btn.disabled = false;
     btn.innerHTML = 'Submit Application';
   }
+}
+
+// ── NURSE QUALIFICATION CHAT ─────────────────────────────
+const nurseSessionId = 'nrn-' + Math.random().toString(36).slice(2);
+let nurseChatReady = false;
+let nurseChatTurns = 0;
+
+function addNurseBubble(text, type) {
+  const box = document.getElementById('n-chat-box');
+  const div = document.createElement('div');
+  div.style.cssText = type === 'user'
+    ? 'align-self:flex-end;background:var(--navy);color:#fff;padding:9px 13px;border-radius:14px 14px 3px 14px;font-size:0.875rem;max-width:85%;line-height:1.45;'
+    : 'align-self:flex-start;background:#fff;border:1px solid #e2e6ea;padding:9px 13px;border-radius:14px 14px 14px 3px;font-size:0.875rem;max-width:85%;line-height:1.45;color:#1a2332;';
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+async function sendNurseChat() {
+  if (nurseChatReady) return;
+  const input = document.getElementById('n-chat-input');
+  const send  = document.getElementById('n-chat-send');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  addNurseBubble(msg, 'user');
+  input.value = '';
+  input.disabled = true;
+  send.disabled = true;
+
+  const typing = addNurseBubble('…', 'bot');
+
+  try {
+    const res = await fetch('/api/chat-nurse', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: nurseSessionId, message: msg })
+    });
+    const data = await res.json();
+    typing.remove();
+    if (data.reply) addNurseBubble(data.reply, 'bot');
+    nurseChatTurns++;
+
+    if (data.ready) {
+      nurseChatReady = true;
+      document.getElementById('n-message').value = data.transcript || msg;
+      const btn = document.getElementById('n-submit');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      input.disabled = true;
+      send.disabled = true;
+      input.placeholder = 'Thank you — click Submit Application above.';
+    } else {
+      input.disabled = false;
+      send.disabled = false;
+      input.focus();
+    }
+  } catch(e) {
+    typing.remove();
+    addNurseBubble('Sorry, something went wrong. Please try again.', 'bot');
+    input.disabled = false;
+    send.disabled = false;
+  }
+}
+
+// Kick off nurse chat with an opening prompt on tab load
+function initNurseChat() {
+  const box = document.getElementById('n-chat-box');
+  if (!box || box.children.length > 0) return;
+  addNurseBubble("Tell us a bit about your nursing background — what type of nurse are you and what kinds of facilities or roles are you most interested in?", 'bot');
 }
 
 // ── GENERAL CHAT ─────────────────────────────────────────

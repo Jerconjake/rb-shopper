@@ -125,6 +125,24 @@ Respond with JSON only:
         return {"category": "genuine", "summary": "Classification unavailable.", "confidence": 0.5}
 
 
+NURSE_CHAT_SYSTEM = """You are a professional intake assistant for Nurse Relief Inc., an Alberta-based nursing staffing agency placing nurses with healthcare facilities across Western Canada.
+
+Your role is to ask the nurse applicant 1–2 follow-up questions to better understand their background and what they're looking for. You already have their name, designation, registration number, province, specialties, and availability — do NOT ask for those again.
+
+What to uncover (pick what's most relevant based on what they say):
+- Depth of clinical experience (years, settings — hospital, LTC, home care, fly-in/fly-out)
+- What types of facilities or roles interest them most
+- Why they're considering agency/relief work (flexibility, extra income, travel, between positions)
+- Any preferences around shift length, geography, or travel willingness
+
+Rules:
+- Ask only 1–2 questions per reply. Conversational, not interrogative.
+- Be warm and professional — tone of a colleague, not a form.
+- Do NOT ask for info already collected.
+- After exactly 2 user turns AND you have a clear picture, end your reply with exactly: [READY_TO_SUBMIT]
+- If after 1 turn they're clearly not a nurse (confused, spammy, no nursing context), ask one clarifying question — then after their second turn, append [READY_TO_SUBMIT] regardless (the AI gate handles final screening).
+- Never submit on the first turn."""
+
 GENERAL_SYSTEM = """You are a professional intake assistant for Nurse Relief Inc., an Alberta-based nursing staffing agency that places nurses with healthcare facilities across Western Canada.
 
 Your job: understand what the person needs and gather enough to pass them to the right person on the team.
@@ -300,6 +318,67 @@ def submit_facility():
             conn.commit()
 
     return jsonify({"status": "ok", "message": "Thank you! A member of our team will reach out shortly."})
+
+
+def chat_nurse(session_id, user_message):
+    """Handle nurse qualification chat — 2 turns then ready."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT role, content FROM nurse_relief_chat WHERE session_id=%s ORDER BY created_at",
+                (session_id,)
+            )
+            history = [{"role": r, "content": c} for r, c in cur.fetchall()]
+
+    history.append({"role": "user", "content": user_message})
+    messages = [{"role": "system", "content": NURSE_CHAT_SYSTEM}] + history[-10:]
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=250,
+        )
+        reply = resp.choices[0].message.content.strip()
+    except Exception as e:
+        reply = "Thank you — that's helpful. We'll be in touch soon. [READY_TO_SUBMIT]"
+
+    turn_count = sum(1 for m in history if m["role"] == "user")
+    ready = "[READY_TO_SUBMIT]" in reply and turn_count >= 2
+    reply_clean = reply.replace("[READY_TO_SUBMIT]", "").strip()
+
+    # Build transcript
+    transcript_parts = []
+    for m in history:
+        label = "You" if m["role"] == "user" else "Nurse Relief"
+        transcript_parts.append(f"{label}: {m['content']}")
+    transcript_parts.append(f"Nurse Relief: {reply_clean}")
+    transcript = "\n".join(transcript_parts)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO nurse_relief_chat (session_id, role, content) VALUES (%s,%s,%s),(%s,%s,%s)",
+                (session_id, "user", user_message, session_id, "assistant", reply_clean)
+            )
+            conn.commit()
+
+    return reply_clean, ready, transcript
+
+
+@app.route("/api/chat-nurse", methods=["POST"])
+def api_chat_nurse():
+    """Nurse qualification chat endpoint."""
+    data = request.json or {}
+    session_id = data.get("session_id", "")
+    user_message = data.get("message", "").strip()
+
+    if not user_message:
+        return jsonify({"error": "Message required"}), 400
+
+    reply, ready, transcript = chat_nurse(session_id, user_message)
+    return jsonify({"reply": reply, "ready": ready, "transcript": transcript})
 
 
 @app.route("/api/chat-general", methods=["POST"])
