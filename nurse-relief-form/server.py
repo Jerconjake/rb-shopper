@@ -125,6 +125,24 @@ Respond with JSON only:
         return {"category": "genuine", "summary": "Classification unavailable.", "confidence": 0.5}
 
 
+NURSE_SCREEN_SYSTEM = """You are an intake screener for Nurse Relief Inc., an Alberta-based nursing staffing agency.
+
+A nurse has filled out a structured application form (designation, registration number, province, specialties, availability) and written a free-text message. Classify that message into exactly one of:
+
+STRONG — Clear, genuine application with real substance: mentions specific experience, clinical background, years in practice, specific settings (ICU, LTC, MH, ER, home care), specific geographic preferences, or clear intent. These should go straight to the team.
+
+NEEDS_QUALIFICATION — Genuine interest but too vague to act on: "I'm a nurse interested in agency work", "looking to see if it's a fit", single-sentence with no detail. Worth a quick follow-up.
+
+SPAM — Not a nurse at all: SEO pitches, marketing solicitations, nonsense, job board spam, someone asking how to become a nurse.
+
+Respond with JSON only:
+{
+  "classification": "STRONG" | "NEEDS_QUALIFICATION" | "SPAM",
+  "opener": "..."
+}
+
+The opener is only used for NEEDS_QUALIFICATION. It should be a warm, 1-sentence follow-up question that digs into experience or preferences — do NOT ask for anything already on the structured form (designation, registration #, province, specialties, availability)."""
+
 NURSE_CHAT_SYSTEM = """You are a professional intake assistant for Nurse Relief Inc., an Alberta-based nursing staffing agency placing nurses with healthcare facilities across Western Canada.
 
 Your role is to ask the nurse applicant 1–2 follow-up questions to better understand their background and what they're looking for. You already have their name, designation, registration number, province, specialties, and availability — do NOT ask for those again.
@@ -235,10 +253,18 @@ def submit_nurse():
     if not name or not email:
         return jsonify({"error": "Name and email are required."}), 400
 
-    # AI classification
-    result = classify_nurse_message(nurse_type, registration_number, specialties, message)
-    category = result.get("category", "genuine")
-    ai_summary = result.get("summary", "")
+    # AI classification — skip gate if already pre-classified on frontend
+    pre_classified = data.get("pre_classified", "").upper()
+    if pre_classified == "STRONG":
+        category = "genuine"
+        ai_summary = "Pre-qualified: strong application submitted directly."
+    elif pre_classified == "SPAM":
+        category = "noise"
+        ai_summary = "Pre-classified as spam/noise by frontend screen."
+    else:
+        result = classify_nurse_message(nurse_type, registration_number, specialties, message)
+        category = result.get("category", "genuine")
+        ai_summary = result.get("summary", "")
 
     notified = 0
 
@@ -318,6 +344,39 @@ def submit_facility():
             conn.commit()
 
     return jsonify({"status": "ok", "message": "Thank you! A member of our team will reach out shortly."})
+
+
+@app.route("/api/classify-nurse-message", methods=["POST"])
+def api_classify_nurse_message():
+    """Pre-classify nurse message before submission — three-branch: STRONG / NEEDS_QUALIFICATION / SPAM."""
+    data = request.json or {}
+    message     = data.get("message", "").strip()
+    designation = data.get("designation", "")
+
+    if not message:
+        return jsonify({"error": "Message required"}), 400
+
+    context = f"Nurse designation: {designation or 'not specified'}\nMessage: {message}"
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": NURSE_SCREEN_SYSTEM},
+                {"role": "user", "content": context}
+            ],
+            temperature=0.1,
+            max_tokens=200,
+            response_format={"type": "json_object"}
+        )
+        result = json.loads(resp.choices[0].message.content)
+        classification = result.get("classification", "NEEDS_QUALIFICATION")
+        opener = result.get("opener", "Could you tell me a bit more about your clinical background and the types of opportunities you're looking for?")
+    except Exception as e:
+        print(f"Screen error: {e}")
+        classification = "NEEDS_QUALIFICATION"
+        opener = "Could you tell me a bit more about your nursing background and what you're looking for in relief work?"
+
+    return jsonify({"classification": classification, "opener": opener})
 
 
 def chat_nurse(session_id, user_message):
