@@ -4,386 +4,1022 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Nurse Relief Inc. — Contact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f4f6f9; color: #1a2332; min-height: 100vh; }
 
-  .wrapper { max-width: 680px; margin: 0 auto; padding: 32px 16px 60px; }
+  :root {
+    --navy:    #0B1E3D;
+    --navy-mid:#163056;
+    --navy-lt: #1E4080;
+    --accent:  #2D6BE4;
+    --accent-lt:#EEF3FD;
+    --gold:    #C8A84B;
+    --white:   #FFFFFF;
+    --off-white:#F7F9FC;
+    --border:  #DDE4EF;
+    --text:    #0B1E3D;
+    --muted:   #6B7A99;
+    --success: #1A7F5A;
+    --error:   #C0392B;
+    --radius:  10px;
+    --shadow:  0 4px 24px rgba(11,30,61,.09);
+  }
 
-  .logo-area { text-align: center; margin-bottom: 28px; }
-  .logo-area img { max-height: 56px; }
-  .logo-area h1 { font-size: 1.5rem; font-weight: 700; color: #1a4fa0; margin-top: 8px; }
-  .logo-area p { color: #5a6a7a; font-size: 0.95rem; margin-top: 4px; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--off-white);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
 
-  /* Path selector */
-  .path-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  /* ── HEADER ─────────────────────────────── */
+  .header {
+    background: var(--navy);
+    padding: 0 24px;
+  }
+  .header-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-mark svg { width: 22px; height: 22px; }
+  .brand-name {
+    color: var(--white);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+  }
+  .brand-tagline {
+    color: rgba(255,255,255,.5);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+  .header-badge {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: rgba(255,255,255,.6);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── MAIN CONTENT ───────────────────────── */
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 20px 72px;
+  }
+
+  .page-title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .page-sub {
+    font-size: 0.92rem;
+    color: var(--muted);
+    font-weight: 400;
+    margin-bottom: 32px;
+  }
+
+  /* ── PATH SELECTOR ──────────────────────── */
+  .path-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
   .path-card {
-    border: 2px solid #d0dae8; border-radius: 12px; padding: 18px 12px;
-    text-align: center; cursor: pointer; background: #fff;
-    transition: all .18s ease;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s, transform .12s;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
   }
-  .path-card:hover { border-color: #1a4fa0; background: #f0f4ff; }
-  .path-card.active { border-color: #1a4fa0; background: #eef2ff; }
-  .path-card .icon { font-size: 2rem; margin-bottom: 6px; }
-  .path-card .label { font-weight: 600; font-size: 0.92rem; color: #1a2332; }
-  .path-card .sub { font-size: 0.78rem; color: #6b7a8d; margin-top: 3px; }
-
-  /* Form sections */
-  .form-section { display: none; background: #fff; border-radius: 14px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
-  .form-section.visible { display: block; }
-
-  h2 { font-size: 1.15rem; font-weight: 700; color: #1a4fa0; margin-bottom: 20px; }
-
-  .field { margin-bottom: 16px; }
-  label { display: block; font-size: 0.85rem; font-weight: 600; color: #3a4a5a; margin-bottom: 5px; }
-  label .req { color: #c0392b; margin-left: 2px; }
-  input[type=text], input[type=email], input[type=tel], select, textarea {
-    width: 100%; border: 1.5px solid #d0dae8; border-radius: 8px;
-    padding: 10px 12px; font-size: 0.95rem; color: #1a2332;
-    background: #fafbfc; transition: border .15s;
-    font-family: inherit;
+  .path-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent-lt);
+    opacity: 0;
+    transition: opacity .15s;
   }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: #1a4fa0; background: #fff; }
-  textarea { resize: vertical; min-height: 100px; }
-
-  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-  /* Specialties grid */
-  .specialties-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 8px; margin-top: 6px;
+  .path-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 16px rgba(45,107,228,.12);
+    transform: translateY(-1px);
   }
-  .spec-item { display: flex; align-items: center; gap: 7px; font-size: 0.87rem; cursor: pointer; }
-  .spec-item input[type=checkbox] { width: 15px; height: 15px; accent-color: #1a4fa0; cursor: pointer; }
-
-  /* Nurse type radios */
-  .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
-  .radio-item { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; cursor: pointer; }
-  .radio-item input[type=radio] { width: 16px; height: 16px; accent-color: #1a4fa0; cursor: pointer; }
-
-  .hint { font-size: 0.8rem; color: #6b7a8d; margin-top: 4px; }
-
-  /* Chat */
-  .chat-box {
-    border: 1.5px solid #d0dae8; border-radius: 10px; background: #fafbfc;
-    padding: 16px; min-height: 120px; max-height: 320px; overflow-y: auto;
-    margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;
+  .path-card:hover::after { opacity: 1; }
+  .path-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 2px 16px rgba(45,107,228,.15);
   }
-  .bubble { max-width: 85%; padding: 9px 13px; border-radius: 10px; font-size: 0.92rem; line-height: 1.45; }
-  .bubble.bot { background: #eef2ff; color: #1a2332; align-self: flex-start; border-bottom-left-radius: 3px; }
-  .bubble.user { background: #1a4fa0; color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
-  .bubble.typing { background: #eef2ff; color: #8a9aaa; font-style: italic; align-self: flex-start; }
+  .path-card.active::after { opacity: 1; }
+  .path-card > * { position: relative; z-index: 1; }
 
-  .chat-input-row { display: flex; gap: 8px; }
-  .chat-input-row input { flex: 1; }
-  .chat-input-row button { background: #1a4fa0; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.92rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
-  .chat-input-row button:hover { background: #163d80; }
+  .path-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-lt);
+    border-radius: 8px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .path-card.active .path-icon,
+  .path-card:hover .path-icon {
+    background: var(--accent);
+  }
+  .path-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--accent);
+    transition: stroke .15s;
+  }
+  .path-card.active .path-icon svg,
+  .path-card:hover .path-icon svg {
+    stroke: var(--white);
+  }
+  .path-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -.01em;
+    margin-bottom: 3px;
+  }
+  .path-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
 
-  /* Contact fields above chat */
-  .contact-fields { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1.5px solid #e8edf3; }
+  /* ── FORM CARD ──────────────────────────── */
+  .form-card {
+    display: none;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .form-card.visible { display: block; }
 
-  /* Submit button */
+  .form-card-header {
+    background: var(--navy);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .form-card-header .h-icon {
+    width: 34px;
+    height: 34px;
+    background: rgba(255,255,255,.12);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .form-card-header .h-icon svg { width: 18px; height: 18px; stroke: white; }
+  .form-card-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -.01em;
+  }
+  .form-card-header p {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,.55);
+    margin-top: 1px;
+    font-weight: 400;
+  }
+
+  .form-body { padding: 28px; }
+
+  /* ── FIELDS ─────────────────────────────── */
+  .field { margin-bottom: 18px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  label.field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  label.field-label .req { color: var(--accent); margin-left: 2px; }
+  label.field-label .opt { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
+
+  input[type=text],
+  input[type=email],
+  input[type=tel],
+  select,
+  textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 0.92rem;
+    color: var(--text);
+    background: var(--white);
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: border-color .15s, box-shadow .15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45,107,228,.1);
+  }
+  input::placeholder, textarea::placeholder { color: #A8B4C8; }
+  textarea { resize: vertical; min-height: 110px; }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A99' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 38px;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  /* ── RADIO GROUP ────────────────────────── */
+  .radio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .radio-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+    font-size: 0.85rem;
+    color: var(--navy);
+    font-weight: 500;
+  }
+  .radio-pill:hover { border-color: var(--accent); background: var(--accent-lt); }
+  .radio-pill input[type=radio] { display: none; }
+  .radio-pill .radio-dot {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: border-color .12s, background .12s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .radio-pill.selected {
+    border-color: var(--accent);
+    background: var(--accent-lt);
+  }
+  .radio-pill.selected .radio-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: inset 0 0 0 3px white;
+  }
+
+  /* ── SPECIALTIES ────────────────────────── */
+  .spec-section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .spec-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 7px;
+  }
+  .spec-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+    font-size: 0.81rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .spec-chip:hover { border-color: var(--accent); background: var(--accent-lt); }
+  .spec-chip.checked { border-color: var(--accent); background: var(--accent-lt); color: var(--accent); }
+  .spec-chip input[type=checkbox] { display: none; }
+  .spec-chip .check-box {
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .12s, background .12s;
+  }
+  .spec-chip.checked .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .spec-chip.checked .check-box::after {
+    content: '';
+    display: block;
+    width: 4px; height: 7px;
+    border: 1.5px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translate(-1px,-1px);
+  }
+
+  /* ── DIVIDER ────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* ── SECTION HEADING ────────────────────── */
+  .section-heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── SUBMIT BUTTON ──────────────────────── */
   .btn-submit {
-    width: 100%; background: #1a4fa0; color: #fff; border: none;
-    border-radius: 10px; padding: 14px; font-size: 1rem; font-weight: 700;
-    cursor: pointer; margin-top: 8px; transition: background .15s;
+    width: 100%;
+    background: var(--accent);
+    color: var(--white);
+    border: none;
+    border-radius: 9px;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Inter', system-ui, sans-serif;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background .15s, box-shadow .15s;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
-  .btn-submit:hover { background: #163d80; }
-  .btn-submit:disabled { background: #9aafcc; cursor: default; }
+  .btn-submit:hover {
+    background: var(--navy-lt);
+    box-shadow: 0 4px 16px rgba(45,107,228,.3);
+  }
+  .btn-submit:disabled {
+    background: #A8B4C8;
+    cursor: default;
+    box-shadow: none;
+  }
+  .btn-submit svg { width: 18px; height: 18px; stroke: white; flex-shrink: 0; }
 
-  /* Success */
-  .success-banner {
-    display: none; background: #e8f5e9; border: 1.5px solid #4caf50;
-    border-radius: 10px; padding: 18px; text-align: center; color: #2e7d32;
-    font-weight: 600; margin-bottom: 20px;
+  /* ── CHAT ───────────────────────────────── */
+  .chat-area {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .chat-messages {
+    background: var(--off-white);
+    padding: 18px;
+    min-height: 140px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .bubble.bot {
+    background: var(--white);
+    color: var(--text);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+  }
+  .bubble.user {
+    background: var(--accent);
+    color: var(--white);
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+  }
+  .bubble.typing {
+    background: var(--white);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-style: italic;
+    align-self: flex-start;
+  }
+  .chat-input-bar {
+    display: flex;
+    border-top: 1.5px solid var(--border);
+    background: var(--white);
+  }
+  .chat-input-bar input {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    background: transparent;
+    box-shadow: none;
+  }
+  .chat-input-bar input:focus { box-shadow: none; border: none; }
+  .chat-send-btn {
+    border: none;
+    background: var(--accent);
+    color: var(--white);
+    padding: 0 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .chat-send-btn:hover { background: var(--navy-lt); }
+  .chat-send-btn:disabled { background: #A8B4C8; cursor: default; }
+
+  /* ── SUCCESS BANNER ─────────────────────── */
+  .success-card {
+    display: none;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 40px 28px;
+    text-align: center;
+  }
+  .success-card .s-icon {
+    width: 56px; height: 56px;
+    background: #E8F5EF;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .success-card .s-icon svg { width: 28px; height: 28px; stroke: var(--success); }
+  .success-card h3 { font-size: 1.2rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .success-card p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── ERROR ──────────────────────────────── */
+  .error-msg {
+    color: var(--error);
+    font-size: 0.8rem;
+    margin-top: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
-  .error-msg { color: #c0392b; font-size: 0.83rem; margin-top: 4px; }
+  /* ── FOOTER ─────────────────────────────── */
+  .footer {
+    text-align: center;
+    margin-top: 36px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
 
-  @media (max-width: 520px) {
+  @media (max-width: 580px) {
     .path-selector { grid-template-columns: 1fr; }
     .row-2 { grid-template-columns: 1fr; }
+    .row-3 { grid-template-columns: 1fr; }
+    .radio-grid { grid-template-columns: 1fr; }
+    .header-badge { display: none; }
+    .page { padding: 24px 14px 56px; }
+    .form-body { padding: 20px; }
+    .form-card-header { padding: 18px 20px; }
   }
 </style>
 </head>
 <body>
-<div class="wrapper">
 
-  <div class="logo-area">
-    <h1>Nurse Relief Inc.</h1>
-    <p>Alberta's trusted nursing staffing agency</p>
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z"/>
+          <path d="M20 22a8 8 0 1 0-16 0"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Nurse Relief Inc.</div>
+        <div class="brand-tagline">Healthcare Staffing</div>
+      </div>
+    </div>
+    <div class="header-badge">Trusted Since 1994</div>
   </div>
+</header>
 
-  <div id="successBanner" class="success-banner"></div>
+<div class="page">
+
+  <h1 class="page-title">How can we help you?</h1>
+  <p class="page-sub">Select the option that best describes your inquiry and we'll get back to you promptly.</p>
+
+  <!-- SUCCESS CARD -->
+  <div class="success-card" id="successCard">
+    <div class="s-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h3 id="successTitle">Submission Received</h3>
+    <p id="successBody">Thank you for reaching out. A member of our team will be in touch with you shortly.</p>
+  </div>
 
   <!-- PATH SELECTOR -->
-  <div class="path-selector">
+  <div class="path-selector" id="pathSelector">
+
     <div class="path-card" onclick="selectPath('facility')" id="card-facility">
-      <div class="icon">🏥</div>
-      <div class="label">Healthcare Facility</div>
-      <div class="sub">Looking to hire nurses</div>
+      <div class="path-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="15" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div class="path-label">Healthcare Facility</div>
+      <div class="path-sub">Staffing &amp; placement inquiries</div>
     </div>
+
     <div class="path-card" onclick="selectPath('nurse')" id="card-nurse">
-      <div class="icon">🩺</div>
-      <div class="label">Nurse / NP / LPN</div>
-      <div class="sub">Applying for work</div>
+      <div class="path-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+          <path d="M12 11v4m-2-2h4"/>
+        </svg>
+      </div>
+      <div class="path-label">Nursing Professional</div>
+      <div class="path-sub">Apply for placement opportunities</div>
     </div>
+
     <div class="path-card" onclick="selectPath('general')" id="card-general">
-      <div class="icon">💬</div>
-      <div class="label">General Inquiry</div>
-      <div class="sub">Questions or other</div>
+      <div class="path-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="path-label">General Inquiry</div>
+      <div class="path-sub">Questions &amp; other matters</div>
     </div>
-  </div>
 
-  <!-- ── FACILITY FORM ─────────────────────────────── -->
-  <div class="form-section" id="section-facility">
-    <h2>🏥 Facility Inquiry</h2>
-    <div class="field">
-      <label>Organization Name <span class="req">*</span></label>
-      <input type="text" id="f-org" placeholder="e.g. Grey Nuns Community Hospital"/>
+  </div><!-- /path-selector -->
+
+  <!-- ── FACILITY FORM ─────────────────────────────────── -->
+  <div class="form-card" id="section-facility">
+    <div class="form-card-header">
+      <div class="h-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="15" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Healthcare Facility Inquiry</h2>
+        <p>Tell us about your staffing needs and we'll respond within one business day</p>
+      </div>
     </div>
-    <div class="row-2">
+    <div class="form-body">
+
+      <div class="section-heading">Organization</div>
       <div class="field">
-        <label>Your Name <span class="req">*</span></label>
-        <input type="text" id="f-name" placeholder="First Last"/>
+        <label class="field-label">Organization Name <span class="req">*</span></label>
+        <input type="text" id="f-org" placeholder="e.g. Grey Nuns Community Hospital"/>
       </div>
-      <div class="field">
-        <label>Phone <span class="req">*</span></label>
-        <input type="tel" id="f-phone" placeholder="(780) 000-0000"/>
-      </div>
-    </div>
-    <div class="field">
-      <label>Email <span class="req">*</span></label>
-      <input type="email" id="f-email" placeholder="you@facility.ca"/>
-    </div>
-    <div class="field">
-      <label>Tell us what you need</label>
-      <textarea id="f-message" placeholder="Number of nurses needed, specialties, shifts, start date…"></textarea>
-    </div>
-    <div id="f-error" class="error-msg"></div>
-    <button class="btn-submit" id="f-submit" onclick="submitFacility()">Send Inquiry →</button>
-  </div>
-
-  <!-- ── NURSE APPLICATION FORM ────────────────────── -->
-  <div class="form-section" id="section-nurse">
-    <h2>🩺 Nurse Application</h2>
-    <div class="row-2">
-      <div class="field">
-        <label>Full Name <span class="req">*</span></label>
-        <input type="text" id="n-name" placeholder="First Last"/>
-      </div>
-      <div class="field">
-        <label>Phone</label>
-        <input type="tel" id="n-phone" placeholder="(780) 000-0000"/>
-      </div>
-    </div>
-    <div class="field">
-      <label>Email <span class="req">*</span></label>
-      <input type="email" id="n-email" placeholder="you@email.com"/>
-    </div>
-
-    <div class="field">
-      <label>Type of Nurse <span class="req">*</span></label>
-      <div class="radio-group" id="n-type-group">
-        <label class="radio-item"><input type="radio" name="nurse_type" value="Registered Nurse (RN)"/> Registered Nurse (RN)</label>
-        <label class="radio-item"><input type="radio" name="nurse_type" value="Nurse Practitioner (NP)"/> Nurse Practitioner (NP)</label>
-        <label class="radio-item"><input type="radio" name="nurse_type" value="Licensed Practical Nurse (LPN)"/> Licensed Practical Nurse (LPN)</label>
-        <label class="radio-item"><input type="radio" name="nurse_type" value="Registered Psychiatric Nurse (RPN)"/> Registered Psychiatric Nurse (RPN)</label>
-        <label class="radio-item"><input type="radio" name="nurse_type" value="Personal Support Worker (PSW)"/> Personal Support Worker (PSW)</label>
-      </div>
-    </div>
-
-    <div class="row-2">
-      <div class="field">
-        <label>Registration / License Number <span class="req">*</span></label>
-        <input type="text" id="n-regnum" placeholder="e.g. 12345678"/>
-        <p class="hint">Your CARNA, CLPNA, or provincial licensing number</p>
-      </div>
-      <div class="field">
-        <label>Province of License <span class="req">*</span></label>
-        <select id="n-province">
-          <option value="">— Select —</option>
-          <option>Alberta</option>
-          <option>British Columbia</option>
-          <option>Saskatchewan</option>
-          <option>Manitoba</option>
-          <option>Ontario</option>
-          <option>Quebec</option>
-          <option>Nova Scotia</option>
-          <option>New Brunswick</option>
-          <option>Newfoundland &amp; Labrador</option>
-          <option>PEI</option>
-          <option>Northwest Territories</option>
-          <option>Yukon</option>
-          <option>Nunavut</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Availability</label>
-      <select id="n-availability">
-        <option value="">— Select —</option>
-        <option>Full-time</option>
-        <option>Part-time</option>
-        <option>Casual / On-call</option>
-        <option>Open to all</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Specialties <span style="font-weight:400;color:#6b7a8d">(select all that apply)</span></label>
-      <div class="specialties-grid" id="specialties-grid">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Tell us about yourself <span class="req">*</span></label>
-      <textarea id="n-message" placeholder="Tell us a bit about your experience, what you're looking for, your availability, and why you're interested in agency work…" style="min-height:120px"></textarea>
-      <p class="hint">This helps us match you to the right opportunities. Required — please be specific.</p>
-    </div>
-    <div id="n-error" class="error-msg"></div>
-    <button class="btn-submit" id="n-submit" onclick="submitNurse()">Submit Application →</button>
-  </div>
-
-  <!-- ── GENERAL INQUIRY (AI CHAT) ─────────────────── -->
-  <div class="form-section" id="section-general">
-    <h2>💬 General Inquiry</h2>
-    <div class="contact-fields">
       <div class="row-2">
         <div class="field">
-          <label>Your Name <span class="req">*</span></label>
+          <label class="field-label">Your Name <span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="First Last"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Your Title <span class="opt">(optional)</span></label>
+          <input type="text" id="f-title" placeholder="e.g. Director of Nursing"/>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-heading">Contact Information</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Phone <span class="req">*</span></label>
+          <input type="tel" id="f-phone" placeholder="(780) 000-0000"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Email <span class="req">*</span></label>
+          <input type="email" id="f-email" placeholder="you@facility.ca"/>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-heading">Staffing Needs</div>
+
+      <div class="field">
+        <label class="field-label">Tell us what you need <span class="opt">(optional)</span></label>
+        <textarea id="f-message" placeholder="Number of nurses needed, required specialties, shift types, start date, duration…" style="min-height:100px"></textarea>
+      </div>
+
+      <div id="f-error" class="error-msg"></div>
+      <button class="btn-submit" id="f-submit" onclick="submitFacility()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send Inquiry
+      </button>
+
+    </div>
+  </div><!-- /facility -->
+
+  <!-- ── NURSE APPLICATION FORM ────────────────────────── -->
+  <div class="form-card" id="section-nurse">
+    <div class="form-card-header">
+      <div class="h-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Nursing Professional Application</h2>
+        <p>Apply for placement opportunities across Alberta and beyond</p>
+      </div>
+    </div>
+    <div class="form-body">
+
+      <div class="section-heading">Personal Information</div>
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Full Name <span class="req">*</span></label>
+          <input type="text" id="n-name" placeholder="First Last"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Phone <span class="opt">(optional)</span></label>
+          <input type="tel" id="n-phone" placeholder="(780) 000-0000"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Email Address <span class="req">*</span></label>
+        <input type="email" id="n-email" placeholder="you@email.com"/>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-heading">Credentials</div>
+
+      <div class="field">
+        <label class="field-label">Designation <span class="req">*</span></label>
+        <div class="radio-grid" id="n-type-group">
+          <label class="radio-pill" onclick="selectRadio(this, 'nurse_type', 'Registered Nurse (RN)')">
+            <input type="radio" name="nurse_type" value="Registered Nurse (RN)"/>
+            <span class="radio-dot"></span>RN — Registered Nurse
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this, 'nurse_type', 'Nurse Practitioner (NP)')">
+            <input type="radio" name="nurse_type" value="Nurse Practitioner (NP)"/>
+            <span class="radio-dot"></span>NP — Nurse Practitioner
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this, 'nurse_type', 'Licensed Practical Nurse (LPN)')">
+            <input type="radio" name="nurse_type" value="Licensed Practical Nurse (LPN)"/>
+            <span class="radio-dot"></span>LPN — Licensed Practical Nurse
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this, 'nurse_type', 'Registered Psychiatric Nurse (RPN)')">
+            <input type="radio" name="nurse_type" value="Registered Psychiatric Nurse (RPN)"/>
+            <span class="radio-dot"></span>RPN — Registered Psychiatric Nurse
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this, 'nurse_type', 'Personal Support Worker (PSW)')">
+            <input type="radio" name="nurse_type" value="Personal Support Worker (PSW)"/>
+            <span class="radio-dot"></span>PSW — Personal Support Worker
+          </label>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Registration / License Number <span class="req">*</span></label>
+          <input type="text" id="n-regnum" placeholder="e.g. 12345678"/>
+          <p class="hint">Your CARNA, CLPNA, or provincial licensing number</p>
+        </div>
+        <div class="field">
+          <label class="field-label">Province of License <span class="req">*</span></label>
+          <select id="n-province">
+            <option value="">— Select province —</option>
+            <option>Alberta</option>
+            <option>British Columbia</option>
+            <option>Saskatchewan</option>
+            <option>Manitoba</option>
+            <option>Ontario</option>
+            <option>Quebec</option>
+            <option>Nova Scotia</option>
+            <option>New Brunswick</option>
+            <option>Newfoundland &amp; Labrador</option>
+            <option>PEI</option>
+            <option>Northwest Territories</option>
+            <option>Yukon</option>
+            <option>Nunavut</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Availability</label>
+        <select id="n-availability">
+          <option value="">— Select availability —</option>
+          <option>Full-time</option>
+          <option>Part-time</option>
+          <option>Casual / On-call</option>
+          <option>Open to all</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <div class="spec-section-label">Specialties <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:0.75rem;color:var(--muted)">— select all that apply</span></div>
+        <div class="spec-grid" id="specialties-grid"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-heading">About You</div>
+
+      <div class="field">
+        <label class="field-label">Tell us about yourself &amp; what you're looking for <span class="req">*</span></label>
+        <textarea id="n-message" placeholder="Share your clinical experience, the types of facilities or roles you're interested in, your scheduling preferences, and why you're considering agency work. The more specific you are, the better we can match you to the right opportunities." style="min-height:130px"></textarea>
+        <p class="hint">Required — this helps us qualify and match you appropriately.</p>
+      </div>
+
+      <div id="n-error" class="error-msg"></div>
+      <button class="btn-submit" id="n-submit" onclick="submitNurse()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Submit Application
+      </button>
+
+    </div>
+  </div><!-- /nurse -->
+
+  <!-- ── GENERAL INQUIRY (AI CHAT) ─────────────────────── -->
+  <div class="form-card" id="section-general">
+    <div class="form-card-header">
+      <div class="h-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h2>General Inquiry</h2>
+        <p>Ask us anything — our assistant is here to help</p>
+      </div>
+    </div>
+    <div class="form-body">
+
+      <div class="section-heading">Your Contact Details</div>
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Your Name <span class="req">*</span></label>
           <input type="text" id="g-name" placeholder="First Last"/>
         </div>
         <div class="field">
-          <label>Phone</label>
+          <label class="field-label">Phone <span class="opt">(optional)</span></label>
           <input type="tel" id="g-phone" placeholder="(780) 000-0000"/>
         </div>
       </div>
       <div class="field">
-        <label>Email <span class="req">*</span></label>
+        <label class="field-label">Email Address <span class="req">*</span></label>
         <input type="email" id="g-email" placeholder="you@email.com"/>
       </div>
-    </div>
 
-    <div class="chat-box" id="g-chat">
-      <div class="bubble bot">Hi! I'm the Nurse Relief assistant. What can I help you with today?</div>
+      <div class="divider"></div>
+      <div class="section-heading">Your Message</div>
+
+      <div class="chat-area">
+        <div class="chat-messages" id="g-chat">
+          <div class="bubble bot">Hello — I'm the Nurse Relief assistant. How can I help you today?</div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="g-input" placeholder="Type your message and press Enter…" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="chat-send-btn" id="g-send" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+      <div id="g-error" class="error-msg"></div>
+
     </div>
-    <div class="chat-input-row">
-      <input type="text" id="g-input" placeholder="Type your message…" onkeydown="if(event.key==='Enter')sendChat()"/>
-      <button onclick="sendChat()">Send</button>
-    </div>
-    <div id="g-error" class="error-msg" style="margin-top:8px"></div>
+  </div><!-- /general -->
+
+  <div class="footer">
+    Nurse Relief Inc. &nbsp;·&nbsp; <a href="tel:+17804401234">Confidential &amp; Secure</a>
   </div>
 
-</div><!-- /wrapper -->
+</div><!-- /page -->
 
 <script>
+// ── SPECIALTIES ──────────────────────────────────────────
 const SPECIALTIES = [
-  "Labor and Delivery","Operating Room","Community Health","Medicine",
-  "Surgery","Neurology","ICU","Long Term Care","Pediatrics","Clinic",
-  "Home Care","Critical Care","Cardiology","Teaching","Management",
-  "Outpost","Nephrology","Emergency","Flight","Obstetrics",
-  "Post Partum","Palliative Care","Infusion Nurse","Occupational",
-  "Health Nurse","Mental Health","Dialysis"
+  "Emergency","ICU / Critical Care","Operating Room","Labor &amp; Delivery",
+  "Post Partum","Obstetrics","Pediatrics","Cardiology","Neurology","Nephrology",
+  "Dialysis","Oncology","Palliative Care","Mental Health","Community Health",
+  "Home Care","Long Term Care","Medicine","Surgery","Outpost",
+  "Flight Nursing","Infusion Therapy","Occupational Health","Management / Leadership","Teaching / Education"
 ];
 
-// Build specialties checkboxes
 const grid = document.getElementById('specialties-grid');
 SPECIALTIES.forEach(s => {
   const label = document.createElement('label');
-  label.className = 'spec-item';
-  label.innerHTML = `<input type="checkbox" value="${s}"/> ${s}`;
+  label.className = 'spec-chip';
+  label.innerHTML = `<input type="checkbox" value="${s}"/><span class="check-box"></span>${s}`;
+  label.addEventListener('click', function(e){
+    if(e.target.tagName === 'INPUT') return;
+    const cb = this.querySelector('input');
+    cb.checked = !cb.checked;
+    this.classList.toggle('checked', cb.checked);
+    e.preventDefault();
+  });
+  label.querySelector('input').addEventListener('change', function(){
+    label.classList.toggle('checked', this.checked);
+  });
   grid.appendChild(label);
 });
 
-// Session ID for chat
-const sessionId = 'nr-' + Math.random().toString(36).slice(2);
-let chatReady = false;
+// ── RADIO PILLS ──────────────────────────────────────────
+function selectRadio(el, name, value) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+    r.closest('.radio-pill').classList.remove('selected');
+  });
+  el.classList.add('selected');
+  const r = el.querySelector('input[type=radio]');
+  if(r) r.checked = true;
+}
 
+// ── PATH SELECTION ───────────────────────────────────────
 function selectPath(path) {
   ['facility','nurse','general'].forEach(p => {
     document.getElementById('card-'+p).classList.toggle('active', p===path);
     document.getElementById('section-'+p).classList.toggle('visible', p===path);
   });
+  const el = document.getElementById('section-'+path);
+  setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'nearest'}), 80);
 }
 
-function showSuccess(msg) {
-  const banner = document.getElementById('successBanner');
-  banner.textContent = msg;
-  banner.style.display = 'block';
-  // Hide all form sections
+// ── SUCCESS ──────────────────────────────────────────────
+function showSuccess(title, body) {
+  document.getElementById('pathSelector').style.display = 'none';
   ['facility','nurse','general'].forEach(p => {
     document.getElementById('section-'+p).classList.remove('visible');
-    document.getElementById('card-'+p).classList.remove('active');
   });
+  document.getElementById('successTitle').textContent = title;
+  document.getElementById('successBody').textContent = body;
+  document.getElementById('successCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-// ── FACILITY ──────────────────────────────────────────
+// ── FACILITY ─────────────────────────────────────────────
 async function submitFacility() {
   const btn = document.getElementById('f-submit');
   const err = document.getElementById('f-error');
   err.textContent = '';
-  const org = document.getElementById('f-org').value.trim();
-  const name = document.getElementById('f-name').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
-  const email = document.getElementById('f-email').value.trim();
+  const org     = document.getElementById('f-org').value.trim();
+  const name    = document.getElementById('f-name').value.trim();
+  const phone   = document.getElementById('f-phone').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
   const message = document.getElementById('f-message').value.trim();
+  const title   = document.getElementById('f-title').value.trim();
 
   if (!org || !name || !phone || !email) {
-    err.textContent = 'Please fill in all required fields.';
+    err.innerHTML = '&#9888; Please fill in all required fields.';
     return;
   }
   btn.disabled = true;
-  btn.textContent = 'Sending…';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Sending…';
 
   try {
     const res = await fetch('/api/submit-facility', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({org_name:org, name, phone, email, message})
+      body: JSON.stringify({org_name:org, name, title, phone, email, message})
     });
     const data = await res.json();
     if (data.status === 'ok') {
-      showSuccess('✅ ' + data.message);
+      showSuccess('Inquiry Received', 'Thank you for contacting Nurse Relief Inc. A member of our team will follow up with you within one business day.');
     } else {
       err.textContent = data.error || 'Something went wrong. Please try again.';
       btn.disabled = false;
-      btn.textContent = 'Send Inquiry →';
+      btn.innerHTML = 'Send Inquiry';
     }
   } catch(e) {
-    err.textContent = 'Network error. Please try again.';
+    err.innerHTML = '&#9888; Network error. Please try again.';
     btn.disabled = false;
-    btn.textContent = 'Send Inquiry →';
+    btn.innerHTML = 'Send Inquiry';
   }
 }
 
-// ── NURSE ─────────────────────────────────────────────
+// ── NURSE ────────────────────────────────────────────────
 async function submitNurse() {
   const btn = document.getElementById('n-submit');
   const err = document.getElementById('n-error');
   err.textContent = '';
 
-  const name = document.getElementById('n-name').value.trim();
-  const phone = document.getElementById('n-phone').value.trim();
-  const email = document.getElementById('n-email').value.trim();
-  const nurseType = document.querySelector('input[name="nurse_type"]:checked')?.value || '';
-  const regnum = document.getElementById('n-regnum').value.trim();
-  const province = document.getElementById('n-province').value;
+  const name         = document.getElementById('n-name').value.trim();
+  const phone        = document.getElementById('n-phone').value.trim();
+  const email        = document.getElementById('n-email').value.trim();
+  const nurseType    = document.querySelector('input[name="nurse_type"]:checked')?.value || '';
+  const regnum       = document.getElementById('n-regnum').value.trim();
+  const province     = document.getElementById('n-province').value;
   const availability = document.getElementById('n-availability').value;
-  const message = document.getElementById('n-message').value.trim();
-  const specialties = [...document.querySelectorAll('#specialties-grid input:checked')].map(i=>i.value).join(', ');
+  const message      = document.getElementById('n-message').value.trim();
+  const specialties  = [...document.querySelectorAll('#specialties-grid input:checked')].map(i=>i.value).join(', ');
 
-  if (!name || !email) { err.textContent = 'Name and email are required.'; return; }
-  if (!nurseType) { err.textContent = 'Please select your nurse type.'; return; }
-  if (!regnum) { err.textContent = 'Registration/license number is required.'; return; }
-  if (!province) { err.textContent = 'Please select your province of license.'; return; }
-  if (!message) { err.textContent = 'Please add a message — tell us about yourself and what you\'re looking for.'; return; }
+  if (!name || !email)   { err.innerHTML = '&#9888; Name and email are required.'; return; }
+  if (!nurseType)         { err.innerHTML = '&#9888; Please select your designation.'; return; }
+  if (!regnum)            { err.innerHTML = '&#9888; Registration/license number is required.'; return; }
+  if (!province)          { err.innerHTML = '&#9888; Please select your province of license.'; return; }
+  if (!message)           { err.innerHTML = '&#9888; Please tell us about yourself and what you\'re looking for.'; return; }
 
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.innerHTML = 'Submitting…';
 
   try {
     const res = await fetch('/api/submit-nurse', {
@@ -393,20 +1029,23 @@ async function submitNurse() {
     });
     const data = await res.json();
     if (data.status === 'ok') {
-      showSuccess('✅ ' + data.message);
+      showSuccess('Application Received', 'Thank you for applying to Nurse Relief Inc. We review all applications carefully and will be in touch if your profile is a match for our current needs.');
     } else {
       err.textContent = data.error || 'Something went wrong. Please try again.';
       btn.disabled = false;
-      btn.textContent = 'Submit Application →';
+      btn.innerHTML = 'Submit Application';
     }
   } catch(e) {
-    err.textContent = 'Network error. Please try again.';
+    err.innerHTML = '&#9888; Network error. Please try again.';
     btn.disabled = false;
-    btn.textContent = 'Submit Application →';
+    btn.innerHTML = 'Submit Application';
   }
 }
 
-// ── GENERAL / CHAT ────────────────────────────────────
+// ── GENERAL CHAT ─────────────────────────────────────────
+const sessionId = 'nr-' + Math.random().toString(36).slice(2);
+let chatReady = false;
+
 function addBubble(text, type) {
   const box = document.getElementById('g-chat');
   const div = document.createElement('div');
@@ -420,13 +1059,13 @@ function addBubble(text, type) {
 async function sendChat() {
   if (chatReady) return;
   const input = document.getElementById('g-input');
-  const err = document.getElementById('g-error');
-  const name = document.getElementById('g-name').value.trim();
+  const err   = document.getElementById('g-error');
+  const name  = document.getElementById('g-name').value.trim();
   const email = document.getElementById('g-email').value.trim();
   const phone = document.getElementById('g-phone').value.trim();
-  const msg = input.value.trim();
+  const msg   = input.value.trim();
 
-  if (!name || !email) { err.textContent = 'Please enter your name and email above first.'; return; }
+  if (!name || !email) { err.innerHTML = '&#9888; Please enter your name and email above first.'; return; }
   if (!msg) return;
   err.textContent = '';
 
@@ -434,7 +1073,7 @@ async function sendChat() {
   input.value = '';
   input.disabled = true;
 
-  const typing = addBubble('…', 'typing');
+  const typing = addBubble('Typing…', 'typing');
 
   try {
     const res = await fetch('/api/chat-general', {
@@ -444,16 +1083,11 @@ async function sendChat() {
     });
     const data = await res.json();
     typing.remove();
-
-    if (data.reply) {
-      addBubble(data.reply, 'bot');
-    }
-
+    if (data.reply) addBubble(data.reply, 'bot');
     if (data.ready) {
       chatReady = true;
       input.placeholder = 'Message sent — we\'ll be in touch!';
-      document.querySelector('.chat-input-row button').disabled = true;
-      document.querySelector('.chat-input-row button').style.background = '#9aafcc';
+      document.getElementById('g-send').disabled = true;
     } else {
       input.disabled = false;
       input.focus();
