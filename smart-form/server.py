@@ -560,11 +560,26 @@ def classify():
 
     # Notify owner for qualified leads
     ghl_id = None
-    if result['category'] == 'QUALIFIED_LEAD' and not result.get('response') and not is_demo:
-        ghl_id = _notify_lead(cfg, result, name, email, phone, message)
-        if ghl_id:
-            db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
-            conn.commit()
+    if not is_demo:
+        if result['category'] == 'QUALIFIED_LEAD' and not result.get('response'):
+            ghl_id = _notify_lead(cfg, result, name, email, phone, message)
+            if ghl_id:
+                db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
+                conn.commit()
+        elif result['category'] == 'CLARIFICATION' and cfg.get('ghl_api_token'):
+            # Push to GHL immediately on clarification — lead captured, note says awaiting reply
+            clarif_result = dict(result)
+            clarif_result['summary'] = (result.get('summary') or '') + ' [Clarification sent — awaiting reply]'
+            ghl_id = push_to_ghl(cfg, {
+                'name': name, 'email': email, 'phone': phone,
+                'message': message, 'summary': clarif_result['summary'],
+                'estimated_value': result.get('estimated_value', ''),
+                'category': 'CLARIFICATION',
+                'conversation': []
+            })
+            if ghl_id:
+                db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
+                conn.commit()
 
     conn.close()
 
@@ -641,6 +656,7 @@ def chat():
     ghl_id = None
     if result['category'] == 'QUALIFIED_LEAD' and not result.get('response') and not is_demo:
         full_msg = "\n".join(m['content'] for m in conversation if m['role'] == 'user')
+        # Always push — push_to_ghl does create-or-update by email, so updates the clarification record
         ghl_id = _notify_lead(cfg, result, name, email, phone, full_msg, conversation)
         if ghl_id:
             db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
