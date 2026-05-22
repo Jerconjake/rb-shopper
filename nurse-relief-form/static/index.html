@@ -912,7 +912,7 @@
 
   <div class="footer">
     Nurse Relief Inc. &nbsp;·&nbsp; <a href="tel:+17804401234">Confidential &amp; Secure</a>
-    &nbsp;·&nbsp; <span style="opacity:0.4;font-size:11px;">v3</span>
+    &nbsp;·&nbsp; <span style="opacity:0.4;font-size:11px;">v4</span>
   </div>
 
 </div><!-- /page -->
@@ -1019,51 +1019,6 @@ async function submitFacility() {
 }
 
 // ── NURSE ────────────────────────────────────────────────
-async function submitNurse() {
-  const btn = document.getElementById('n-submit');
-  const err = document.getElementById('n-error');
-  err.textContent = '';
-
-  const name         = document.getElementById('n-name').value.trim();
-  const phone        = document.getElementById('n-phone').value.trim();
-  const email        = document.getElementById('n-email').value.trim();
-  const nurseType    = document.querySelector('input[name="nurse_type"]:checked')?.value || '';
-  const regnum       = document.getElementById('n-regnum').value.trim();
-  const province     = document.getElementById('n-province').value;
-  const availability = document.getElementById('n-availability').value;
-  const message      = document.getElementById('n-message').value.trim();
-  const specialties  = [...document.querySelectorAll('#specialties-grid input:checked')].map(i=>i.value).join(', ');
-
-  if (!name || !email)   { err.innerHTML = '&#9888; Name and email are required.'; return; }
-  if (!nurseType)         { err.innerHTML = '&#9888; Please select your designation.'; return; }
-  if (!regnum)            { err.innerHTML = '&#9888; Registration/license number is required.'; return; }
-  if (!province)          { err.innerHTML = '&#9888; Please select your province of license.'; return; }
-  if (!message)           { err.innerHTML = '&#9888; Please complete the "About You" questions above before submitting.'; return; }
-
-  btn.disabled = true;
-  btn.innerHTML = 'Submitting…';
-
-  try {
-    const res = await fetch('/api/submit-nurse', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name, phone, email, nurse_type: nurseType, registration_number: regnum, province, availability, specialties, message})
-    });
-    const data = await res.json();
-    if (data.status === 'ok') {
-      showSuccess('Application Received', 'Thank you for applying to Nurse Relief Inc. We review all applications carefully and will be in touch if your profile is a match for our current needs.');
-    } else {
-      err.textContent = data.error || 'Something went wrong. Please try again.';
-      btn.disabled = false;
-      btn.innerHTML = 'Submit Application';
-    }
-  } catch(e) {
-    err.innerHTML = '&#9888; Network error. Please try again.';
-    btn.disabled = false;
-    btn.innerHTML = 'Submit Application';
-  }
-}
-
 // ── NURSE PATH ─────────────────────────────────────────────
 const nurseSessionId = 'nrn-' + Math.random().toString(36).slice(2);
 let nurseChatReady = false;
@@ -1087,13 +1042,11 @@ async function doSubmitNurse(message) {
   const name       = document.getElementById('n-name').value.trim();
   const email      = document.getElementById('n-email').value.trim();
   const phone      = document.getElementById('n-phone').value.trim();
-  const nurseType  = document.getElementById('n-type').value;
-  const regNum     = document.getElementById('n-reg').value.trim();
+  const nurseType  = document.querySelector('input[name="nurse_type"]:checked')?.value || '';
+  const regNum     = document.getElementById('n-regnum').value.trim();
   const province   = document.getElementById('n-province').value;
-  const avail      = document.querySelectorAll('#section-nurse .avail-chip.selected');
-  const availability = Array.from(avail).map(c => c.dataset.value).join(', ');
-  const specialtiesChecked = document.querySelectorAll('#section-nurse input[type="checkbox"]:checked');
-  const specialties = Array.from(specialtiesChecked).map(c => c.value).join(', ');
+  const availability = document.getElementById('n-availability').value;
+  const specialties = [...document.querySelectorAll('#specialties-grid input:checked')].map(i=>i.value).join(', ');
 
   try {
     const res = await fetch('/api/submit-nurse', {
@@ -1107,7 +1060,7 @@ async function doSubmitNurse(message) {
       })
     });
     const data = await res.json();
-    if (data.success) {
+    if (data.status === 'ok') {
       document.getElementById('section-nurse').style.display = 'none';
       document.getElementById('success-card').style.display = 'block';
       window.scrollTo({top: 0, behavior:'smooth'});
@@ -1131,8 +1084,8 @@ async function submitNurse() {
 
   const name     = document.getElementById('n-name').value.trim();
   const email    = document.getElementById('n-email').value.trim();
-  const regNum   = document.getElementById('n-reg').value.trim();
-  const nurseType = document.getElementById('n-type').value;
+  const regNum   = document.getElementById('n-regnum').value.trim();
+  const nurseType = document.querySelector('input[name="nurse_type"]:checked')?.value || '';
 
   if (!name)    { err.innerHTML = '&#9888; Name is required.'; return; }
   if (!email)   { err.innerHTML = '&#9888; Email is required.'; return; }
