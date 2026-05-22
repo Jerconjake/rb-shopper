@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nurse Relief — Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+  .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-card { background: #fff; border-radius: 12px; padding: 40px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+  .login-card h2 { font-size: 1.4rem; margin-bottom: 8px; color: #2b4f8a; }
+  .login-card p { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .login-card input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; margin-bottom: 12px; text-align: center; letter-spacing: 4px; }
+  .btn { background: #2b4f8a; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 1rem; cursor: pointer; width: 100%; }
+  .btn:hover { background: #1e3a6e; }
+  .error { color: #e53e3e; font-size: 0.85rem; margin-top: 8px; }
+
+  header { background: #2b4f8a; color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 1.2rem; }
+  header span { font-size: 0.85rem; opacity: 0.8; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .stats-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 16px 24px; flex: 1; min-width: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .stat-card .label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #2b4f8a; margin-top: 4px; }
+
+  .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filters select, .filters input { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; }
+  .filters .btn-sm { padding: 8px 16px; font-size: 0.9rem; background: #2b4f8a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+  .filters .btn-export { background: #fff; color: #2b4f8a; border: 1px solid #2b4f8a; }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 0.88rem; }
+  th { background: #2b4f8a; color: #fff; padding: 12px 14px; text-align: left; font-weight: 600; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7faff; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+  .badge-nurse { background: #dbeafe; color: #1d4ed8; }
+  .badge-facility { background: #dcfce7; color: #166534; }
+  .badge-general { background: #fef9c3; color: #854d0e; }
+  .badge-genuine { background: #dcfce7; color: #166534; }
+  .badge-noise { background: #fee2e2; color: #991b1b; }
+  .badge-qualified { background: #dcfce7; color: #166534; }
+  .badge-unqualified { background: #fee2e2; color: #991b1b; }
+  .badge-notified { background: #e0e7ff; color: #3730a3; }
+
+  .expand-btn { background: none; border: none; color: #2b4f8a; cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
+  .detail-row td { background: #f7faff; padding: 16px 20px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-item label { font-size: 0.75rem; color: #888; text-transform: uppercase; display: block; }
+  .detail-item span { font-size: 0.92rem; color: #1a202c; }
+  .message-block { margin-top: 12px; background: #fff; border-left: 3px solid #2b4f8a; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.9rem; color: #333; white-space: pre-wrap; }
+
+  .hidden { display: none; }
+  .empty { text-align: center; padding: 40px; color: #888; }
+  .loading { text-align: center; padding: 40px; color: #888; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <h2>Nurse Relief Inc.</h2>
+    <p>Admin Dashboard</p>
+    <input type="password" id="pinInput" placeholder="PIN" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn" onclick="doLogin()">Enter</button>
+    <div class="error hidden" id="loginErr">Incorrect PIN</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+  <header>
+    <h1>Nurse Relief Inc. — Leads</h1>
+    <span id="lastRefresh"></span>
+  </header>
+  <div class="main">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="filters">
+      <select id="filterPath" onchange="applyFilters()">
+        <option value="">All Types</option>
+        <option value="nurse">Nurse Applications</option>
+        <option value="facility">Healthcare Facilities</option>
+        <option value="general">General Inquiries</option>
+      </select>
+      <select id="filterStatus" onchange="applyFilters()">
+        <option value="">All Statuses</option>
+        <option value="notified">Notified</option>
+        <option value="not_notified">Not Notified</option>
+      </select>
+      <input type="text" id="filterSearch" placeholder="Search name / email..." oninput="applyFilters()"/>
+      <button class="btn-sm btn-export" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn-sm" onclick="loadLeads()">↻ Refresh</button>
+    </div>
+    <table id="leadsTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody id="leadsBody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let PIN = '';
+let allLeads = [];
+
+function doLogin() {
+  PIN = document.getElementById('pinInput').value;
+  fetch('/api/leads?pin=' + encodeURIComponent(PIN))
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(data => {
+      document.getElementById('loginWrap').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      allLeads = data.leads || [];
+      renderStats(allLeads);
+      renderTable(allLeads);
+      document.getElementById('lastRefresh').textContent = 'Refreshed ' + new Date().toLocaleTimeString();
+    })
+    .catch(() => {
+      document.getElementById('loginErr').classList.remove('hidden');
+    });
+}
+
+function loadLeads() {
+  fetch('/api/leads?pin=' + encodeURIComponent(PIN))
+    .then(r => r.json())
+    .then(data => {
+      allLeads = data.leads || [];
+      applyFilters();
+      document.getElementById('lastRefresh').textContent = 'Refreshed ' + new Date().toLocaleTimeString();
+    });
+}
+
+function renderStats(leads) {
+  const nurses = leads.filter(l => l.path === 'nurse');
+  const facilities = leads.filter(l => l.path === 'facility');
+  const general = leads.filter(l => l.path === 'general');
+  const notified = leads.filter(l => l.notified);
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="label">Total</div><div class="value">${leads.length}</div></div>
+    <div class="stat-card"><div class="label">Nurse Apps</div><div class="value">${nurses.length}</div></div>
+    <div class="stat-card"><div class="label">Facilities</div><div class="value">${facilities.length}</div></div>
+    <div class="stat-card"><div class="label">General</div><div class="value">${general.length}</div></div>
+    <div class="stat-card"><div class="label">Notified Heather</div><div class="value">${notified.length}</div></div>
+  `;
+}
+
+function applyFilters() {
+  let filtered = [...allLeads];
+  const path = document.getElementById('filterPath').value;
+  const status = document.getElementById('filterStatus').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase();
+  if (path) filtered = filtered.filter(l => l.path === path);
+  if (status === 'notified') filtered = filtered.filter(l => l.notified);
+  if (status === 'not_notified') filtered = filtered.filter(l => !l.notified);
+  if (search) filtered = filtered.filter(l =>
+    (l.name||'').toLowerCase().includes(search) ||
+    (l.email||'').toLowerCase().includes(search)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(leads) {
+  const tbody = document.getElementById('leadsBody');
+  if (!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No entries found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map((l, i) => {
+    const date = new Date(l.created_at).toLocaleString('en-CA', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    const pathBadge = `<span class="badge badge-${l.path}">${l.path === 'nurse' ? '🩺 Nurse' : l.path === 'facility' ? '🏥 Facility' : '💬 General'}</span>`;
+    const cat = l.ai_category || '';
+    let statusBadge = '';
+    if (l.notified) statusBadge = '<span class="badge badge-notified">✉ Notified</span>';
+    else if (cat === 'noise' || cat === 'general_unqualified') statusBadge = '<span class="badge badge-noise">Noise</span>';
+    else statusBadge = '<span class="badge badge-unqualified">Stored</span>';
+
+    return `<tr id="row-${i}">
+      <td>${date}</td>
+      <td>${pathBadge}</td>
+      <td>${l.name || '—'}</td>
+      <td>${l.email || '—'}</td>
+      <td>${l.phone || '—'}</td>
+      <td>${statusBadge}</td>
+      <td><button class="expand-btn" onclick="toggleDetail(${i})">▶ View</button></td>
+    </tr>
+    <tr id="detail-${i}" class="detail-row hidden">
+      <td colspan="7">
+        ${buildDetail(l)}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function buildDetail(l) {
+  let html = '<div class="detail-grid">';
+  if (l.nurse_type) html += `<div class="detail-item"><label>Nurse Type</label><span>${l.nurse_type}</span></div>`;
+  if (l.registration_number) html += `<div class="detail-item"><label>Registration #</label><span>${l.registration_number}</span></div>`;
+  if (l.province) html += `<div class="detail-item"><label>Province</label><span>${l.province}</span></div>`;
+  if (l.availability) html += `<div class="detail-item"><label>Availability</label><span>${l.availability}</span></div>`;
+  if (l.specialties) html += `<div class="detail-item"><label>Specialties</label><span>${l.specialties}</span></div>`;
+  if (l.org_name) html += `<div class="detail-item"><label>Organization</label><span>${l.org_name}</span></div>`;
+  if (l.ai_summary) html += `<div class="detail-item" style="grid-column:1/-1"><label>AI Summary</label><span>${l.ai_summary}</span></div>`;
+  html += '</div>';
+  if (l.message) html += `<div class="message-block">${l.message}</div>`;
+  return html;
+}
+
+function toggleDetail(i) {
+  const row = document.getElementById('detail-' + i);
+  const btn = document.querySelector('#row-' + i + ' .expand-btn');
+  if (row.classList.contains('hidden')) {
+    row.classList.remove('hidden');
+    btn.textContent = '▼ Hide';
+  } else {
+    row.classList.add('hidden');
+    btn.textContent = '▶ View';
+  }
+}
+
+function exportCSV() {
+  const headers = ['Date','Type','Name','Email','Phone','Nurse Type','Reg #','Province','Specialties','Availability','Org','AI Category','AI Summary','Notified','Message'];
+  const rows = allLeads.map(l => [
+    l.created_at, l.path, l.name, l.email, l.phone,
+    l.nurse_type, l.registration_number, l.province, l.specialties, l.availability,
+    l.org_name, l.ai_category, l.ai_summary, l.notified ? 'Yes' : 'No', l.message
+  ].map(v => '"' + (v||'').toString().replace(/"/g,'""') + '"').join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'nurse-relief-leads.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

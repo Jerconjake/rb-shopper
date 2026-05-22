@@ -182,6 +182,10 @@ def index():
 def static_files(path):
     return send_from_directory("static", path)
 
+@app.route("/admin")
+def admin():
+    return send_from_directory("static", "admin.html")
+
 @app.route("/version")
 def version():
     return jsonify({"version": "nurse-relief-form-1.0.0", "status": "ok"})
