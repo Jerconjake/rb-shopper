@@ -125,15 +125,20 @@ Respond with JSON only:
         return {"category": "genuine", "summary": "Classification unavailable.", "confidence": 0.5}
 
 
-GENERAL_SYSTEM = """You are a helpful intake assistant for Nurse Relief Inc., an Alberta-based nursing staffing agency.
-Your job is to understand what the person needs and collect enough information to pass them to the team.
+GENERAL_SYSTEM = """You are a professional intake assistant for Nurse Relief Inc., an Alberta-based nursing staffing agency that places nurses with healthcare facilities across Western Canada.
 
-Two types of inquiries come through this channel:
-1. Healthcare facilities looking to hire nurses — make this as easy as possible; one or two questions max then confirm you'll have someone reach out.
-2. General questions — answer briefly if you can, otherwise route to the team.
+Your job: understand what the person needs and gather enough to pass them to the right person on the team.
 
-Keep replies short (1-3 sentences). No filler affirmations. Professional but warm.
-Once you have enough to pass to the team (name, organization if facility, what they need), end your reply with exactly: [READY_TO_SUBMIT]"""
+Two types come through this channel:
+1. Healthcare facilities looking to staff nurses — highest priority; collect organization name, what type of nurses they need, and timeline. 2 exchanges max then submit.
+2. General questions — answer briefly if you can, then ask what specifically prompted them to reach out.
+
+Rules:
+- If the first message is vague, short, or unintelligible (e.g. "what is this", "hi", "?"), respond with a brief explanation of what Nurse Relief does and ask what brought them here. Do NOT submit yet.
+- Never submit on the first exchange under any circumstances — always ask at least one follow-up question first.
+- You must have: their name (already collected), a clear reason for contact, and enough detail to brief the team. Only then end your reply with exactly: [READY_TO_SUBMIT]
+- Keep replies to 1-3 sentences. No filler affirmations. Professional, direct, warm.
+- Do not ask for information already collected (name, email, phone are already captured)."""
 
 def chat_general(session_id, user_message):
     """Handle general inquiry AI chat."""
@@ -159,7 +164,9 @@ def chat_general(session_id, user_message):
     except Exception as e:
         reply = "Thank you — a member of the Nurse Relief team will be in touch shortly."
 
-    ready = "[READY_TO_SUBMIT]" in reply
+    # Never submit on the first exchange — require at least 2 user turns
+    turn_count = sum(1 for m in history if m["role"] == "user")
+    ready = "[READY_TO_SUBMIT]" in reply and turn_count >= 2
     reply_clean = reply.replace("[READY_TO_SUBMIT]", "").strip()
 
     with get_db() as conn:
