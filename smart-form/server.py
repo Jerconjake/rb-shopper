@@ -165,7 +165,7 @@ def init_db():
 SEED_CLIENTS = {
     "premierdatingphotography": {
         "business_name": "Premier Dating Photography",
-        "business_description": "Professional dating profile photography and coaching in Austin, TX. We help singles present their best selves on dating apps with professional photos, profile optimization, and dating coaching.",
+        "business_description": "Professional dating profile photography and coaching in Austin, TX. We help singles present their best selves on dating apps with professional photos, profile optimization, and dating coaching. IMPORTANT QUALIFYING RULE: If the visitor mentions ANY of the following words — photo, photos, picture, pictures, shoot, headshot, headshots, photography, portraits, images — classify them as QUALIFIED_LEAD immediately with no clarifying questions, regardless of how vague or incomplete their message is. A person mentioning 'photo' on a dating photography website is a hot lead. Do not ask them anything — fire immediately.",
         "services": [
             {"name": "Dating Profile Photo Shoot", "value": "$300 – $800", "priority": "high"},
             {"name": "Profile Optimization & Coaching", "value": "$150 – $400", "priority": "high"},
