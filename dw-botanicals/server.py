@@ -146,7 +146,12 @@ Subscription URL: {p['subscription_url'] or 'N/A'}
 """)
     return "\n".join(lines)
 
-SYSTEM_PROMPT = f"""You are Sage, a knowledgeable wellness advisor for Desert Willow Botanicals. Desert Willow has been making artisan herbal tinctures for over four decades — small-batch, pure, no fillers, vegan, gluten-free, purity-tested.
+# Static portion of the system prompt (catalog doesn't change at runtime)
+_CATALOG_TEXT = build_catalog_text()
+
+def get_system_prompt():
+    """Build the full system prompt fresh each request so bundle/sale info is always current."""
+    return f"""You are Sage, a knowledgeable wellness advisor for Desert Willow Botanicals. Desert Willow has been making artisan herbal tinctures for over four decades — small-batch, pure, no fillers, vegan, gluten-free, purity-tested.
 
 Your role is to help people find the right formula for what they're dealing with. You're like a knowledgeable friend who happens to know herbs deeply — calm, practical, and plain-spoken. Not clinical. Not woo-woo. Just genuinely helpful.
 
@@ -190,7 +195,7 @@ RECOMMENDATIONS:
 - After the primary recommendation, if relevant, mention one complementary product conversationally — not as a sales pitch, but as genuine advice ("A lot of people dealing with joint pain also find...")
 
 PRODUCT KNOWLEDGE:
-{build_catalog_text()}
+{_CATALOG_TEXT}
 
 UPSELL / CROSS-SELL LOGIC (OR rules — if they mention ANY of these products, suggest the paired one):
 - Mentions Inflammaid OR Nervaid → suggest Joint Juice
@@ -246,8 +251,8 @@ def chat():
     data = request.json
     messages = data.get("messages", [])
 
-    # Build OpenAI messages
-    openai_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    # Build OpenAI messages with a fresh system prompt each request
+    openai_messages = [{"role": "system", "content": get_system_prompt()}]
     for msg in messages:
         openai_messages.append({
             "role": msg["role"],
