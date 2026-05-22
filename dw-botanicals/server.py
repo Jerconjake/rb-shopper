@@ -382,7 +382,7 @@ def wc_data():
             r = requests.get(f"{WC_BASE}/{resource}", headers=headers, params=params, timeout=30)
         except Exception as e:
             return jsonify({"error": str(e), "fetched": len(all_items)}), 502
-        if r.status_code != 200:
+        if not (200 <= r.status_code < 300):
             return jsonify({"error": f"WC returned {r.status_code}", "fetched": len(all_items)}), 502
         batch = r.json()
         if not batch:
