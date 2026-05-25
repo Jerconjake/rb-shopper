@@ -361,6 +361,7 @@ def get_products():
 def wc_data():
     """Proxy endpoint — fetches paginated WooCommerce data from DWB.
     Usage: /api/wc-data?resource=orders|customers|products
+          &after=YYYY-MM-DD  (orders only, ISO 8601 date filter)
     Bypasses SiteGround IP blocking since requests come from Render's trusted IP.
     """
     import base64 as b64
@@ -373,18 +374,27 @@ def wc_data():
 
     all_items = []
     page = 1
-    while True:
+    MAX_PAGES = 20  # safety cap — 20 pages × 100 items = 2,000 orders max
+    while page <= MAX_PAGES:
         params = {"per_page": 100, "page": page}
         if resource == "orders":
             params["orderby"] = "date"
-            params["order"] = "asc"
+            params["order"] = "desc"
+            # Support optional ISO 8601 date filter, e.g. after=2026-04-01
+            after = request.args.get("after")
+            if after:
+                params["after"] = after  # WC accepts ISO 8601: 2026-04-01T00:00:00
         try:
             r = requests.get(f"{WC_BASE}/{resource}", headers=headers, params=params, timeout=30)
         except Exception as e:
             return jsonify({"error": str(e), "fetched": len(all_items)}), 502
         if not (200 <= r.status_code < 300):
-            return jsonify({"error": f"WC returned {r.status_code}", "fetched": len(all_items)}), 502
-        batch = r.json()
+            return jsonify({"error": f"WC returned {r.status_code}", "body": r.text[:500], "fetched": len(all_items)}), 502
+        try:
+            batch = r.json()
+        except Exception as e:
+            # WooCommerce / SiteGround returned non-JSON (e.g. HTML error page)
+            return jsonify({"error": f"Non-JSON response from WC: {e}", "body": r.text[:500], "fetched": len(all_items)}), 502
         if not batch:
             break
         all_items.extend(batch)
