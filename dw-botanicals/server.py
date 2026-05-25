@@ -180,6 +180,13 @@ GENERAL QUESTIONS — answer these directly:
 - Subscriptions: Every 2 months, saves 10%, easy to cancel. Recommend for chronic/ongoing concerns.
 - Can't answer something confidently: direct to https://www.desertwillowbotanicals.com/contact or suggest they call — Willow is known for getting back to people quickly.
 
+BOTTLE SIZE & DOSES:
+- Every bottle contains 50 doses (one full dropper = one dose).
+- If taken once daily, a bottle lasts about 50 days (roughly a month and a half).
+- If taken twice daily, a bottle lasts about 25 days.
+- Subscriptions ship every 2 months, which lines up well with once-daily use.
+- IMPORTANT: Never say "30 doses" — it is always 50 doses per bottle.
+
 BUNDLES & SALES — Desert Willow offers curated bundles and runs occasional sales. Only recommend items that are currently live below.
 {build_bundle_text()}
 
