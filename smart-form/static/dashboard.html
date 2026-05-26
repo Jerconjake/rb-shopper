@@ -157,6 +157,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       <option value="JOB_APPLICANT">Job Applicants</option>
       <option value="SCOPE_MISMATCH">Scope Mismatch</option>
       <option value="AI_CHAT">AI Chat</option>
+      <option value="WIDGET_CHAT">Widget Chat</option>
     </select>
     <select class="filter-select" id="filterMonth">
       <option value="">All Time</option>
@@ -221,6 +222,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     JOB_APPLICANT:      { label: 'Job Applicant', cls: 'job' },
     SCOPE_MISMATCH:     { label: 'Mismatch', cls: 'mismatch' },
     AI_CHAT:            { label: 'AI Chat', cls: 'chat' },
+    WIDGET_CHAT:        { label: 'Widget Chat', cls: 'chat' },
   };
 
   var $ = function(id) { return document.getElementById(id); };
@@ -290,6 +292,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     var qualified = leads.filter(function(l){ return l.category === 'QUALIFIED_LEAD'; }).length;
     var clarification = leads.filter(function(l){ return l.category === 'NEEDS_CLARIFICATION'; }).length;
     var totalValue = leads.reduce(function(s, l){ return s + (parseFloat(l.estimated_value) || 0); }, 0);
+    var widgetChats = leads.filter(function(l){ return l.category === 'WIDGET_CHAT'; }).length;
     var thisMonth = leads.filter(function(l){
       var d = new Date(l.created_at);
       var now = new Date();
@@ -302,6 +305,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
         <div class="stat-sub">' + (total ? Math.round(qualified/total*100) : 0) + '% qualification rate</div></div>\
       <div class="stat-card"><div class="stat-label">Need Follow-up</div><div class="stat-value" style="color:#3b82f6">' + clarification + '</div></div>\
       <div class="stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value">$' + totalValue.toLocaleString() + '</div></div>\
+      <div class="stat-card"><div class="stat-label">Widget Chats</div><div class="stat-value" style="color:#6366f1">' + widgetChats + '</div></div>\
       <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">' + thisMonth + '</div></div>';
   }
 
@@ -448,7 +452,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     var meta = CATEGORY_META[lead.category] || { label: lead.category, cls: 'clarification' };
 
     var html = '<div class="detail-row"><div class="detail-label">Date</div><div class="detail-value">' + dateStr + '</div></div>';
-    html += '<div class="detail-row"><div class="detail-label">Email</div><div class="detail-value">' + esc(lead.email || '—') + '</div></div>';
+    var emailCross = '';
+    if (lead.email) {
+      var sameEmail = leads.filter(function(l){ return l.email === lead.email && l.id !== lead.id; });
+      if (sameEmail.length > 0) {
+        var types = {};
+        sameEmail.forEach(function(l){ types[l.category] = (types[l.category]||0) + 1; });
+        var parts = [];
+        for (var t in types) {
+          var m = CATEGORY_META[t] || {label:t};
+          parts.push(types[t] + ' ' + m.label);
+        }
+        emailCross = ' <span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">Also: ' + parts.join(', ') + '</span>';
+      }
+    }
+    html += '<div class="detail-row"><div class="detail-label">Email</div><div class="detail-value">' + esc(lead.email || '—') + emailCross + '</div></div>';
     html += '<div class="detail-row"><div class="detail-label">Phone</div><div class="detail-value">' + esc(lead.phone || '—') + '</div></div>';
     html += '<div class="detail-row"><div class="detail-label">Category</div><div class="detail-value"><span class="cat-badge ' + meta.cls + '">' + meta.label + '</span></div></div>';
     if (lead.confidence) {
@@ -461,9 +479,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     html += '<div class="detail-row"><div class="detail-label">Original</div><div class="detail-value">' + esc(lead.message || '—') + '</div></div>';
 
     // Transcript
-    if (lead.transcript) {
+    var rawTranscript = lead.transcript || lead.conversation;
+    if (rawTranscript) {
       var transcript;
-      try { transcript = JSON.parse(lead.transcript); } catch(e) { transcript = null; }
+      try { transcript = typeof rawTranscript === 'string' ? JSON.parse(rawTranscript) : rawTranscript; } catch(e) { transcript = null; }
       if (transcript && transcript.length > 0) {
         html += '<div class="transcript"><div class="transcript-title">Full Conversation</div><div class="transcript-body">';
         transcript.forEach(function(msg) {

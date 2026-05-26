@@ -147,6 +147,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       if(c.ghl_api_token) badges += '<span class="badge badge-ghl">GHL</span>';
       if(c.knowledge_base) badges += '<span class="badge badge-qa">💬 AI Q&A</span>';
       if(c.dashboard_pin) badges += '<span class="badge badge-dash">📊 Dashboard</span>';
+      if(c.widget_enabled) badges += '<span class="badge badge-ghl" style="background:#dbeafe;color:#1e40af">💬 Chat Widget</span>';
       return '<div class="client-card" data-idx="'+i+'">\
         <div class="client-card-header" onclick="window._sfToggle('+i+')">\
           <div><h3>'+esc(c.business_name||c.id)+'</h3><div class="client-id">'+esc(c.id)+'</div></div>\
@@ -172,7 +173,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       <div class="tab" onclick="window._sfTab('+i+',1,this)">GHL Integration</div>\
       <div class="tab" onclick="window._sfTab('+i+',2,this)">Tracking & Ads</div>\
       <div class="tab" onclick="window._sfTab('+i+',3,this)">Embed Code</div>\
-      <div class="tab" onclick="window._sfTab('+i+',4,this)">Links</div>\
+      <div class="tab" onclick="window._sfTab('+i+',4,this)">Chat Widget</div>\
+      <div class="tab" onclick="window._sfTab('+i+',5,this)">Links</div>\
     </div>\
     \
     <div class="tab-content active" id="tc'+i+'_0">\
@@ -231,7 +233,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       <div class="embed-code" id="embed_ty'+i+'"><button class="copy-btn" onclick="window._sfCopy(\'embed_ty'+i+'\')">Copy</button>&lt;!-- Place on your thank you page --&gt;\n&lt;script src="'+host+'/embed.js?id='+esc(c.id)+'"&gt;&lt;/script&gt;\n&lt;!-- Widget auto-opens with continuation chat --&gt;</div>':'')+'\
     </div>\
     \
-    <div class="tab-content" id="tc'+i+'_4">\
+<div class="tab-content" id="tc'+i+'_4">\
+      <div class="section-title">Chat Widget</div>\
+      <div class="fg-check"><input type="checkbox" id="f'+i+'_widget_enabled" '+(c.widget_enabled?'checked':'')+'><label for="f'+i+'_widget_enabled">Enable floating chat widget for this client</label></div>\
+      <div class="form-grid" style="margin-top:14px">\
+        <div class="fg"><label>CTA Button Text</label><input id="f'+i+'_widget_cta" value="'+esc(c.widget_cta_text||'')+'" placeholder="e.g. Book a free consultation →">\
+          <div class="hint">Shown when visitor shows buying intent</div></div>\
+        <div class="fg"><label>CTA URL</label><input id="f'+i+'_widget_cta_url" value="'+esc(c.widget_cta_url||'')+'" placeholder="https://...">\
+          <div class="hint">Where the CTA button links to</div></div>\
+      </div>\
+      <div class="form-grid full" style="margin-top:14px">\
+        <div class="fg"><label>Greeting Message</label><input id="f'+i+'_widget_greeting" value="'+esc(c.widget_greeting||'')+'" placeholder="Hi! How can I help you today?">\
+          <div class="hint">First message the visitor sees (leave blank for auto-generated)</div></div>\
+      </div>\
+      <div class="section-title">Widget Embed Code</div>\
+      <div class="embed-code" id="embed_chat'+i+'"><button class="copy-btn" onclick="window._sfCopy(\'embed_chat'+i+'\')">Copy</button>&lt;script src="'+host+'/widget.js?id='+esc(c.id)+'"&gt;&lt;/script&gt;</div>\
+      <div class="save-row"><button class="save-btn" onclick="window._sfSave('+i+')">Save Changes</button><span class="save-status" id="status_widget'+i+'"></span></div>\
+    </div>\
+    \
+    <div class="tab-content" id="tc'+i+'_5">\
       <div class="section-title">Quick Links</div>\
       <div style="display:flex;flex-direction:column;gap:10px">\
         <a href="'+host+'/form/'+esc(c.id)+'" target="_blank" style="color:#3b82f6;font-size:13px">📝 Standalone Form</a>\
@@ -244,7 +264,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
   window._sfTab = function(i, t, el){
     el.parentElement.querySelectorAll('.tab').forEach(function(tab){ tab.classList.remove('active'); });
     el.classList.add('active');
-    for(var j=0;j<5;j++){
+    for(var j=0;j<6;j++){
       var tc = document.getElementById('tc'+i+'_'+j);
       if(tc) tc.classList.toggle('active', j===t);
     }
@@ -268,6 +288,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
       ghl_api_token: $('f'+i+'_ghl_token').value.trim(),
       ghl_location_id: $('f'+i+'_ghl_loc').value.trim(),
       ghl_tag: $('f'+i+'_ghl_tag').value.trim(),
+      widget_enabled: $('f'+i+'_widget_enabled').checked,
+      widget_cta_text: $('f'+i+'_widget_cta').value.trim(),
+      widget_cta_url: $('f'+i+'_widget_cta_url').value.trim(),
+      widget_greeting: $('f'+i+'_widget_greeting').value.trim(),
     };
     try {
       var r = await fetch(BASE+'/admin/api/clients',{
@@ -292,7 +316,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
   };
 
   function showStatus(i, msg){
-    var els = [document.getElementById('status'+i), document.getElementById('status_ghl'+i), document.getElementById('status_track'+i)];
+    var els = [document.getElementById('status'+i), document.getElementById('status_ghl'+i), document.getElementById('status_track'+i), document.getElementById('status_widget'+i)];
     els.forEach(function(el){ if(el){ el.textContent = msg; setTimeout(function(){ el.textContent=''; }, 3000); }});
   }
 

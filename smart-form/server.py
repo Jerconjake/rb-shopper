@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from openai import OpenAI
 import requests as http_requests
 
-VERSION = "5.1"
+VERSION = "6.0"
 app = Flask(__name__, static_folder='static')
 _ai = None
 
@@ -111,6 +111,10 @@ CLIENTS_COLS = """
     demo_mode INTEGER NOT NULL DEFAULT 0,
     active INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    widget_enabled INTEGER NOT NULL DEFAULT 0,
+    widget_cta_text TEXT NOT NULL DEFAULT '',
+    widget_cta_url TEXT NOT NULL DEFAULT '',
+    widget_greeting TEXT NOT NULL DEFAULT '',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 """
 
@@ -131,6 +135,20 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
         conn.commit()
+        cur.execute("""CREATE TABLE IF NOT EXISTS chat_sessions (
+            id SERIAL PRIMARY KEY,
+            client_id TEXT NOT NULL,
+            name TEXT,
+            email TEXT,
+            messages TEXT NOT NULL DEFAULT '[]',
+            intent TEXT NOT NULL DEFAULT 'BROWSING',
+            ai_summary TEXT NOT NULL DEFAULT '',
+            ghl_contact_id TEXT DEFAULT '',
+            notified INTEGER NOT NULL DEFAULT 0,
+            conversion_fired INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""")
         # Migrations for future column adds
         for col, td in [
             ('ghl_api_token', "TEXT NOT NULL DEFAULT ''"),
@@ -140,9 +158,30 @@ def init_db():
         ]:
             _pg_add_col(conn, 'clients', col, td)
         _pg_add_col(conn, 'leads', 'ghl_contact_id', "TEXT DEFAULT ''")
+        for col, td in [
+            ('widget_enabled', "INTEGER NOT NULL DEFAULT 0"),
+            ('widget_cta_text', "TEXT NOT NULL DEFAULT ''"),
+            ('widget_cta_url', "TEXT NOT NULL DEFAULT ''"),
+            ('widget_greeting', "TEXT NOT NULL DEFAULT ''"),
+        ]:
+            _pg_add_col(conn, 'clients', col, td)
     else:
         conn.executescript(f"""
             CREATE TABLE IF NOT EXISTS clients ({CLIENTS_COLS});
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id TEXT NOT NULL,
+                name TEXT,
+                email TEXT,
+                messages TEXT NOT NULL DEFAULT '[]',
+                intent TEXT NOT NULL DEFAULT 'BROWSING',
+                ai_summary TEXT NOT NULL DEFAULT '',
+                ghl_contact_id TEXT DEFAULT '',
+                notified INTEGER NOT NULL DEFAULT 0,
+                conversion_fired INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             CREATE TABLE IF NOT EXISTS leads (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 client_id TEXT NOT NULL,
@@ -507,6 +546,10 @@ def client_config(client_id):
         'thank_you_url': cfg.get('thank_you_url', ''),
         'demo_mode': bool(cfg.get('demo_mode', 0)),
         'has_knowledge_base': bool(cfg.get('knowledge_base', '').strip()),
+        'widget_enabled': bool(cfg.get('widget_enabled', 0)),
+        'widget_cta_text': cfg.get('widget_cta_text', ''),
+        'widget_cta_url': cfg.get('widget_cta_url', ''),
+        'widget_greeting': cfg.get('widget_greeting', ''),
     })
 
 # ---------------------------------------------------------------------------
@@ -990,6 +1033,31 @@ def dashboard_export(client_id):
     )
 
 
+
+
+@app.route('/api/dashboard/<client_id>/chat-sessions')
+def dashboard_chat_sessions(client_id):
+    """Return chat sessions for dashboard."""
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Not found'}), 404
+    if not require_dashboard(cfg):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    conn = get_db()
+    rows = db_all(conn,
+        'SELECT * FROM chat_sessions WHERE client_id=? ORDER BY created_at DESC LIMIT 200',
+        (client_id,))
+    conn.close()
+
+    for r in rows:
+        if r.get('created_at') and not isinstance(r['created_at'], str):
+            r['created_at'] = r['created_at'].isoformat()
+        if r.get('updated_at') and not isinstance(r['updated_at'], str):
+            r['updated_at'] = r['updated_at'].isoformat()
+
+    return jsonify(rows)
+
 # ---------------------------------------------------------------------------
 # Email — SendGrid (fallback if GHL not configured)
 # ---------------------------------------------------------------------------
@@ -1133,6 +1201,7 @@ def admin_save_client():
             solicitor_sheet_url=?, job_sheet_url=?, knowledge_base=?,
             ghl_api_token=?, ghl_location_id=?, ghl_tag=?, dashboard_pin=?,
             demo_mode=?, active=?,
+            widget_enabled=?, widget_cta_text=?, widget_cta_url=?, widget_greeting=?,
             updated_at=CURRENT_TIMESTAMP
             WHERE id=?''',
             (biz_name, data.get('business_description',''), json.dumps(services), json.dumps(wont_do),
@@ -1144,7 +1213,10 @@ def admin_save_client():
              data.get('ghl_api_token',''), data.get('ghl_location_id',''),
              data.get('ghl_tag','SmartForm Lead'), data.get('dashboard_pin',''),
              1 if data.get('demo_mode', False) else 0,
-             1 if data.get('active', True) else 0, client_id)
+             1 if data.get('active', True) else 0,
+             1 if data.get('widget_enabled', False) else 0,
+             data.get('widget_cta_text',''), data.get('widget_cta_url',''),
+             data.get('widget_greeting',''), client_id)
         )
     else:
         db_exec(conn, '''INSERT INTO clients
@@ -1153,8 +1225,9 @@ def admin_save_client():
              google_ads_id, google_ads_label, thank_you_url,
              solicitor_sheet_url, job_sheet_url, knowledge_base,
              ghl_api_token, ghl_location_id, ghl_tag, dashboard_pin,
-             demo_mode, active)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+             demo_mode, active,
+             widget_enabled, widget_cta_text, widget_cta_url, widget_greeting)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             (client_id, biz_name, data.get('business_description',''),
              json.dumps(services), json.dumps(wont_do),
              data.get('notification_email',''), data.get('brand_color','#2563eb'),
@@ -1165,7 +1238,10 @@ def admin_save_client():
              data.get('ghl_api_token',''), data.get('ghl_location_id',''),
              data.get('ghl_tag','SmartForm Lead'), data.get('dashboard_pin',''),
              1 if data.get('demo_mode', False) else 0,
-             1 if data.get('active', True) else 0)
+             1 if data.get('active', True) else 0,
+             1 if data.get('widget_enabled', False) else 0,
+             data.get('widget_cta_text',''), data.get('widget_cta_url',''),
+             data.get('widget_greeting',''))
         )
 
     conn.commit()
@@ -1212,12 +1288,335 @@ def admin_stats(client_id):
     })
 
 
+
+# ---------------------------------------------------------------------------
+# Widget Chat — AI system prompt
+# ---------------------------------------------------------------------------
+def build_widget_system_prompt(cfg):
+    services = "\n".join(
+        f"- {s['name']} ({s['value']}, {s['priority']} priority)" for s in cfg['services']
+    )
+    wont = "\n".join(f"- {w}" for w in cfg['wont_do'])
+    kb = cfg.get('knowledge_base', '').strip()
+    kb_block = f"\nKNOWLEDGE BASE:\n{kb}" if kb else ""
+
+    cta_text = cfg.get('widget_cta_text', '').strip()
+    cta_instruction = f'When you detect buying intent or they ask to connect with someone, suggest they "{cta_text}".' if cta_text else 'When you detect buying intent, suggest they get in touch with the team.'
+
+    return f"""You are a helpful AI assistant for {cfg['business_name']}.
+{cfg['business_description']}
+
+SERVICES:
+{services}
+
+THINGS WE DO NOT DO:
+{wont}
+{kb_block}
+
+You are chatting live with a website visitor. Be helpful, conversational, and concise.
+{cta_instruction}
+
+RULES:
+- 1-3 sentences per response. Natural and conversational.
+- No filler phrases ("Great question!", "Absolutely!", "Wonderful!").
+- Never quote exact prices — say pricing depends on the project and suggest connecting with the team.
+- If you don't know something, say so and suggest they reach out.
+- Be warm but not pushy. You're a helpful guide, not a salesperson.
+- If they show clear buying intent (want to schedule, get started, learn next steps), set intent to BUYING.
+- If they ask to speak with someone or need human help, set intent to HANDOFF.
+
+Classify the visitor's intent after each message:
+- BROWSING — general curiosity, asking what you do
+- INTERESTED — asking about specific services, pricing, process
+- BUYING — ready to take action, wants to book/schedule/start
+- HANDOFF — explicitly wants to talk to a human
+- SUPPORT — needs help with existing service/order
+- OTHER — off-topic
+
+Return ONLY this JSON — no markdown, no extra text:
+{{
+  "response": "Your response to the visitor",
+  "intent": "BROWSING",
+  "should_notify": false,
+  "summary": "Brief running summary of what they're looking for (1-2 sentences, for the business owner)"
+}}
+
+Set should_notify: true when:
+- Intent is BUYING or HANDOFF
+- They share specific project details worth acting on
+- The conversation reveals a clear, actionable need"""
+
+
+# ---------------------------------------------------------------------------
+# Widget Chat — API routes
+# ---------------------------------------------------------------------------
+@app.route('/api/widget/start', methods=['POST'])
+def widget_start():
+    data = request.json or {}
+    client_id = data.get('client_id', '')
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    if not name or not email:
+        return jsonify({'error': 'Name and email required'}), 400
+
+    greeting = cfg.get('widget_greeting', '').strip()
+    if not greeting:
+        first = name.split(' ')[0]
+        biz = cfg['business_name']
+        greeting = f"Hi {first}! How can I help you today?"
+
+    initial_messages = [{'role': 'assistant', 'content': greeting}]
+
+    conn = get_db()
+    session_id = db_insert_id(conn,
+        """INSERT INTO chat_sessions (client_id, name, email, messages, intent, ai_summary)
+           VALUES (?,?,?,?,?,?)""",
+        (client_id, name, email, json.dumps(initial_messages), 'BROWSING', '')
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({'session_id': session_id, 'greeting': greeting})
+
+
+@app.route('/api/widget/chat', methods=['POST'])
+def widget_chat():
+    data = request.json or {}
+    client_id = data.get('client_id', '')
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    session_id = data.get('session_id')
+    message = data.get('message', '').strip()
+    if not message or not session_id:
+        return jsonify({'error': 'Message and session_id required'}), 400
+
+    conn = get_db()
+    session = db_one(conn, 'SELECT * FROM chat_sessions WHERE id=? AND client_id=?', (session_id, client_id))
+    if not session:
+        conn.close()
+        return jsonify({'error': 'Session not found'}), 404
+
+    messages = json.loads(session.get('messages', '[]'))
+    name = session.get('name', '')
+    email = session.get('email', '')
+
+    ai = get_ai()
+    system = build_widget_system_prompt(cfg)
+
+    chat_msgs = [{'role': 'system', 'content': system}]
+    for m in messages:
+        chat_msgs.append(m)
+    chat_msgs.append({'role': 'user', 'content': message})
+
+    resp = ai.chat.completions.create(
+        model='gpt-4o',
+        messages=chat_msgs,
+        temperature=0.3,
+        response_format={"type": "json_object"},
+    )
+
+    result = json.loads(resp.choices[0].message.content)
+    ai_response = result.get('response', '')
+    intent = result.get('intent', 'BROWSING')
+    should_notify = result.get('should_notify', False)
+    summary = result.get('summary', '')
+
+    messages.append({'role': 'user', 'content': message})
+    messages.append({'role': 'assistant', 'content': ai_response})
+
+    db_exec(conn,
+        """UPDATE chat_sessions SET messages=?, intent=?, ai_summary=?, updated_at=CURRENT_TIMESTAMP WHERE id=?""",
+        (json.dumps(messages), intent, summary, session_id)
+    )
+    conn.commit()
+
+    is_demo = bool(cfg.get('demo_mode', 0))
+    show_cta = intent in ('BUYING', 'HANDOFF') or should_notify
+    fire_conversion = False
+    ghl_id = None
+
+    if show_cta and not is_demo and not session.get('notified', 0):
+        # Push to GHL + email owner
+        lead_data = {
+            'name': name, 'email': email, 'phone': '',
+            'message': summary,
+            'category': 'WIDGET_CHAT',
+            'summary': f"[Widget Chat] {summary}",
+            'estimated_value': '',
+            'conversation': messages,
+        }
+        ghl_id = push_to_ghl(cfg, lead_data)
+        if not ghl_id:
+            _email_widget_summary(cfg, name, email, messages, summary, intent)
+
+        # Also store as a lead for dashboard cross-reference
+        lead_id = db_insert_id(conn,
+            """INSERT INTO leads (client_id,category,name,email,phone,message,ai_summary,estimated_value,conversation,ghl_contact_id)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (client_id, 'WIDGET_CHAT', name, email, '', summary,
+             f"[Widget Chat] {summary}", '', json.dumps(messages), ghl_id or '')
+        )
+        conn.commit()
+
+        db_exec(conn, 'UPDATE chat_sessions SET notified=1, ghl_contact_id=? WHERE id=?',
+                (ghl_id or '', session_id))
+        conn.commit()
+        fire_conversion = True
+
+    conn.close()
+
+    resp_data = {
+        'response': ai_response,
+        'intent': intent,
+        'show_cta': show_cta,
+        'fire_conversion': fire_conversion,
+    }
+
+    if is_demo:
+        resp_data['demo'] = {
+            'intent': intent,
+            'should_notify': should_notify,
+            'summary': summary,
+        }
+
+    return jsonify(resp_data)
+
+
+@app.route('/api/widget/end', methods=['POST'])
+def widget_end():
+    """Called when visitor closes the widget — finalize session."""
+    data = request.json or {}
+    if not request.is_json:
+        try:
+            data = json.loads(request.get_data(as_text=True))
+        except Exception:
+            data = {}
+    client_id = data.get('client_id', '')
+    session_id = data.get('session_id')
+    if not session_id:
+        return jsonify({'ok': True})
+
+    cfg = get_client(client_id) if client_id else None
+    is_demo = bool(cfg.get('demo_mode', 0)) if cfg else False
+
+    conn = get_db()
+    session = db_one(conn, 'SELECT * FROM chat_sessions WHERE id=?', (session_id,))
+    if session and not session.get('notified', 0) and not is_demo:
+        messages = json.loads(session.get('messages', '[]'))
+        if len(messages) > 1:  # More than just the greeting
+            name = session.get('name', '')
+            email = session.get('email', '')
+            summary = session.get('ai_summary', '') or 'Widget chat session'
+            intent = session.get('intent', 'BROWSING')
+
+            # Always store as lead for dashboard visibility
+            lead_id = db_insert_id(conn,
+                """INSERT INTO leads (client_id,category,name,email,phone,message,ai_summary,estimated_value,conversation)
+                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                (client_id, 'WIDGET_CHAT', name, email, '', summary,
+                 f"[Widget Chat] {summary}", '', json.dumps(messages))
+            )
+            conn.commit()
+
+            # For interested+ visitors, also notify
+            if intent in ('INTERESTED', 'BUYING', 'HANDOFF', 'SUPPORT') and cfg:
+                lead_data = {
+                    'name': name, 'email': email, 'phone': '',
+                    'message': summary, 'category': 'WIDGET_CHAT',
+                    'summary': f"[Widget Chat] {summary}",
+                    'estimated_value': '', 'conversation': messages,
+                }
+                ghl_id = push_to_ghl(cfg, lead_data)
+                if not ghl_id:
+                    _email_widget_summary(cfg, name, email, messages, summary, intent)
+                db_exec(conn, 'UPDATE chat_sessions SET notified=1, ghl_contact_id=? WHERE id=?',
+                        (ghl_id or '', session_id))
+                db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id or '', lead_id))
+                conn.commit()
+
+    conn.close()
+    return jsonify({'ok': True})
+
+
+def _email_widget_summary(cfg, name, email, messages, summary, intent):
+    """Email widget chat summary to business owner."""
+    notify = cfg.get('notification_email') or os.environ.get('NOTIFICATION_EMAIL', '')
+    sg_key = os.environ.get('SENDGRID_API_KEY', '')
+    if not notify or not sg_key:
+        print(f"[WIDGET] {cfg['business_name']}: {name} <{email}> — {summary}")
+        return
+    try:
+        import sendgrid
+        from sendgrid.helpers.mail import Mail, Email, To, Content
+
+        sg = sendgrid.SendGridAPIClient(api_key=sg_key)
+        biz = cfg['business_name']
+
+        intent_labels = {
+            'BROWSING': '👀 Browsing', 'INTERESTED': '🔍 Interested',
+            'BUYING': '🔥 Ready to Buy', 'HANDOFF': '🤝 Wants Human',
+            'SUPPORT': '🛠 Support', 'OTHER': '💬 General'
+        }
+        intent_label = intent_labels.get(intent, intent)
+
+        transcript_html = ''
+        for m in messages:
+            if m['role'] == 'user':
+                transcript_html += f'<div style="background:#eff6ff;padding:10px 14px;border-radius:10px;margin:6px 0;margin-left:40px"><strong>{name}:</strong> {m["content"]}</div>'
+            else:
+                transcript_html += f'<div style="background:#f1f5f9;padding:10px 14px;border-radius:10px;margin:6px 0;margin-right:40px"><strong>AI:</strong> {m["content"]}</div>'
+
+        is_hot = intent in ('BUYING', 'HANDOFF')
+        color = '#ef4444' if is_hot else '#6366f1'
+        icon = '🔥' if is_hot else '💬'
+
+        html = f"""<div style="font-family:-apple-system,system-ui,sans-serif;max-width:560px;margin:0 auto">
+<div style="background:{color};color:#fff;padding:20px 24px;border-radius:10px 10px 0 0">
+<h2 style="margin:0;font-size:18px">{icon} Widget Chat — {intent_label}</h2>
+<p style="margin:4px 0 0;font-size:13px;opacity:.85">{summary or 'Someone chatted with your AI assistant'}</p></div>
+<div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 10px 10px">
+<p style="margin:0 0 8px"><strong>Name:</strong> {name}</p>
+<p style="margin:0 0 16px"><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
+<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+<p style="margin:0 0 12px;font-weight:600">Conversation:</p>
+{transcript_html}
+</div></div>"""
+
+        subj = f"{'🔥 Hot Lead' if is_hot else '💬 Chat'} — {name} — {summary[:60]}" if summary else f"Widget Chat — {name}"
+        mail = Mail(
+            from_email=Email("leads@j-squared.ca", f"{biz} Chat"),
+            to_emails=To(notify),
+            subject=subj,
+            html_content=Content("text/html", html),
+        )
+        sg.client.mail.send.post(request_body=mail.get())
+    except Exception as e:
+        print(f"Widget email error: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Static / pages
 # ---------------------------------------------------------------------------
 @app.route('/embed.js')
 def serve_embed():
     return send_from_directory('static', 'embed.js', mimetype='application/javascript')
+
+@app.route('/widget.js')
+def serve_widget_js():
+    return send_from_directory('static', 'widget.js', mimetype='application/javascript')
+
+@app.route('/chat/<client_id>')
+def chat_page(client_id):
+    cfg = get_client(client_id)
+    if not cfg:
+        return "Not found", 404
+    return send_from_directory('static', 'chat.html')
 
 @app.route('/form/<client_id>')
 def form_page(client_id):
