@@ -77,9 +77,7 @@ def db_insert_id(conn, sql, params=()):
 def _pg_add_col(conn, table, col, typedef):
     """Safely add a column to a Postgres table (no-op if exists)."""
     import psycopg2
-    # Use a separate connection to avoid transaction issues
-    dsn = conn.dsn if hasattr(conn, 'dsn') else conn.info.dsn
-    tmp = psycopg2.connect(dsn)
+    tmp = psycopg2.connect(os.environ["DATABASE_URL"])
     tmp.autocommit = True
     try:
         cur = tmp.cursor()
