@@ -151,6 +151,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
+        conn.commit()
         # Migrations for future column adds
         for col, td in [
             ('ghl_api_token', "TEXT NOT NULL DEFAULT ''"),
