@@ -98,6 +98,7 @@ CLIENTS_COLS = """
     wont_do TEXT NOT NULL DEFAULT '[]',
     notification_email TEXT NOT NULL DEFAULT '',
     brand_color TEXT NOT NULL DEFAULT '#2563eb',
+    accent_color TEXT NOT NULL DEFAULT '',
     facebook_pixel_id TEXT NOT NULL DEFAULT '',
     google_ads_id TEXT NOT NULL DEFAULT '',
     google_ads_label TEXT NOT NULL DEFAULT '',
@@ -164,6 +165,7 @@ def init_db():
             ('widget_cta_text', "TEXT NOT NULL DEFAULT ''"),
             ('widget_cta_url', "TEXT NOT NULL DEFAULT ''"),
             ('widget_greeting', "TEXT NOT NULL DEFAULT ''"),
+            ('accent_color', "TEXT NOT NULL DEFAULT ''"),
         ]:
             _pg_add_col(conn, 'clients', col, td)
     else:
@@ -541,6 +543,7 @@ def client_config(client_id):
     return jsonify({
         'business_name': cfg['business_name'],
         'brand_color': cfg.get('brand_color', '#2563eb'),
+        'accent_color': cfg.get('accent_color', ''),
         'facebook_pixel_id': cfg.get('facebook_pixel_id', ''),
         'google_ads_id': cfg.get('google_ads_id', ''),
         'google_ads_label': cfg.get('google_ads_label', ''),
@@ -1203,6 +1206,7 @@ def admin_save_client():
             ghl_api_token=?, ghl_location_id=?, ghl_tag=?, dashboard_pin=?,
             demo_mode=?, active=?,
             widget_enabled=?, widget_cta_text=?, widget_cta_url=?, widget_greeting=?,
+            accent_color=?,
             updated_at=CURRENT_TIMESTAMP
             WHERE id=?''',
             (biz_name, data.get('business_description',''), json.dumps(services), json.dumps(wont_do),
@@ -1217,7 +1221,8 @@ def admin_save_client():
              1 if data.get('active', True) else 0,
              1 if data.get('widget_enabled', False) else 0,
              data.get('widget_cta_text',''), data.get('widget_cta_url',''),
-             data.get('widget_greeting',''), client_id)
+             data.get('widget_greeting',''),
+             data.get('accent_color',''), client_id)
         )
     else:
         db_exec(conn, '''INSERT INTO clients
@@ -1227,8 +1232,8 @@ def admin_save_client():
              solicitor_sheet_url, job_sheet_url, knowledge_base,
              ghl_api_token, ghl_location_id, ghl_tag, dashboard_pin,
              demo_mode, active,
-             widget_enabled, widget_cta_text, widget_cta_url, widget_greeting)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+             widget_enabled, widget_cta_text, widget_cta_url, widget_greeting, accent_color)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             (client_id, biz_name, data.get('business_description',''),
              json.dumps(services), json.dumps(wont_do),
              data.get('notification_email',''), data.get('brand_color','#2563eb'),
@@ -1242,7 +1247,7 @@ def admin_save_client():
              1 if data.get('active', True) else 0,
              1 if data.get('widget_enabled', False) else 0,
              data.get('widget_cta_text',''), data.get('widget_cta_url',''),
-             data.get('widget_greeting',''))
+             data.get('widget_greeting',''), data.get('accent_color',''))
         )
 
     conn.commit()
