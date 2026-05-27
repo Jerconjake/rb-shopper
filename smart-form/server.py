@@ -1308,25 +1308,30 @@ def admin_stats(client_id):
 @app.route('/admin/api/backfill-ghl', methods=['POST'])
 def admin_backfill_ghl():
     """Push a lead to GHL via the server (avoids Cloudflare IP blocks)."""
-    require_admin()
-    data = request.json
-    client_id = data.get('client_id', '')
-    cfg = get_client_config(client_id)
-    if not cfg:
-        return jsonify({'error': 'unknown client'}), 404
+    try:
+        require_admin()
+        data = request.json
+        client_id = data.get('client_id', '')
+        cfg = get_client_config(client_id)
+        if not cfg:
+            return jsonify({'error': 'unknown client'}), 404
 
-    lead_data = {
-        'name': data.get('name', ''),
-        'email': data.get('email', ''),
-        'phone': data.get('phone', ''),
-        'message': data.get('message', ''),
-        'summary': data.get('summary', ''),
-        'category': data.get('category', ''),
-    }
-    contact_id = push_to_ghl(cfg, lead_data)
-    if contact_id:
-        return jsonify({'ok': True, 'contact_id': contact_id})
-    return jsonify({'ok': False, 'error': 'GHL push failed — check server logs'}), 500
+        lead_data = {
+            'name': data.get('name', ''),
+            'email': data.get('email', ''),
+            'phone': data.get('phone', ''),
+            'message': data.get('message', ''),
+            'summary': data.get('summary', ''),
+            'category': data.get('category', ''),
+        }
+        contact_id = push_to_ghl(cfg, lead_data)
+        if contact_id:
+            return jsonify({'ok': True, 'contact_id': contact_id})
+        return jsonify({'ok': False, 'error': 'GHL push failed — check server logs'}), 500
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 
 # ---------------------------------------------------------------------------
