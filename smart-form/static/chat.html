@@ -178,6 +178,21 @@ body.demo-mode .demo-banner{display:block}
     return '#' + r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
   }
 
+  // Facebook Pixel
+  function injectPixel(id) {
+    if (window.fbq) return;
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+    (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', id); fbq('track', 'PageView');
+  }
+
+  function fireLeadEvent() {
+    if (window.fbq) fbq('track', 'Lead');
+  }
+
   // Init
   async function init() {
     try {
@@ -204,6 +219,10 @@ body.demo-mode .demo-banner{display:block}
       }
       if (config.widget_cta_url) {
         $('ctaLink').href = config.widget_cta_url;
+      }
+      // Init pixel on standalone chat page (not in iframe/widget — widget.js handles its own)
+      if (config.facebook_pixel_id && !isDemo && window === window.top) {
+        injectPixel(config.facebook_pixel_id);
       }
     } catch(e) {}
   }
@@ -272,6 +291,7 @@ body.demo-mode .demo-banner{display:block}
       }
 
       if (data.fire_conversion) {
+        fireLeadEvent();
         try { window.parent.postMessage({type:'smartform_widget_lead'}, '*'); } catch(e){}
       }
 
