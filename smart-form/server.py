@@ -1312,7 +1312,7 @@ def admin_backfill_ghl():
         require_admin()
         data = request.json
         client_id = data.get('client_id', '')
-        cfg = get_client_config(client_id)
+        cfg = get_client(client_id)
         if not cfg:
             return jsonify({'error': 'unknown client'}), 404
 
