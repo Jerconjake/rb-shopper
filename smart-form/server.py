@@ -223,7 +223,7 @@ SEED_CLIENTS = {
         "notification_email": "",
         "brand_color": "#000000",
         "thank_you_url": "https://premierdatingphotography.com/thank-you-for-contacting-pdp/",
-        "ghl_api_token": "pit-3b2b40f2-563c-41cc-b7fb-ede506e41ce3",
+        "ghl_api_token": "pit-e51a2e39-918c-4533-bb1d-c1020f2a6741",
         "ghl_location_id": "pmUzbbRzxGVF4bqXfdG5",
         "ghl_tag": "SmartForm Lead",
         "dashboard_pin": "pdp2025",
@@ -1303,6 +1303,28 @@ def admin_stats(client_id):
         'by_category': {r['category']: r['cnt'] for r in cats}
     })
 
+
+
+@app.route('/admin/api/backfill-ghl', methods=['POST'])
+def admin_backfill_ghl():
+    """Push a lead to GHL via the server (avoids Cloudflare IP blocks)."""
+    require_admin()
+    data = request.json
+    client_id = data.get('client_id', '')
+    cfg = get_client_config(client_id)
+    if not cfg:
+        return jsonify({'error': 'unknown client'}), 404
+
+    lead_data = {
+        'name': data.get('name', ''),
+        'email': data.get('email', ''),
+        'phone': data.get('phone', ''),
+        'message': data.get('message', ''),
+        'ai_summary': data.get('summary', ''),
+        'category': data.get('category', ''),
+    }
+    result = push_to_ghl(cfg, lead_data)
+    return jsonify(result)
 
 
 # ---------------------------------------------------------------------------
