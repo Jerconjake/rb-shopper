@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from openai import OpenAI
 import requests as http_requests
 
-VERSION = "6.0"
+VERSION = "6.1"
 app = Flask(__name__, static_folder='static')
 _ai = None
 
@@ -459,6 +459,12 @@ def push_to_ghl(cfg, lead_data):
     try:
         resp = http_requests.post(f"{GHL_API}/contacts/upsert",
                                   headers=headers, json=contact_payload, timeout=10)
+        if resp.status_code == 401:
+            print(f"[GHL] ⚠️ 401 Unauthorized — API token expired or revoked for {cfg.get('id','?')}")
+            return None
+        if resp.status_code >= 400:
+            print(f"[GHL] ⚠️ HTTP {resp.status_code} pushing {lead_data.get('name')}: {resp.text[:200]}")
+            return None
         result = resp.json()
         contact_id = result.get('contact', {}).get('id')
 
@@ -592,6 +598,9 @@ def classify():
 
     result = json.loads(resp.choices[0].message.content)
     conversation_log = [{'role': 'user', 'content': message}]
+    # Store the AI's response (e.g. clarification question) in the conversation log
+    if result.get('response'):
+        conversation_log.append({'role': 'assistant', 'content': result['response']})
 
     # Save lead
     conn = get_db()
