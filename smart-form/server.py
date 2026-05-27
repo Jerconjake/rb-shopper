@@ -1320,11 +1320,13 @@ def admin_backfill_ghl():
         'email': data.get('email', ''),
         'phone': data.get('phone', ''),
         'message': data.get('message', ''),
-        'ai_summary': data.get('summary', ''),
+        'summary': data.get('summary', ''),
         'category': data.get('category', ''),
     }
-    result = push_to_ghl(cfg, lead_data)
-    return jsonify(result)
+    contact_id = push_to_ghl(cfg, lead_data)
+    if contact_id:
+        return jsonify({'ok': True, 'contact_id': contact_id})
+    return jsonify({'ok': False, 'error': 'GHL push failed — check server logs'}), 500
 
 
 # ---------------------------------------------------------------------------
