@@ -26,12 +26,18 @@
   // Inject styles
   var style = document.createElement('style');
   style.textContent = '\
-    .sfw-bubble{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;\
+    .sfw-bubble{position:fixed;bottom:24px;right:24px;height:52px;border-radius:26px;\
       background:#2563eb;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;\
-      justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:999998;\
-      transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s ease}\
-    .sfw-bubble:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,0,0,.25)}\
-    .sfw-bubble svg{width:26px;height:26px}\
+      gap:8px;padding:0 20px 0 16px;\
+      box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:999998;\
+      transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s ease;\
+      font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;\
+      font-size:15px;font-weight:600;letter-spacing:.01em}\
+    .sfw-bubble:hover{transform:scale(1.05);box-shadow:0 6px 28px rgba(0,0,0,.25)}\
+    .sfw-bubble svg{width:22px;height:22px;flex-shrink:0}\
+    .sfw-bubble .sfw-bubble-label{white-space:nowrap}\
+    .sfw-bubble.open .sfw-bubble-label{display:none}\
+    .sfw-bubble.open{padding:0;width:48px;height:48px;border-radius:50%;justify-content:center}\
     .sfw-bubble.open svg.sfw-icon-msg{display:none}\
     .sfw-bubble:not(.open) svg.sfw-icon-close{display:none}\
     .sfw-panel{position:fixed;bottom:92px;right:24px;width:400px;max-width:calc(100vw - 32px);\
@@ -71,6 +77,7 @@
     <svg class="sfw-icon-msg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>\
     </svg>\
+    <span class="sfw-bubble-label">Chat with us</span>\
     <svg class="sfw-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
       <path d="M18 6L6 18M6 6l12 12"/>\
     </svg>';
