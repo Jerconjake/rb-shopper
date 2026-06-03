@@ -1956,6 +1956,10 @@ def form_page(client_id):
     cfg = get_client(client_id)
     if not cfg:
         return "Not found", 404
+    import os as _os
+    custom = f'{client_id}-landing.html'
+    if _os.path.exists(_os.path.join('static', custom)):
+        return send_from_directory('static', custom)
     return send_from_directory('static', 'form.html')
 
 @app.route('/landing/<client_id>')
