@@ -445,6 +445,8 @@ function selectPath(path) {
     fw.classList.toggle('visible', p === path);
   });
   currentPath = path;
+  postHeight();
+  setTimeout(postHeight, 100); // catch any transition-based height change
   document.getElementById('form-' + path).scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -669,7 +671,20 @@ function showDeclined(path, message) {
       <h3>Message received</h3>
       <p>${message}</p>
     </div>`;
+  postHeight();
 }
+
+// ── Auto-resize: tell parent iframe how tall we are ──────────────────────────
+function postHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'smartform_resize', height: h }, '*');
+}
+
+// Fire on load and whenever content changes
+window.addEventListener('load', postHeight);
+window.addEventListener('resize', postHeight);
+const _ro = new ResizeObserver(postHeight);
+_ro.observe(document.body);
 </script>
 </body>
 </html>
