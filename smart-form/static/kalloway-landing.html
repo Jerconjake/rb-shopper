@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kalloway Property Services — Contact</title>
+<style>
+  :root {
+    --navy: #1B3665;
+    --navy-dark: #122449;
+    --navy-light: #2a4f8a;
+    --accent: #4A7FC1;
+    --white: #ffffff;
+    --off-white: #f4f6f9;
+    --border: #d1dae8;
+    --text: #1a2540;
+    --muted: #5a6a85;
+    --error: #c0392b;
+    --success: #1a6b3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--off-white);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--navy);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header img { height: 40px; }
+  header .logo-text {
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  header .logo-text span { display: block; font-size: 0.75rem; font-weight: 400; opacity: 0.8; }
+
+  /* HERO */
+  .hero {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: 48px 24px 56px;
+  }
+  .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; line-height: 1.25; }
+  .hero p { font-size: 1.05rem; opacity: 0.85; max-width: 560px; margin: 0 auto; }
+
+  /* PATH CARDS */
+  .paths {
+    max-width: 980px;
+    margin: -32px auto 0;
+    padding: 0 20px 48px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 700px) {
+    .paths { grid-template-columns: 1fr; margin-top: -20px; }
+    .hero h1 { font-size: 1.5rem; }
+  }
+
+  .path-card {
+    background: var(--white);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .path-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(27,54,101,0.15); transform: translateY(-2px); }
+  .path-card.active { border-color: var(--navy); background: #f0f4fb; box-shadow: 0 4px 20px rgba(27,54,101,0.2); }
+  .path-card .icon { font-size: 2rem; margin-bottom: 12px; }
+  .path-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .path-card.featured h3 { font-size: 1.25rem; }
+  .path-card p { font-size: 0.875rem; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+  .path-card .badge {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .path-card .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--navy);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  .path-card.active .cta-link { color: var(--navy-dark); }
+
+  /* FORM SECTION */
+  .form-wrapper {
+    max-width: 680px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+    display: none;
+  }
+  .form-wrapper.visible { display: block; }
+  .form-box {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 36px 36px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+  }
+  @media (max-width: 500px) { .form-box { padding: 24px 20px; } }
+
+  .form-box h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .form-box .form-subtitle {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field label .req { color: var(--error); margin-left: 2px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--white);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
+  .field textarea { resize: vertical; min-height: 110px; }
+  .field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a85' fill='none' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+
+  /* FILE UPLOAD */
+  .file-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .file-upload-area:hover, .file-upload-area.drag-over { border-color: var(--navy); background: #f0f4fb; }
+  .file-upload-area.uploaded { border-color: #27ae60; border-style: solid; background: #f0fff4; }
+  .file-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .file-upload-area .upload-icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .file-upload-area .upload-text { font-size: 0.875rem; color: var(--muted); }
+  .file-upload-area .upload-text strong { color: var(--navy); }
+  .file-upload-area .file-name { font-size: 0.875rem; color: var(--success); font-weight: 600; margin-top: 8px; }
+  .parse-status { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+  .parse-status.success { color: var(--success); }
+
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 9px;
+    padding: 15px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--navy-light); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* AI CHAT (for clarification) */
+  .ai-bubble {
+    background: #f0f4fb;
+    border-left: 3px solid var(--navy);
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* SUCCESS */
+  .success-box {
+    text-align: center;
+    padding: 36px 24px;
+  }
+  .success-box .check { font-size: 3rem; margin-bottom: 16px; }
+  .success-box h3 { font-size: 1.3rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+  .success-box p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; max-width: 420px; margin: 0 auto; }
+
+  /* INLINE MESSAGE */
+  .inline-msg {
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .inline-msg.error { background: #fdf0ef; color: var(--error); border: 1px solid #f5c6c2; }
+  .inline-msg.info { background: #f0f4fb; color: var(--navy); border: 1px solid var(--border); }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.78rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">
+    Kalloway Property Services
+    <span>Remediation &amp; Abatement Specialists</span>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>How can we help?</h1>
+  <p>Select the option that best describes your inquiry and we'll connect you with the right team.</p>
+</div>
+
+<!-- PATH SELECTION -->
+<div class="paths">
+  <div class="path-card featured" id="card-commercial" onclick="selectPath('commercial')">
+    <div class="badge">Commercial &amp; Strata</div>
+    <div class="icon">🏢</div>
+    <h3>Strata &amp; Property Management</h3>
+    <p>Condo boards, strata corporations, property managers, and commercial building owners — get a quote for abatement or remediation services.</p>
+    <span class="cta-link">Get Started →</span>
+  </div>
+  <div class="path-card" id="card-residential" onclick="selectPath('residential')">
+    <div class="icon">🏠</div>
+    <h3>Residential</h3>
+    <p>Homeowners needing asbestos testing, water damage, or mould remediation.</p>
+    <span class="cta-link">Contact Us →</span>
+  </div>
+  <div class="path-card" id="card-application" onclick="selectPath('application')">
+    <div class="icon">📋</div>
+    <h3>Join Our Team</h3>
+    <p>Experienced technicians — apply for open positions.</p>
+    <span class="cta-link">Apply Now →</span>
+  </div>
+</div>
+
+<!-- FORMS -->
+<div class="form-wrapper" id="form-commercial">
+  <div class="form-box" id="content-commercial">
+    <h2>Commercial &amp; Strata Inquiry</h2>
+    <p class="form-subtitle">Tell us about your property and what you need. We prioritize commercial and strata work and will respond promptly.</p>
+    <div id="aibubble-commercial"></div>
+    <form id="form-c" onsubmit="submitForm(event,'commercial')">
+      <div class="form-row">
+        <div class="field">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" name="first_name" required/>
+        </div>
+        <div class="field">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" name="last_name" required/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Company / Organization <span class="req">*</span></label>
+        <input type="text" name="company" placeholder="Strata Corp BCS-1234, ABC Property Management, etc." required/>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" name="email" required/>
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" name="phone" required/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Type of Property</label>
+        <select name="property_type">
+          <option value="">Please select…</option>
+          <option>Strata / Condo Corporation</option>
+          <option>Property Management Company</option>
+          <option>Commercial Building</option>
+          <option>HOA / Condo Board</option>
+          <option>Industrial / Warehouse</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>What do you need? <span class="req">*</span></label>
+        <textarea name="message" placeholder="Describe the issue, location, urgency, or any other details…" required></textarea>
+      </div>
+      <div id="errmsg-commercial"></div>
+      <button type="submit" class="submit-btn" id="btn-commercial">Send Inquiry</button>
+    </form>
+  </div>
+</div>
+
+<div class="form-wrapper" id="form-residential">
+  <div class="form-box" id="content-residential">
+    <h2>Residential Inquiry</h2>
+    <p class="form-subtitle">We serve homeowners across the region. Describe what you're dealing with and we'll get back to you.</p>
+    <div id="aibubble-residential"></div>
+    <form id="form-r" onsubmit="submitForm(event,'residential')">
+      <div class="form-row">
+        <div class="field">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" name="first_name" required/>
+        </div>
+        <div class="field">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" name="last_name" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" name="email" required/>
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" name="phone" required/>
+        </div>
+      </div>
+      <div class="field">
+        <label>What do you need? <span class="req">*</span></label>
+        <textarea name="message" placeholder="e.g. possible asbestos in ceiling tiles, water damage from burst pipe, mould in basement…" required></textarea>
+      </div>
+      <div id="errmsg-residential"></div>
+      <button type="submit" class="submit-btn" id="btn-residential">Send Inquiry</button>
+    </form>
+  </div>
+</div>
+
+<div class="form-wrapper" id="form-application">
+  <div class="form-box" id="content-application">
+    <h2>Apply for a Position</h2>
+    <p class="form-subtitle">We're always looking for experienced, certified technicians to join our team.</p>
+    <div id="aibubble-application"></div>
+    <form id="form-a" onsubmit="submitForm(event,'application')">
+      <div class="form-row">
+        <div class="field">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" name="first_name" required/>
+        </div>
+        <div class="field">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" name="last_name" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" name="email" required/>
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" name="phone" required/>
+        </div>
+      </div>
+      <div class="field" id="position-field">
+        <label>Position Applying For <span class="req">*</span></label>
+        <select name="position" id="position-select" required>
+          <option value="">Loading positions…</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Earliest Possible Start Date</label>
+        <input type="date" name="start_date"/>
+      </div>
+      <div class="field">
+        <label>Cover Letter <span style="font-weight:400;text-transform:none;font-size:0.75rem;color:var(--muted);">(max 200 words)</span></label>
+        <textarea name="cover_letter" id="cover-letter" placeholder="Briefly introduce yourself and explain why you're a great fit…" maxlength="1500"></textarea>
+      </div>
+      <div class="field">
+        <label>Resume <span class="req">*</span></label>
+        <div class="file-upload-area" id="resume-drop" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'resume')">
+          <input type="file" id="resume-input" accept=".pdf,.doc,.docx,.txt,.rtf" onchange="handleFileSelect(this,'resume')"/>
+          <div class="upload-icon">📄</div>
+          <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-text">PDF, Word, or plain text · Max 10 MB</div>
+          <div class="file-name" id="resume-filename"></div>
+          <div class="parse-status" id="resume-parse-status"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Other Documents <span style="font-weight:400;text-transform:none;font-size:0.75rem;color:var(--muted);">(optional — certifications, references)</span></label>
+        <div class="file-upload-area" id="other-drop" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'other')">
+          <input type="file" id="other-input" accept=".pdf,.doc,.docx,.txt,.rtf,.jpg,.png" onchange="handleFileSelect(this,'other')"/>
+          <div class="upload-icon">📎</div>
+          <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="file-name" id="other-filename"></div>
+        </div>
+      </div>
+      <div id="errmsg-application"></div>
+      <button type="submit" class="submit-btn" id="btn-application">Submit Application</button>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <p>Kalloway Property Services · <a href="https://kalloway.com">kalloway.com</a></p>
+</footer>
+
+<script>
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:5000'
+  : '';
+const CLIENT_ID = 'kalloway';
+
+let resumeText = '';
+let leadId = null;
+let currentPath = null;
+
+// ── PATH SELECTION ──────────────────────────────────────────────
+function selectPath(path) {
+  ['commercial','residential','application'].forEach(p => {
+    document.getElementById('card-' + p).classList.toggle('active', p === path);
+    const fw = document.getElementById('form-' + p);
+    fw.classList.toggle('visible', p === path);
+  });
+  currentPath = path;
+  document.getElementById('form-' + path).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── POSITIONS DROPDOWN ──────────────────────────────────────────
+async function loadPositions() {
+  try {
+    const r = await fetch(`${API}/config/${CLIENT_ID}`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    const sel = document.getElementById('position-select');
+    sel.innerHTML = '<option value="">Please select…</option>';
+    (cfg.positions || []).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.warn('Could not load positions', e); }
+}
+loadPositions();
+
+// ── FILE UPLOAD ──────────────────────────────────────────────────
+function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e, type) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    const inputId = type === 'resume' ? 'resume-input' : 'other-input';
+    const dt = new DataTransfer();
+    dt.items.add(files[0]);
+    document.getElementById(inputId).files = dt.files;
+    handleFileSelect(document.getElementById(inputId), type);
+  }
+}
+
+function handleFileSelect(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+  const nameEl = document.getElementById(type + '-filename');
+  nameEl.textContent = '📎 ' + file.name;
+
+  if (type === 'resume') {
+    const statusEl = document.getElementById('resume-parse-status');
+    statusEl.textContent = 'Uploading…';
+    statusEl.className = 'parse-status';
+    const dropEl = document.getElementById('resume-drop');
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    fetch(`${API}/api/upload/resume`, { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.parsed) {
+          resumeText = data.text || '';
+          statusEl.textContent = '✅ Resume parsed successfully';
+          statusEl.className = 'parse-status success';
+          dropEl.classList.add('uploaded');
+        } else {
+          resumeText = '';
+          statusEl.textContent = data.error || '⚠️ Could not parse file — we\'ll review it manually';
+          dropEl.classList.add('uploaded');
+        }
+      })
+      .catch(() => {
+        resumeText = '';
+        statusEl.textContent = '⚠️ Upload error — we\'ll review manually';
+      });
+  } else {
+    document.getElementById(type + '-drop').classList.add('uploaded');
+  }
+}
+
+// ── FORM SUBMISSION ──────────────────────────────────────────────
+async function submitForm(e, path) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('btn-' + path);
+  const errEl = document.getElementById('errmsg-' + path);
+  errEl.innerHTML = '';
+
+  // Basic validation
+  if (path === 'application') {
+    const resumeInput = document.getElementById('resume-input');
+    if (!resumeInput.files || !resumeInput.files.length) {
+      errEl.innerHTML = '<div class="inline-msg error">Please upload your resume before submitting.</div>';
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const fd = new FormData(form);
+  const first = fd.get('first_name') || '';
+  const last = fd.get('last_name') || '';
+  const name = (first + ' ' + last).trim();
+  const email = fd.get('email') || '';
+  const phone = fd.get('phone') || '';
+
+  let message = '';
+  if (path === 'commercial') {
+    const company = fd.get('company') || '';
+    const propType = fd.get('property_type') || '';
+    const msg = fd.get('message') || '';
+    message = [company ? `Company: ${company}` : '', propType ? `Property type: ${propType}` : '', msg].filter(Boolean).join('\n');
+  } else if (path === 'residential') {
+    message = fd.get('message') || '';
+  } else if (path === 'application') {
+    const position = fd.get('position') || '';
+    const startDate = fd.get('start_date') || '';
+    const coverLetter = fd.get('cover_letter') || '';
+    message = [
+      position ? `Applying for: ${position}` : 'Job application',
+      startDate ? `Earliest start: ${startDate}` : '',
+      coverLetter ? `Cover letter:\n${coverLetter}` : '',
+    ].filter(Boolean).join('\n');
+  }
+
+  const payload = {
+    client_id: CLIENT_ID,
+    name, email, phone, message,
+    path: path,
+    resume_text: path === 'application' ? resumeText : '',
+  };
+
+  try {
+    const r = await fetch(`${API}/api/classify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    leadId = data.lead_id;
+
+    if (data.response && !data.end_conversation) {
+      // AI has a clarification question
+      const bubbleEl = document.getElementById('aibubble-' + path);
+      bubbleEl.innerHTML = `<div class="ai-bubble">${data.response}</div>`;
+      btn.disabled = false;
+      btn.textContent = path === 'application' ? 'Submit Application' : 'Send Inquiry';
+      // On next submit, use /api/chat
+      form.onsubmit = (ev) => submitFollowup(ev, path, name, email, phone);
+    } else if (data.response) {
+      // Solicitor / spam — show response inline
+      showDeclined(path, data.response);
+    } else {
+      // Success
+      showSuccess(path);
+    }
+  } catch(err) {
+    errEl.innerHTML = '<div class="inline-msg error">Something went wrong. Please try again or call us directly.</div>';
+    btn.disabled = false;
+    btn.textContent = path === 'application' ? 'Submit Application' : 'Send Inquiry';
+  }
+}
+
+async function submitFollowup(e, path, name, email, phone) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('btn-' + path);
+  const errEl = document.getElementById('errmsg-' + path);
+  errEl.innerHTML = '';
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const fd = new FormData(form);
+  const message = fd.get('message') || fd.get('cover_letter') || '';
+
+  const payload = {
+    client_id: CLIENT_ID,
+    lead_id: leadId,
+    name, email, phone, message,
+    conversation: [],
+  };
+
+  try {
+    const r = await fetch(`${API}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+
+    if (data.response && !data.end_conversation) {
+      const bubbleEl = document.getElementById('aibubble-' + path);
+      bubbleEl.innerHTML = `<div class="ai-bubble">${data.response}</div>`;
+      btn.disabled = false;
+      btn.textContent = path === 'application' ? 'Submit Application' : 'Send Inquiry';
+    } else {
+      showSuccess(path);
+    }
+  } catch(err) {
+    errEl.innerHTML = '<div class="inline-msg error">Something went wrong. Please try again.</div>';
+    btn.disabled = false;
+  }
+}
+
+function showSuccess(path) {
+  const content = document.getElementById('content-' + path);
+  const titles = {
+    commercial: ["We've received your inquiry", "Our commercial team will be in touch shortly. Priority inquiries from strata corporations and property managers typically receive a response within 2 business hours."],
+    residential: ["We've received your inquiry", "We'll review your details and be in touch within 1–2 business days."],
+    application: ["Application received", "Thank you for applying. We'll review your application and reach out if there's a match."],
+  };
+  const [title, msg] = titles[path] || ["Submitted", "We'll be in touch."];
+  content.innerHTML = `
+    <div class="success-box">
+      <div class="check">✅</div>
+      <h3>${title}</h3>
+      <p>${msg}</p>
+    </div>`;
+}
+
+function showDeclined(path, message) {
+  const content = document.getElementById('content-' + path);
+  content.innerHTML = `
+    <div class="success-box">
+      <div class="check">📬</div>
+      <h3>Message received</h3>
+      <p>${message}</p>
+    </div>`;
+}
+</script>
+</body>
+</html>

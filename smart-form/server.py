@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from openai import OpenAI
 import requests as http_requests
 
-VERSION = "6.1"
+VERSION = "6.4"
 app = Flask(__name__, static_folder='static')
 _ai = None
 
@@ -117,7 +117,11 @@ CLIENTS_COLS = """
     widget_cta_text TEXT NOT NULL DEFAULT '',
     widget_cta_url TEXT NOT NULL DEFAULT '',
     widget_greeting TEXT NOT NULL DEFAULT '',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    positions TEXT NOT NULL DEFAULT '[]',
+    ghl_tag_map TEXT NOT NULL DEFAULT '{}',
+    form_type TEXT NOT NULL DEFAULT '',
+    digest_email TEXT NOT NULL DEFAULT ''
 """
 
 def init_db():
@@ -167,8 +171,17 @@ def init_db():
             ('widget_cta_url', "TEXT NOT NULL DEFAULT ''"),
             ('widget_greeting', "TEXT NOT NULL DEFAULT ''"),
             ('accent_color', "TEXT NOT NULL DEFAULT ''"),
+            ('positions', "TEXT NOT NULL DEFAULT '[]'"),
+            ('ghl_tag_map', "TEXT NOT NULL DEFAULT '{}'"),
+            ('form_type', "TEXT NOT NULL DEFAULT ''"),
+            ('digest_email', "TEXT NOT NULL DEFAULT ''"),
         ]:
             _pg_add_col(conn, 'clients', col, td)
+        for col, td in [
+            ('confidence_score', 'INTEGER DEFAULT 0'),
+            ('resume_summary', "TEXT DEFAULT ''"),
+        ]:
+            _pg_add_col(conn, 'leads', col, td)
     else:
         conn.executescript(f"""
             CREATE TABLE IF NOT EXISTS clients ({CLIENTS_COLS});
@@ -249,6 +262,46 @@ SEED_CLIENTS = {
     },
 }
 
+KALLOWAY_TAG_MAP = {
+    "KPS_COMMERCIAL":    "KPS Commercial Lead",
+    "KPS_RESIDENTIAL":   "KPS Residential Lead",
+    "KPS_JOB_APPLICATION": "KPS Job Application",
+    "SOLICITOR":         "KPS Solicitation",
+}
+
+SEED_CLIENTS["kalloway"] = {
+    "business_name": "Kalloway Property Services",
+    "business_description": (
+        "Kalloway Property Services specializes in asbestos abatement, water damage remediation, "
+        "mould remediation, and environmental services. We serve strata corporations, property management "
+        "companies, condo boards, commercial building owners, and residential homeowners. "
+        "Commercial and strata work is our primary focus."
+    ),
+    "services": [
+        {"name": "Asbestos Abatement", "value": "$2,000 – $50,000+", "priority": "high"},
+        {"name": "Water Damage Remediation", "value": "$1,500 – $30,000", "priority": "high"},
+        {"name": "Mould Remediation", "value": "$1,000 – $20,000", "priority": "high"},
+        {"name": "Environmental Services / Air Quality Testing", "value": "$500 – $5,000", "priority": "medium"},
+    ],
+    "wont_do": [
+        "General construction or renovation",
+        "Pest control",
+        "Landscaping",
+        "Non-environmental cleaning",
+    ],
+    "notification_email": "",
+    "brand_color": "#1B3665",
+    "accent_color": "#4A7FC1",
+    "ghl_api_token": "pit-62ba98c4-5e8c-485f-84c7-11940a06c2c3",
+    "ghl_location_id": "AIHw0l2a2kNK3UoAyxln",
+    "ghl_tag": "KPS Lead",
+    "ghl_tag_map": KALLOWAY_TAG_MAP,
+    "form_type": "kalloway",
+    "positions": ["Experienced Asbestos, Water and Abatement Technician"],
+    "dashboard_pin": "kps2025",
+}
+
+
 def _seed_defaults():
     conn = get_db()
     for cid, cfg in SEED_CLIENTS.items():
@@ -256,15 +309,19 @@ def _seed_defaults():
         if not row:
             db_exec(conn, '''INSERT INTO clients
                 (id, business_name, business_description, services, wont_do,
-                 notification_email, brand_color, thank_you_url,
-                 ghl_api_token, ghl_location_id, ghl_tag, dashboard_pin)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
+                 notification_email, brand_color, accent_color, thank_you_url,
+                 ghl_api_token, ghl_location_id, ghl_tag, dashboard_pin,
+                 positions, ghl_tag_map, form_type)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                 (cid, cfg['business_name'], cfg['business_description'],
                  json.dumps(cfg['services']), json.dumps(cfg['wont_do']),
                  cfg.get('notification_email',''), cfg.get('brand_color','#2563eb'),
-                 cfg.get('thank_you_url',''),
+                 cfg.get('accent_color',''), cfg.get('thank_you_url',''),
                  cfg.get('ghl_api_token',''), cfg.get('ghl_location_id',''),
-                 cfg.get('ghl_tag','SmartForm Lead'), cfg.get('dashboard_pin',''))
+                 cfg.get('ghl_tag','SmartForm Lead'), cfg.get('dashboard_pin',''),
+                 json.dumps(cfg.get('positions', [])),
+                 json.dumps(cfg.get('ghl_tag_map', {})),
+                 cfg.get('form_type', ''))
             )
         else:
             # Update GHL fields if currently empty (handles pre-existing seeds)
@@ -273,6 +330,14 @@ def _seed_defaults():
                     "UPDATE clients SET ghl_api_token=?, ghl_location_id=?, ghl_tag=?, dashboard_pin=? WHERE id=? AND (ghl_api_token='' OR ghl_api_token IS NULL)",
                     (cfg['ghl_api_token'], cfg.get('ghl_location_id',''),
                      cfg.get('ghl_tag','SmartForm Lead'), cfg.get('dashboard_pin',''), cid))
+            # Refresh positions/tag_map/form_type for all seeds
+            if cfg.get('positions') or cfg.get('ghl_tag_map') or cfg.get('form_type'):
+                db_exec(conn,
+                    "UPDATE clients SET positions=?, ghl_tag_map=?, form_type=?, accent_color=? WHERE id=?",
+                    (json.dumps(cfg.get('positions', [])),
+                     json.dumps(cfg.get('ghl_tag_map', {})),
+                     cfg.get('form_type', ''),
+                     cfg.get('accent_color', ''), cid))
     conn.commit()
     conn.close()
 
@@ -408,15 +473,70 @@ Return ONLY this JSON — no markdown, no extra text:
 Set "is_buying_signal": true if the question suggests genuine purchase/project intent (e.g. asking about specific services, process for getting started, what they'd need to prepare)."""
 
 # ---------------------------------------------------------------------------
+# Kalloway-specific system prompt
+# ---------------------------------------------------------------------------
+def build_kalloway_system_prompt(cfg, path_hint='', resume_text=''):
+    positions = json.loads(cfg.get('positions', '[]'))
+    pos_list = '\n'.join(f"- {p}" for p in positions) if positions else '- (Check website for current openings)'
+
+    resume_block = ''
+    if resume_text:
+        resume_block = f"\n\nRESUME TEXT (extracted from uploaded file):\n{resume_text[:3000]}"
+
+    return f"""You are an intelligent intake assistant for Kalloway Property Services, a professional asbestos abatement, water damage remediation, and mould remediation company.
+
+You receive form submissions from their website. Classify each submission accurately AND detect ALL solicitation attempts — even when disguised as a service inquiry.
+
+FORM PATH HINT: {path_hint or 'not specified'}
+
+OPEN POSITIONS:
+{pos_list}
+{resume_block}
+
+CATEGORIES (return exactly one):
+- KPS_COMMERCIAL — Genuine inquiry from a strata corporation, property management company, condo board, or commercial building owner wanting Kalloway's services
+- KPS_RESIDENTIAL — Genuine inquiry from a homeowner wanting Kalloway's services
+- KPS_JOB_APPLICATION — Candidate applying to work FOR Kalloway (even if they used the wrong form)
+- SOLICITOR — Anyone pitching products/services TO Kalloway (SEO, marketing, software, unsolicited subcontractors, "we can help your business grow" etc.)
+- SPAM — Bot submissions, test messages, gibberish, clearly fake
+
+SOLICITATION DETECTION RULES (HIGH PRIORITY):
+- A genuine commercial inquiry asks about getting services FROM Kalloway
+- A solicitor uses language like: "we can help", "increase your revenue", "grow your business", "we offer", "our services include", "checking if you're looking for", "looking to connect with companies like yours"
+- Subcontractors trying to get on bid lists without being invited = SOLICITOR
+- Software/tool vendors, marketing agencies, lead gen companies = SOLICITOR
+- If in doubt between SOLICITOR and KPS_COMMERCIAL — ask yourself: are they trying to buy FROM Kalloway or sell TO Kalloway?
+
+CONFIDENCE SCORE (1–10):
+- 1–3: Spam or clear solicitor
+- 4–6: Somewhat vague but likely genuine
+- 7–10: Clear genuine lead
+
+Return ONLY this JSON — no markdown, no extra text:
+{{
+  "category": "KPS_COMMERCIAL",
+  "confidence_score": 8,
+  "summary": "1–2 sentence brief for the Kalloway team about this submission",
+  "resume_summary": null,
+  "response": null,
+  "end_conversation": true
+}}
+
+resume_summary: If resume text was provided, write a 2–3 sentence hiring manager assessment: key qualifications, relevant experience, and a "worth interviewing?" verdict. Set null if no resume.
+response: Set null for genuine leads (Kalloway's team handles follow-up). For SOLICITOR/SPAM, write a brief polite decline (1 sentence max). For KPS_JOB_APPLICATION without a resume, ask them to upload one.
+end_conversation: true for all Kalloway submissions."""
+
+
+# ---------------------------------------------------------------------------
 # GoHighLevel integration
 # ---------------------------------------------------------------------------
 GHL_API = "https://services.leadconnectorhq.com"
 
-def push_to_ghl(cfg, lead_data):
+def push_to_ghl(cfg, lead_data, tag_override=None):
     """Push lead to GoHighLevel — upsert contact + add note. Returns contact_id or None."""
     token = cfg.get('ghl_api_token', '')
     location = cfg.get('ghl_location_id', '')
-    tag = cfg.get('ghl_tag', 'SmartForm Lead')
+    tag = tag_override or cfg.get('ghl_tag', 'SmartForm Lead')
     if not token or not location:
         return None
 
@@ -491,15 +611,22 @@ def push_to_ghl(cfg, lead_data):
 
 
 def _build_ghl_note(d):
+    score = d.get('confidence_score', 0)
+    score_str = f" (Confidence: {score}/10)" if score else ""
     lines = [
         "📋 SmartForm Lead Brief",
         "━" * 30,
-        f"Category: {d.get('category', 'Unknown')}",
+        f"Category: {d.get('category', 'Unknown')}{score_str}",
         f"Estimated Value: {d.get('estimated_value') or 'N/A'}",
         "",
         f"AI Summary: {d.get('summary', 'N/A')}",
         "",
     ]
+    resume_summary = d.get('resume_summary', '')
+    if resume_summary:
+        lines.append("📄 Resume Assessment:")
+        lines.append(resume_summary)
+        lines.append("")
     convo = d.get('conversation', [])
     if convo:
         lines.append("Conversation:")
@@ -513,11 +640,16 @@ def _build_ghl_note(d):
     return "\n".join(lines)
 
 
-def _notify_lead(cfg, result, name, email, phone, message, conversation=None):
+def _notify_lead(cfg, result, name, email, phone, message, conversation=None, tag_override=None):
     """Notify business owner — GHL first, SendGrid fallback."""
     is_demo = bool(cfg.get('demo_mode', 0))
     if is_demo:
         return
+
+    # Resolve tag: explicit override > per-category map > client default
+    if not tag_override:
+        tag_map = json.loads(cfg.get('ghl_tag_map', '{}') or '{}')
+        tag_override = tag_map.get(result.get('category', '')) or None
 
     # Build lead data for GHL note
     lead_data = {
@@ -527,16 +659,147 @@ def _notify_lead(cfg, result, name, email, phone, message, conversation=None):
         'summary': result.get('summary', ''),
         'estimated_value': result.get('estimated_value', ''),
         'conversation': conversation or [{'role': 'user', 'content': message}],
+        'resume_summary': result.get('resume_summary', ''),
+        'confidence_score': result.get('confidence_score', 0),
     }
 
     # Try GHL first
-    ghl_id = push_to_ghl(cfg, lead_data)
+    ghl_id = push_to_ghl(cfg, lead_data, tag_override=tag_override)
     if ghl_id:
         return ghl_id
 
     # Fallback to SendGrid email
     _email_owner(cfg, result, name, email, phone, message)
     return None
+
+
+# ---------------------------------------------------------------------------
+# Resume upload — parse PDF/Word, return extracted text
+# ---------------------------------------------------------------------------
+@app.route('/api/upload/resume', methods=['POST'])
+def upload_resume():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    f = request.files['file']
+    filename = (f.filename or '').lower()
+    allowed = ('.pdf', '.doc', '.docx', '.txt', '.rtf')
+    if not any(filename.endswith(ext) for ext in allowed):
+        return jsonify({'error': 'Unsupported file type. Please upload PDF, Word, or plain text.'}), 400
+
+    file_bytes = f.read()
+    if len(file_bytes) > 10 * 1024 * 1024:  # 10 MB cap
+        return jsonify({'error': 'File too large (max 10 MB)'}), 400
+
+    extracted = ''
+    try:
+        if filename.endswith('.pdf'):
+            import pypdf, io as _io2
+            reader = pypdf.PdfReader(_io2.BytesIO(file_bytes))
+            extracted = '\n'.join(page.extract_text() or '' for page in reader.pages)
+        elif filename.endswith('.docx'):
+            import docx, io as _io2
+            doc = docx.Document(_io2.BytesIO(file_bytes))
+            extracted = '\n'.join(p.text for p in doc.paragraphs)
+        else:
+            extracted = file_bytes.decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"[RESUME PARSE] Error: {e}")
+        extracted = ''
+
+    extracted = extracted.strip()
+    return jsonify({
+        'ok': True,
+        'parsed': bool(extracted),
+        'text': extracted[:4000] if extracted else '',
+        'filename': f.filename,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Weekly digest — generate AI summary and push to GHL
+# ---------------------------------------------------------------------------
+@app.route('/api/digest/<client_id>', methods=['POST'])
+def generate_digest(client_id):
+    """Generate weekly digest for a client and push to GHL. Can be called by trigger."""
+    # Allow admin PIN or internal trigger key
+    auth = request.headers.get('X-Admin-Pin', '') or (request.json or {}).get('pin', '')
+    if auth != ADMIN_PIN:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    cfg = get_client(client_id)
+    if not cfg:
+        return jsonify({'error': 'Unknown client'}), 404
+
+    from datetime import datetime, timedelta
+    days_back = (request.json or {}).get('days', 7)
+    since = (datetime.utcnow() - timedelta(days=days_back)).isoformat()
+
+    conn = get_db()
+    digest_categories = ['KPS_RESIDENTIAL', 'SOLICITOR', 'SPAM', 'JOB_APPLICANT']
+    placeholders = ','.join(['?' for _ in digest_categories])
+    rows = db_all(conn,
+        f"SELECT category, name, email, ai_summary, confidence_score, created_at FROM leads WHERE client_id=? AND category IN ({placeholders}) AND created_at >= ? ORDER BY created_at DESC",
+        tuple([client_id] + digest_categories + [since])
+    )
+    conn.close()
+
+    if not rows:
+        return jsonify({'ok': True, 'message': 'No digest submissions this period', 'count': 0})
+
+    # Count by category
+    counts = {}
+    for r in rows:
+        counts[r['category']] = counts.get(r['category'], 0) + 1
+
+    summary_lines = [f"Weekly Digest — {cfg['business_name']} — Past {days_back} days", ""]
+    for cat, cnt in sorted(counts.items()):
+        summary_lines.append(f"• {cat}: {cnt}")
+    summary_lines.append("")
+
+    # Build AI digest summary
+    submissions_text = "\n\n".join(
+        f"[{r.get('category','?')}] {r.get('name','Unknown')} — {r.get('ai_summary','No summary')}"
+        for r in rows[:30]
+    )
+
+    ai = get_ai()
+    digest_resp = ai.chat.completions.create(
+        model='gpt-4o',
+        messages=[
+            {'role': 'system', 'content': f"You write concise weekly digest summaries for {cfg['business_name']}. Summarize the following non-priority submissions in 2–3 sentences. Group by type. Note any patterns (e.g. recurring solicitors, residential inquiry trends). Be factual and brief."},
+            {'role': 'user', 'content': submissions_text},
+        ],
+        temperature=0.3,
+        max_tokens=300,
+    )
+    ai_summary = digest_resp.choices[0].message.content.strip()
+    summary_lines.append(ai_summary)
+
+    full_digest = "\n".join(summary_lines)
+    digest_date = datetime.utcnow().strftime('%Y-%m-%d')
+
+    # Push to GHL as a tagged contact so their automation sends the digest email
+    ghl_payload = {
+        'name': f'Weekly Digest {digest_date}',
+        'email': f'digest.{digest_date.replace("-","")}@kalloway.com',
+        'phone': '',
+        'message': full_digest,
+        'category': 'WEEKLY_DIGEST',
+        'summary': f"Weekly digest: {counts}",
+        'estimated_value': '',
+        'conversation': [],
+    }
+    tag_map = json.loads(cfg.get('ghl_tag_map', '{}') or '{}')
+    digest_tag = tag_map.get('WEEKLY_DIGEST', 'KPS Weekly Digest')
+    ghl_id = push_to_ghl(cfg, ghl_payload, tag_override=digest_tag)
+
+    return jsonify({
+        'ok': True,
+        'count': len(rows),
+        'counts': counts,
+        'ghl_pushed': bool(ghl_id),
+        'digest_preview': ai_summary,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -561,6 +824,8 @@ def client_config(client_id):
         'widget_cta_text': cfg.get('widget_cta_text', ''),
         'widget_cta_url': cfg.get('widget_cta_url', ''),
         'widget_greeting': cfg.get('widget_greeting', ''),
+        'positions': json.loads(cfg.get('positions', '[]') or '[]'),
+        'form_type': cfg.get('form_type', ''),
     })
 
 # ---------------------------------------------------------------------------
@@ -578,13 +843,21 @@ def classify():
     email = data.get('email', '').strip()
     phone = data.get('phone', '').strip()
     message = data.get('message', '').strip()
+    path_hint = data.get('path', '').strip()         # kalloway: commercial/residential/application
+    resume_text = data.get('resume_text', '').strip() # kalloway: extracted resume text
 
     if not message:
         return jsonify({'error': 'Message required'}), 400
 
     ai = get_ai()
-    system = build_system_prompt(cfg)
-    user_msg = f"Name: {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
+    form_type = cfg.get('form_type', '')
+
+    if form_type == 'kalloway':
+        system = build_kalloway_system_prompt(cfg, path_hint=path_hint, resume_text=resume_text)
+        user_msg = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nForm section: {path_hint or 'general'}\n\nMessage:\n{message}"
+    else:
+        system = build_system_prompt(cfg)
+        user_msg = f"Name: {name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
 
     resp = ai.chat.completions.create(
         model='gpt-4o',
@@ -602,29 +875,44 @@ def classify():
     if result.get('response'):
         conversation_log.append({'role': 'assistant', 'content': result['response']})
 
+    confidence_score = int(result.get('confidence_score', 0) or 0)
+    resume_summary = result.get('resume_summary', '') or ''
+
     # Save lead
     conn = get_db()
     lead_id = db_insert_id(conn,
-        '''INSERT INTO leads (client_id,category,name,email,phone,message,ai_summary,estimated_value,conversation)
-           VALUES (?,?,?,?,?,?,?,?,?)''',
+        '''INSERT INTO leads (client_id,category,name,email,phone,message,ai_summary,estimated_value,conversation,confidence_score,resume_summary)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
         (client_id, result['category'], name, email, phone, message,
          result.get('summary',''), result.get('estimated_value',''),
-         json.dumps(conversation_log))
+         json.dumps(conversation_log), confidence_score, resume_summary)
     )
     conn.commit()
 
     is_demo = bool(cfg.get('demo_mode', 0))
 
-    # Notify owner for qualified leads
+    # Determine GHL tag from tag map (if set)
+    tag_map = json.loads(cfg.get('ghl_tag_map', '{}') or '{}')
+
+    # Notify owner for qualified/KPS leads
     ghl_id = None
+    kps_categories = {'KPS_COMMERCIAL', 'KPS_RESIDENTIAL', 'KPS_JOB_APPLICATION', 'SOLICITOR'}
     if not is_demo:
-        if result['category'] == 'QUALIFIED_LEAD' and not result.get('response'):
+        category = result['category']
+        tag_override = tag_map.get(category) if tag_map else None
+
+        # KPS categories: always push (except SPAM)
+        if form_type == 'kalloway' and category in kps_categories:
+            ghl_id = _notify_lead(cfg, result, name, email, phone, message, tag_override=tag_override)
+            if ghl_id:
+                db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
+                conn.commit()
+        elif category == 'QUALIFIED_LEAD' and not result.get('response'):
             ghl_id = _notify_lead(cfg, result, name, email, phone, message)
             if ghl_id:
                 db_exec(conn, 'UPDATE leads SET ghl_contact_id=? WHERE id=?', (ghl_id, lead_id))
                 conn.commit()
-        elif result['category'] == 'CLARIFICATION' and cfg.get('ghl_api_token'):
-            # Push to GHL immediately on clarification — lead captured, note says awaiting reply
+        elif category == 'CLARIFICATION' and cfg.get('ghl_api_token'):
             clarif_result = dict(result)
             clarif_result['summary'] = (result.get('summary') or '') + ' [Clarification sent — awaiting reply]'
             ghl_id = push_to_ghl(cfg, {
@@ -1675,6 +1963,10 @@ def landing_page(client_id):
     cfg = get_client(client_id)
     if not cfg:
         return "Not found", 404
+    import os as _os
+    custom = f'{client_id}-landing.html'
+    if _os.path.exists(_os.path.join('static', custom)):
+        return send_from_directory('static', custom)
     return send_from_directory('static', 'form.html')
 
 @app.route('/widget/<client_id>')
