@@ -27,6 +27,28 @@ const SUGGESTIONS = [
   "I need better focus and less brain fog",
 ];
 
+// Append UTM tracking params to product/subscribe URLs
+function withUtm(url: string, content: string): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("utm_source", "sage");
+    u.searchParams.set("utm_medium", "chat");
+    u.searchParams.set("utm_content", content);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+// Fire a tracking event to the server (fire-and-forget)
+function trackEvent(event: string, productId: string) {
+  fetch("/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event, product_id: productId }),
+  }).catch(() => {});
+}
+
 function ProductCard({ product }: { product: Product }) {
   return (
     <div style={{
@@ -61,9 +83,10 @@ function ProductCard({ product }: { product: Product }) {
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" as const }}>
           <a
-            href={product.product_url}
+            href={withUtm(product.product_url, "view")}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent("product_click", product.id)}
             style={{
               padding: "6px 12px",
               borderRadius: 20,
@@ -78,9 +101,10 @@ function ProductCard({ product }: { product: Product }) {
           </a>
           {product.subscription_url && product.chronic && (
             <a
-              href={product.subscription_url}
+              href={withUtm(product.subscription_url, "subscribe")}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent("subscribe_click", product.id)}
               style={{
                 padding: "6px 12px",
                 borderRadius: 20,
